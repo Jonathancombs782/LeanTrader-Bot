@@ -1,0 +1,85 @@
+assets:
+  - symbol: EURUSD
+    venue: mt5
+    timeframe: M5
+
+  - symbol: XAUUSD
+    venue: mt5
+    timeframe: M5
+
+  - symbol: BTC/USDT
+    venue: crypto
+    exchange: binance
+    timeframe: 5m
+
+  - symbol: ETH/USDT
+    venue: crypto
+    exchange: binance
+    timeframe: 5m
+
+lookback_days: 120
+horizon_bars: 6
+
+risk:
+  # Tight risk for $50 live on spot; orders must meet exchange min notionals
+  equity_usd: 50.0
+  per_trade_risk_pct: 0.01      # 1% of $50 = $0.50 theoretical risk
+  atr_window: 14
+  atr_stop_mult: 1.8
+  atr_tp_mult: 3.0
+  # MT5 only (ignored by crypto)
+  min_lot: 0.01
+  max_lot: 1.00
+  lot_step: 0.01
+  max_daily_loss_pct: 0.03
+
+promotion:
+  min_oos_sharpe: 1.2
+  min_hit_rate: 0.52
+  max_drawdown: -0.10
+  paper_shadow_trades: 300
+
+scheduler:
+  research_cadence_sec: 90
+  signal_cadence_sec: 15
+  digest_hour_utc: 23
+
+# add under root
+tcost:
+  # round-trip trading cost stress (fees+slip), applied in research metrics
+  crypto_bps: 15     # 0.15%
+  fx_bps: 4          # 0.04%
+
+regimes:
+  vol_window: 120    # bars
+  calm_quantile: 0.4 # vol <= q → 'calm', else 'storm'
+
+online_learning:
+  enabled: true
+  window_bars: 500
+  min_samples: 200
+
+oco:
+  enabled: true
+  # for live-crypto: emulate client-side OCO (close at SL/TP)
+  poll_sec: 2
+
+# NEW: wallet-aware selection
+selection:
+  max_concurrent_base: 2          # for tiny wallets
+  tiers:                           # scale with equity_usd (crypto) or MT5 equity
+    - { min_equity: 0,     k: 1.0 }     # 0–99 → 2 * 1.0 = 2 symbols
+    - { min_equity: 200,   k: 1.5 }     # 200+ → 3 symbols
+    - { min_equity: 500,   k: 2.0 }     # 500+ → 4 symbols
+    - { min_equity: 1000,  k: 3.0 }     # 1k+ → 6 symbols
+  min_cash_buffer_pct: 0.10        # keep 10% cash buffer
+  score:
+    w_trend: 0.45                  # momentum strength weight
+    w_vol:   0.25                  # usable volatility
+    w_liq:   0.20                  # liquidity / volume proxy
+    w_cost:  0.10                  # (negative) trading cost
+  min_score: 0.25                  # only trade symbols scoring above this
+
+# Regime models
+regime_models:
+  enabled: true

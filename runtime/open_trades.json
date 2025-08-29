@@ -1,0 +1,14 @@
+[
+  {
+    "symbol": "XRP/USDT",
+    "side": "buy",
+    "mode": "spot",
+    "amount": 13.003625096821178,
+    "entry": 0.3861053145462982,
+    "tp_pct": 0.0014,
+    "sl_pct": 0.0007,
+    "leverage": 1,
+    "vol_bp": 14.888483567022833,
+    "opened_at": 1756455124
+  }
+]

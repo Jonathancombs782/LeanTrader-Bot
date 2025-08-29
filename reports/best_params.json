@@ -1,0 +1,17 @@
+{
+  "strategy": "trend",
+  "params": {
+    "ema_fast": 80,
+    "ema_slow": 224,
+    "bb_period": 30,
+    "bb_std": 2.3475152875480894,
+    "bb_bw_lookback": 189,
+    "bb_bw_quantile": 0.7696567504181607,
+    "atr_period": 16
+  },
+  "risk": {
+    "atr_stop_mult": 2.2964866677402305,
+    "atr_trail_mult": 1.6628658598827366
+  },
+  "score": 0.07515890003923109
+}

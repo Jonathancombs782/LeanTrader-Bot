@@ -1,0 +1,19 @@
+timeframe: "5m"
+fee_bps: 1
+slippage_bps: 2
+risk:
+  initial_equity: 50
+  fixed_risk_usd: 1.0        # ~$1 risk per trade
+  max_daily_loss_bps: 80
+  max_open_positions: 1
+  atr_period: 14
+  atr_stop_mult: 2.0
+  atr_trail_mult: 1.2
+guards:
+  cooldown_bars: 5
+  max_loss_streak: 3
+  daily_profit_lock_bps: 40
+  spread_bps_threshold: 8
+  max_trades_per_day: 20
+pairs:
+  - "EURUSD"

@@ -1,0 +1,12 @@
+yfinance>=0.2.40
+oandapyV20>=0.7.2
+MetaTrader5>=5.0.45
+ib_insync>=0.9.86
+python-dotenv>=1.0.1
+pandas>=2.1.0
+numpy>=1.26.0
+pydantic>=2.5.0
+pyyaml>=6.0.1
+feedparser>=6.0.11
+ccxt>=3.0.98
+matplotlib>=3.7.0

@@ -1,0 +1,17 @@
+# optimize_weekly.ps1
+param(
+  [string]$ProjectDir = "$PSScriptRoot",
+  [string]$Py = "$PSScriptRoot\.venv\Scripts\python.exe"
+)
+
+Set-Location $ProjectDir
+
+# Activate venv implicitly by calling python inside .venv
+& $Py -m pip install --quiet --upgrade pip
+& $Py -m pip install --quiet optuna ccxt feedparser vaderSentiment
+
+# Refresh news store (optional)
+& $Py news_harvest.py
+
+# Walk-forward optimize and refresh reports/best_params.json
+& $Py research_optuna_walk.py --exchange binanceus --symbol "DOGE/USD" --timeframe 1m --days 60 --train_days 30 --test_days 7 --trials 60

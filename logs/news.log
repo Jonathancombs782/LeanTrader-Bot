@@ -1,0 +1,10 @@
+2025-08-24 19:31:55,267 [INFO] news_harvest: Harvested 201 new rows -> data\news_raw.csv
+2025-08-24 19:31:55,334 [INFO] news_harvest: Built clean file with 0 rows -> data\news.csv
+2025-08-24 19:58:52,541 [INFO] news_harvest: Harvested 2 new rows -> data\news_raw.csv
+2025-08-24 19:58:52,757 [INFO] news_harvest: Built clean file with 0 rows -> data\news.csv
+2025-08-24 20:23:32,337 [INFO] news_harvest: Harvested 3 new rows -> data\news_raw.csv
+2025-08-24 20:23:32,571 [INFO] news_harvest: Built clean file with 0 rows -> data\news.csv
+2025-08-24 20:46:00,427 [INFO] news_harvest: Harvested 4 new rows -> data\news_raw.csv
+2025-08-24 20:46:00,606 [INFO] news_harvest: Built clean file with 0 rows -> data\news.csv
+2025-08-29 01:36:58,242 [INFO] news_harvest: Harvested 190 new rows -> data\news_raw.csv
+2025-08-29 01:36:58,332 [INFO] news_harvest: Built clean file with 0 rows -> data\news.csv

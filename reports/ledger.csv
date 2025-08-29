@@ -1,0 +1,3 @@
+ts,day,venue,symbol,side,qty,price,fees,pnl,tag,notes,session
+1756137621,2025-08-25,binanceus,HYPE/USD,buy,0.03224419604471195,46.52,0.0,0.0,auto,,live
+1756139165,2025-08-25,binanceus,HYPE/USD,exit,0.03224419604471195,46.77,0.0,0.008061049011177988,SL/trail,,live

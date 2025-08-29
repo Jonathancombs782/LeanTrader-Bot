@@ -1,0 +1,40 @@
+# telegram_notifier.py
+import os, json, requests
+from typing import Dict, Any
+
+BOT = os.getenv("TELEGRAM_BOT_TOKEN", "")
+CHAT = os.getenv("TELEGRAM_CHAT_ID", "")
+ENABLED = os.getenv("TELEGRAM_ENABLED", "false").lower() == "true"
+
+def _fmt_kv(k: str, v: Any) -> str:
+    if isinstance(v, float):
+        return f"{k}: <b>{v:.5f}</b>"
+    return f"{k}: <b>{v}</b>"
+
+def send_text(text: str) -> bool:
+    if not ENABLED or not BOT or not CHAT:
+        return False
+    url = f"https://api.telegram.org/bot{BOT}/sendMessage"
+    payload = {"chat_id": CHAT, "text": text, "parse_mode": "HTML", "disable_web_page_preview": True}
+    try:
+        r = requests.post(url, json=payload, timeout=10)
+        return r.ok
+    except Exception:
+        return False
+
+def send_signal(sig: Dict[str, Any]) -> bool:
+    """
+    Pretty signal message with TP1/TP2/TP3 + SL.
+    Expected keys: symbol, tf, signal, price, tp1,tp2,tp3, sl, score, reason
+    """
+    parts = [
+        f"🚨 <b>{sig.get('symbol')}</b>  <code>{sig.get('tf')}</code>  ➜  <b>{sig.get('signal','').upper()}</b>",
+        _fmt_kv("Price", sig.get("price")),
+        _fmt_kv("TP1", sig.get("tp1")),
+        _fmt_kv("TP2", sig.get("tp2")),
+        _fmt_kv("TP3", sig.get("tp3")),
+        _fmt_kv("SL",  sig.get("sl")),
+        _fmt_kv("Score", sig.get("score", 0.0)),
+        f"Reason: <i>{sig.get('reason','')}</i>",
+    ]
+    return send_text("\n".join(parts))

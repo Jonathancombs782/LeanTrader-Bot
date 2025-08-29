@@ -1,0 +1,47 @@
+{
+  "exchange": "bybit",
+  "generated_at": 1756134176,
+  "params": {
+    "quotes": [
+      "USDT"
+    ],
+    "min_usd_vol": 500000.0,
+    "preselect": 120,
+    "max": 25,
+    "tf": "1m",
+    "limit": 200,
+    "w_liq": 0.65,
+    "w_vol": 0.35,
+    "xp_days": 0,
+    "xp_weight": 0.25,
+    "include_regex": "",
+    "exclude_regex": ""
+  },
+  "symbols": [
+    "ETH/USDT",
+    "BTC/USDT",
+    "SOL/USDT",
+    "XTER/USDT",
+    "MNT/USDT",
+    "USDC/USDT",
+    "XRP/USDT",
+    "INJ/USDT",
+    "ADA/USDT",
+    "USDE/USDT",
+    "CRV/USDT",
+    "DOGE/USDT",
+    "LINK/USDT",
+    "FLOCK/USDT",
+    "SUI/USDT",
+    "ENA/USDT",
+    "PUMP/USDT",
+    "PEPE/USDT",
+    "ZORA/USDT",
+    "AVAX/USDT",
+    "ARB/USDT",
+    "NEON/USDT",
+    "TUNA/USDT",
+    "HYPE/USDT",
+    "BDXN/USDT"
+  ]
+}

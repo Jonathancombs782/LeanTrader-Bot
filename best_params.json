@@ -1,0 +1,20 @@
+{
+  "exchange": "binanceus",
+  "symbol": "DOGE/USD",
+  "timeframe": "1m",
+  "strategy": "ema_bb_squeeze",
+  "params": {
+    "ema_fast": 12,
+    "ema_slow": 26,
+    "bb_n": 20,
+    "bb_k": 2.0,
+    "bw_q": 0.3
+  },
+  "score": 1.12,
+  "test_metrics": {
+    "sharpe": 1.05,
+    "max_dd": 0.08,
+    "ret_sum": 0.21,
+    "trades": 134
+  }
+}

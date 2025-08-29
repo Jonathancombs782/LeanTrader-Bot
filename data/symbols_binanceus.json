@@ -1,0 +1,26 @@
+{
+  "exchange": "binanceus",
+  "generated_at": 1756135035,
+  "params": {
+    "quotes": [
+      "USD"
+    ],
+    "min_usd_vol": 500000.0,
+    "preselect": 120,
+    "max": 25,
+    "tf": "1m",
+    "limit": 200,
+    "w_liq": 0.65,
+    "w_vol": 0.35,
+    "xp_days": 7,
+    "xp_weight": 0.25,
+    "include_regex": "",
+    "exclude_regex": ""
+  },
+  "symbols": [
+    "USDT/USD",
+    "SOL/USD",
+    "BTC/USD",
+    "ETH/USD"
+  ]
+}
