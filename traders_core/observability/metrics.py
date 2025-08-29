@@ -13,17 +13,25 @@ class _M:
             "latest_prob", "Latest model long probability", ["venue","symbol"]
         )
         self.realized_pnl = Counter(
-            "realized_pnl", "Realized PnL (quote currency units, summed)", ["venue","symbol"]
+            "realized_pnl",
+            "Realized PnL (quote currency units, summed)",
+            ["venue", "symbol"],
         )
         self.research_runs_total = Counter(
             "research_runs_total", "Research loop runs", ["venue","symbol"]
         )
         self.regime_flag = Gauge(
-    "regime_flag", "1=storm,0=calm", ["venue","symbol"]
+            "regime_flag",
+            "1=storm,0=calm",
+            ["venue", "symbol"],
         )
 
 METRICS = _M()
-# crypto
-METRICS.regime_flag.labels(venue="crypto", symbol=symbol).set(1 if regime_now=="storm" else 0)
-# mt5
-METRICS.regime_flag.labels(venue="mt5", symbol=symbol).set(1 if regime_now=="storm" else 0)
+
+# NOTE: Do not call `.labels(...).set(...)` at import time because the values
+# (for example `symbol` or `regime_now`) are not available during module
+# import in many runtime contexts. Use this module's `METRICS` instance from
+# runtime code and set labels where the variables are defined, e.g.:
+#
+#   METRICS.regime_flag.labels(venue="crypto", symbol=the_symbol).set(1 if regime_now=="storm" else 0)
+
