@@ -37,4 +37,5 @@ jobs:
           mypy . --ignore-missing-imports || true
       - name: Run tests
         run: |
+          export PYTHONPATH=.
           pytest -q
