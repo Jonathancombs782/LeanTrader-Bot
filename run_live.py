@@ -2,7 +2,7 @@
 from __future__ import annotations
 import os, sys, time, math, argparse
 from pathlib import Path
-from typing import Dict, Any, List, Optional
+from typing import Dict, Any, List
 import pandas as pd
 from dotenv import load_dotenv
 
@@ -16,9 +16,8 @@ from utils import load_config, setup_logger
 from strategy import TrendBreakoutStrategy
 from risk import RiskConfig
 from guardrails import GuardConfig, TradeGuard
-from news_service import bullets_for
 from notifier import TelegramNotifier
-from ledger import log_entry, log_exit, daily_pnl_text
+from ledger import daily_pnl_text
 from cmd_reader import read_commands           # writes by notifier.poll_commands()
 from acct_portfolio import ccxt_summary            # pretty balances
 from order_utils import place_market

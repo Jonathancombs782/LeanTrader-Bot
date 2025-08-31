@@ -1,6 +1,6 @@
 # bybit_smoke.py
 from __future__ import annotations
-import argparse, sys, time
+import argparse, time
 from bybit_adapter import bybit_init, fetch_ohlcv, account_summary_lines, order_market
 
 def parse_args():

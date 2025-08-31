@@ -14,7 +14,7 @@ import numpy as np  # Added for ML arrays
 # ---- dependencies in your repo ----
 import signals_scanner as scanner
 from signals_publisher import publish_batch
-from pattern_memory import features, record, set_outcome, recall, recompute_scores, get_score, FEATS
+from pattern_memory import features, record, recall, get_score, FEATS
 
 # session-weighted sizing/targets (+ optional OCO helpers)
 try:

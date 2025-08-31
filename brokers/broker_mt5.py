@@ -1,5 +1,5 @@
 
-import os, time, math
+import os, time, math  # noqa: F401
 from dotenv import load_dotenv
 import MetaTrader5 as mt5
 

@@ -1,8 +1,7 @@
 # auto_pilot.py
 from __future__ import annotations
-import os, time, json
-from typing import List, Dict, Any, Optional
-from datetime import datetime, timezone
+import os, time, json  # noqa: F401
+from typing import List, Dict, Any
 
 import pandas as pd
 

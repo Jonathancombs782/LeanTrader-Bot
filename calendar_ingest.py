@@ -4,7 +4,7 @@ Download or scrape upcoming economic calendar events and save to data/calendar.c
 Supports: Investing.com (unofficial), FRED, or dummy fallback.
 """
 
-import os, csv, requests
+import csv, requests
 from pathlib import Path
 import pandas as pd
 
