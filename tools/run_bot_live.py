@@ -1,19 +1,39 @@
-import os, sys, json, time
+import os
+import sys
+import json
 
 # ensure project root importable
 proj_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 if proj_root not in sys.path:
     sys.path.insert(0, proj_root)
 
+
 def bars_to_df(bars):
+    """Convert ccxt OHLCV list to a pandas DataFrame.
+
+    Returns an empty DataFrame with standard columns when bars is falsy.
+    """
     import pandas as pd
+
     if not bars:
-        return pd.DataFrame(columns=["open","high","low","close","volume","timestamp"])
+        return pd.DataFrame(columns=["open", "high", "low", "close", "volume", "timestamp"])
+
     rows = []
     for r in bars:
         ts, o, h, l, c, v = r[:6]
-        rows.append({"timestamp": int(ts), "open": float(o), "high": float(h), "low": float(l), "close": float(c), "volume": float(v)})
+        rows.append(
+            {
+                "timestamp": int(ts),
+                "open": float(o),
+                "high": float(h),
+                "low": float(l),
+                "close": float(c),
+                "volume": float(v),
+            }
+        )
+
     return pd.DataFrame(rows)
+
 
 def guess_usdt_balance(bal):
     try:
@@ -26,17 +46,22 @@ def guess_usdt_balance(bal):
                     return float(usdt or 0.0)
                 except Exception:
                     pass
+
             if "free" in bal and isinstance(bal["free"], dict):
                 return float(bal["free"].get("USDT") or 0.0)
+
             fut = bal.get("futures") or {}
             if isinstance(fut, dict) and "free_cash" in fut:
                 return float(fut.get("free_cash") or 0.0)
     except Exception:
         pass
+
     return 0.0
+
 
 def main(symbol: str = None, timeframe: str = "1m", limit: int = 200):
     out = {"errors": [], "results": {}}
+
     try:
         from router import ExchangeRouter
         from strategy import resolve_strategy_and_params
@@ -46,8 +71,8 @@ def main(symbol: str = None, timeframe: str = "1m", limit: int = 200):
         return
 
     # safety gates
-    enable_live = os.getenv("ENABLE_LIVE", "false").strip().lower() in ("1","true","yes","y","on")
-    allow_live = os.getenv("ALLOW_LIVE", "false").strip().lower() in ("1","true","yes","y","on")
+    enable_live = os.getenv("ENABLE_LIVE", "false").strip().lower() in ("1", "true", "yes", "y", "on")
+    allow_live = os.getenv("ALLOW_LIVE", "false").strip().lower() in ("1", "true", "yes", "y", "on")
     if not (enable_live and allow_live):
         out["errors"].append("ENABLE_LIVE and ALLOW_LIVE must both be set to enable live orders")
         print(json.dumps(out, indent=2))
@@ -63,7 +88,7 @@ def main(symbol: str = None, timeframe: str = "1m", limit: int = 200):
 
     # pick symbol
     if not symbol:
-        syms = ex.spot_symbols("USDT") or list(ex.markets.keys())
+        syms = ex.spot_symbols("USDT") or list(getattr(ex, "markets", {}).keys())
         symbol = syms[0] if syms else "BTC/USDT"
     out["results"]["symbol"] = symbol
 
@@ -141,11 +166,6 @@ def main(symbol: str = None, timeframe: str = "1m", limit: int = 200):
 
     print(json.dumps(out, indent=2))
 
-if __name__ == "__main__":
-    main()
-        out["errors"].append(f"order placement error: {e}")
-
-    print(json.dumps(out, indent=2))
 
 if __name__ == "__main__":
     main()

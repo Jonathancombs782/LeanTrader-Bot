@@ -2,7 +2,7 @@
 from __future__ import annotations
 import os, json, math, time
 from dataclasses import dataclass
-from typing import Optional, Dict, Any, List, Tuple
+from typing import Optional, Dict, Any, Tuple
 from datetime import datetime, timedelta, timezone
 
 import numpy as np

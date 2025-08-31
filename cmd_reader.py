@@ -1,6 +1,6 @@
 # cmd_reader.py
 from __future__ import annotations
-import json, time
+import json
 from pathlib import Path
 from typing import List, Tuple, Dict, Any
 
@@ -61,8 +61,6 @@ def parse_command(cmd: str) -> Tuple[str, List[str]]:
     if not parts:
         return "", []
     return parts[0].lower(), parts[1:]
-import os, time, csv, re, html
-
 # cmd_reader.py — reads JSONL commands written by Telegram poller
 def read_new(max_lines: int = 100) -> List[Dict[str, Any]]:
     if not INBOX.exists():

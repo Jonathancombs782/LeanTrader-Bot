@@ -80,7 +80,8 @@ class DashboardReporter:
         # Build one message per symbol (avoid Telegram’s 4096 char limit)
         count = 0
         for symbol, views in list(self._cache.items()):
-            if count >= self.max_symbols: break
+            if count >= self.max_symbols:
+                break
             try:
                 block = self._build_symbol_block(symbol, views)
                 self._tg.note(block)
@@ -90,6 +91,5 @@ class DashboardReporter:
             count += 1
 
         self._last_emit = now
-        try:
-            # clear cache after emitting
-            self._cache.clear()
+        # clear cache after emitting
+        self._cache.clear()

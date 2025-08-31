@@ -39,9 +39,12 @@ except Exception:
 # ---- Telegram (optional) ----
 try:
     from tg_utils import send_text  # def send_text(msg:str)->bool
+    from tg_utils import heartbeat
 except Exception:
     def send_text(_: str) -> None:  # no-op if unavailable
         pass
+    def heartbeat(_: list) -> None:
+        return None
 
 # New imports for enhancements
 try:
@@ -475,29 +478,6 @@ def health_check() -> bool:
     except Exception:
         return False
 
-# =================== LOOP ===================
-def main() -> None:
-    if THINK_REPEAT <= 0:
-        try:
-            picks = think_once()
-            heartbeat(picks)
-        except Exception:
-            traceback.print_exc()
-        return
-
-    while True:
-        try:
-            picks = think_once()
-            heartbeat(picks)
-            if not health_check():
-                try: send_text("⚠️ Health Check Failed!")
-                except Exception: pass
-        except Exception:
-            traceback.print_exc()
-        time.sleep(THINK_REPEAT)
-
-if __name__ == "__main__":
-    main()
 # =================== LOOP ===================
 def main() -> None:
     if THINK_REPEAT <= 0:

@@ -268,8 +268,9 @@ def scan_project_with_model(root: str = ".") -> dict:
 
 if __name__ == "__main__":  # quick CLI for strategy + codebase checks
     try:
-        import json, sys
+        import sys
+        import json as _json
         root = sys.argv[1] if len(sys.argv) > 1 else "."
-        print(json.dumps(scan_project_with_model(root), indent=2))
+        print(_json.dumps(scan_project_with_model(root), indent=2))
     except Exception as e:
         print(f"[strategy.scan] error: {e}")

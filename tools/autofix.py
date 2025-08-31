@@ -1,4 +1,5 @@
 import ast
+import py_compile
 import argparse
 import json
 import re

@@ -102,12 +102,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-        try:
-            with open(args.json, "w", encoding="utf-8") as f:
-                json.dump(rep, f, indent=2)
-            print(f"Wrote JSON report to {args.json}")
-        except Exception as e:
-            print("Failed writing JSON:", e)
-
-if __name__ == "__main__":
-    main()

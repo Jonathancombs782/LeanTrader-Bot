@@ -4,7 +4,7 @@ from pathlib import Path
 import joblib
 import numpy as np
 from sklearn.linear_model import SGDClassifier
-from typing import Dict
+from typing import Dict, Any
 from alpha_engines import AlphaRouter
 
 import json
@@ -61,8 +61,8 @@ def memorize_entry(symbol: str, row: Dict[str, Any]) -> None:
     # TODO: store features from entry for later training
     return
 
-def reward_from_exit(symbol: str, pnl: float, row: dict | None = None) -> None:
-    # TODO: store realized PnL outcome
+def reward_from_exit_safe(symbol: str, pnl: float, row: dict | None = None) -> None:
+    # TODO: store realized PnL outcome — safe no-op alias to avoid redefinition
     return
 
 # online_learner.py

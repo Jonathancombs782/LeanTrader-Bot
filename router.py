@@ -716,9 +716,10 @@ def scan_full_project(root: str = ".", py_ext: str = ".py", include_exts: Option
 
 if __name__ == "__main__":  # simple CLI for quick scanning
     try:
-        import json, sys
+        import sys
+        import json as _json
         root = sys.argv[1] if len(sys.argv) > 1 else "."
         out = scan_full_project(root)
-        print(json.dumps(out, indent=2))
+        print(_json.dumps(out, indent=2))
     except Exception as e:
         print(f"[router.scan] error: {e}")

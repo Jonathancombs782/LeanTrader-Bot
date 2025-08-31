@@ -2,14 +2,9 @@ name: CI
 
 on:
   push:
-    branches:
-      - main
-      - master
-      - 'feature/**'
+    branches: [ main, master, 'feature/**' ]
   pull_request:
-    branches:
-      - main
-      - master
+    branches: [ main, master ]
 
 jobs:
   test:
@@ -26,11 +21,10 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          # Bash-compatible conditional: install from requirements.txt if present, otherwise install minimal test deps
           if [ -f requirements.txt ]; then
             python -m pip install -r requirements.txt
           else
-            python -m pip install pytest requests-mock
+            python -m pip install pytest
           fi
 
       - name: Lint (flake8)
@@ -47,47 +41,7 @@ jobs:
 
       - name: Guard for ALLOW_LIVE literals
         run: |
-          if git grep -n "ALLOW_LIVE.*=.*true"; then
-            echo "Found ALLOW_LIVE=true in code; remove before merging"
+          if git grep -n "ALLOW_LIVE.*=.*true" || git grep -n "ALLOW_LIVE.*=.*1"; then
+            echo "Found ALLOW_LIVE literal in code; remove before merging"
             exit 1
           fi
-name: CI
-
-on:
-  push:
-  pull_request:
-
-jobs:
-  test-and-scan:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: Set up Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: "3.10"
-      - name: Install deps
-        run: |
-          python -m pip install --upgrade pip
-          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
-          pip install flake8
-      - name: Run repo scans
-        run: python tools/run_scans.py --root . --out reports/scan_report.json
-      - name: Lint
-        run: flake8 || true
-  guard-allow-live:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: Fail if ALLOW_LIVE literal found
-        run: |
-          if grep -R --line-number --exclude-dir=.git --exclude-dir=venv --exclude-dir=.venv "ALLOW_LIVE=true" . ; then
-            echo "Found ALLOW_LIVE=true in repo files; remove before merging."
-            exit 1
-          fi
-          if grep -R --line-number --exclude-dir=.git --exclude-dir=venv --exclude-dir=.venv "ALLOW_LIVE=1" . ; then
-            echo "Found ALLOW_LIVE=1 in repo files; remove before merging."
-            exit 1
-          fi
-      - name: Success
-        run: echo "No unsafe ALLOW_LIVE literals found."

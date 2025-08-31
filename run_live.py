@@ -21,7 +21,9 @@ from notifier import TelegramNotifier
 from ledger import log_entry, log_exit, daily_pnl_text
 from cmd_reader import read_commands           # writes by notifier.poll_commands()
 from acct_portfolio import ccxt_summary            # pretty balances
-from order_utils import place_market, safe_create_order
+from order_utils import place_market
+
+# avoid importing safe_create_order at top-level to prevent redefinition warnings
 
 load_dotenv()
 

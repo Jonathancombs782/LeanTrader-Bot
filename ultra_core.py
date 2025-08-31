@@ -505,6 +505,11 @@ class UltraCore:
         if not self.gnn_model:
             return 0.0
         try:
+            # Local import to avoid top-level dependency and static undefined-name
+            try:
+                import torch
+            except Exception:
+                return 0.0
             # Simulate graph data
             edge_index = torch.tensor([[0, 1], [1, 0]], dtype=torch.long)
             x = torch.randn(2, 10)  # Node features

@@ -48,10 +48,10 @@ def decide_and_execute_crypto(exchange: str, symbol: str, timeframe: str, cfg: d
     side = 1 if prob > gate else 0
 
     sym_key = symbol.replace("/","_")
-tag = "storm" if regime_now == "storm" else "calm"
-model, meta = load_latest_tagged(sym_key, timeframe, tag, models_dir)
-if model is None:
-    model, meta = load_latest(sym_key, timeframe, models_dir)  # fallback
+    tag = "storm" if regime_now == "storm" else "calm"
+    model, meta = load_latest_tagged(sym_key, timeframe, tag, models_dir)
+    if model is None:
+        model, meta = load_latest(sym_key, timeframe, models_dir)  # fallback
 
     price = float(df["close"].iloc[-1])
     latest_atr = float(atr(df.tail(200), cfg["risk"]["atr_window"]).iloc[-1])

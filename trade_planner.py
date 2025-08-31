@@ -16,7 +16,7 @@ except Exception:
         return {}
 
 from session_filter import crypto_session_weight, fx_session_weight
-from order_utils import place_market, safe_create_order
+from order_utils import place_market
 
 EXCHANGE_MODE = os.getenv("EXCHANGE_MODE", "spot").lower()   # "spot" | "linear"
 
@@ -176,16 +176,16 @@ def place_oco_ccxt_safe(ex, symbol: str, side: str, qty: float, entry_px: float,
                 out["entry"] = ex.create_market_order(symbol, side, qty)
             except Exception:
                 pass
-        if out.get("entry") is None:
-            try:
-                from order_utils import safe_create_order
-                out["entry"] = safe_create_order(ex, 'market', symbol, side, qty, price=None, params=params1)
-            except Exception:
+            if out.get("entry") is None:
                 try:
                     from order_utils import safe_create_order
-                    out["entry"] = safe_create_order(ex, 'market', symbol, side, qty)
+                    out["entry"] = safe_create_order(ex, 'market', symbol, side, qty, price=None, params=params1)
                 except Exception:
-                    out["entry"] = {"ok": False, "error": "create_order failed"}
+                    try:
+                        from order_utils import safe_create_order
+                        out["entry"] = safe_create_order(ex, 'market', symbol, side, qty)
+                    except Exception:
+                        out["entry"] = {"ok": False, "error": "create_order failed"}
             return out
         out["entry"] = {"ok": False, "error": "no order method available"}
         return out

@@ -1,9 +1,8 @@
 # portfolio.py
 from __future__ import annotations
 
-import os, math
-from pathlib import Path
-from typing import List, Optional, Dict, Any
+import os
+from typing import List, Optional, Dict
 
 from dotenv import load_dotenv
 
