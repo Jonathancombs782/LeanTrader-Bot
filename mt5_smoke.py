@@ -5,7 +5,7 @@ import sys
 import pandas as pd  # only used to pretty-print the last few rows
 
 # Use the adapter we already wired
-from mt5_adapter import mt5_init, account_summary_lines, bars_df
+from mt5_adapter_old import mt5_init, account_summary_lines, bars_df
 
 
 def main() -> None:

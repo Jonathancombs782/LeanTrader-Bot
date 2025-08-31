@@ -41,6 +41,16 @@ def _build_ex(ex_id: str):
     if not _has_ccxt():
         raise RuntimeError("ccxt not installed")
 
+    # Prefer project's ExchangeRouter when possible so that safety wrappers
+    # (safe_fetch_ohlcv, safe_fetch_ticker) are used consistently.
+    try:
+        from router import ExchangeRouter
+        router = ExchangeRouter()
+        if getattr(router, 'ex', None) and getattr(router.ex, 'id', '').lower() == ex_id.lower():
+            return router
+    except Exception:
+        pass
+
     klass = getattr(ccxt, ex_id)
     cfg = {
         "enableRateLimit": True,

@@ -1,0 +1,18 @@
+[
+  {
+    "market": "ETH/USDT",
+    "action": "sell"
+  },
+  {
+    "market": "SOL/USDT",
+    "action": "buy"
+  },
+  {
+    "market": "XRP/USDT",
+    "action": "buy"
+  },
+  {
+    "market": "DOGE/USDT",
+    "action": "buy"
+  }
+]

@@ -71,6 +71,16 @@ def setup_logger():
         return _L()
 
 def get_exchange(exchange_id: str):
+    # Prefer the project's ExchangeRouter wrapper to inherit safety guards.
+    try:
+        from router import ExchangeRouter
+        router = ExchangeRouter()
+        if getattr(router, 'ex', None) and getattr(router.ex, 'id', '').lower() == exchange_id.lower():
+            return router
+    except Exception:
+        pass
+
+    # Fallback to plain ccxt exchange construction
     import ccxt
     return getattr(ccxt, exchange_id)({"enableRateLimit": True, "timeout": 20000})
 

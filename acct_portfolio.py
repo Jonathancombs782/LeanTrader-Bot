@@ -43,27 +43,35 @@ def _ensure_ccxt_exchange(exchange=None, exchange_id: Optional[str] = None):
     if exchange is not None:
         return exchange
 
-    if ccxt is None:
-        raise RuntimeError("ccxt not installed")
-
-    ex_id = (exchange_id or os.getenv("EXCHANGE_ID") or "").lower().strip()
-    if not ex_id:
-        raise RuntimeError("Missing EXCHANGE_ID (e.g. 'binanceus', 'bybit').")
-
-    api_key = os.getenv("API_KEY") or ""
-    api_secret = os.getenv("API_SECRET") or ""
-
-    klass = getattr(ccxt, ex_id)
-    ex = klass({
-        "apiKey": api_key,
-        "secret": api_secret,
-        "enableRateLimit": True,
-        # a short-ish timeout helps prevent blocking loops
-        "timeout": 15000,
-    })
-    # Some venues need apiKey even for public endpoints (BinanceUS quirks).
-    # If you have credentials, set them in .env to avoid “requires apiKey” noise.
-    return ex
+    # Prefer returning the project's ExchangeRouter-backed exchange to ensure
+    # uniform safety checks (ALLOW_LIVE/LIVE_CONFIRM, notional caps, etc.).
+    try:
+        from router import ExchangeRouter
+        router = ExchangeRouter()
+        # If caller requested a specific exchange_id, ensure router matches or fall back
+        if exchange_id:
+            ex_id = (exchange_id or os.getenv("EXCHANGE_ID") or "").lower().strip()
+            if ex_id and router.id != ex_id:
+                # request a specific ccxt exchange directly as fallback
+                raise RuntimeError("router backend mismatch")
+        return router.ex
+    except Exception:
+        # Fallback to direct ccxt construction for callers that expect a raw ccxt exchange
+        if ccxt is None:
+            raise RuntimeError("ccxt not installed")
+        ex_id = (exchange_id or os.getenv("EXCHANGE_ID") or "").lower().strip()
+        if not ex_id:
+            raise RuntimeError("Missing EXCHANGE_ID (e.g. 'binanceus', 'bybit').")
+        api_key = os.getenv("API_KEY") or ""
+        api_secret = os.getenv("API_SECRET") or ""
+        klass = getattr(ccxt, ex_id)
+        ex = klass({
+            "apiKey": api_key,
+            "secret": api_secret,
+            "enableRateLimit": True,
+            "timeout": 15000,
+        })
+        return ex
 
 
 def _estimate_in_quote(ex, asset: str, amount: float, quote: str = "USD") -> float:

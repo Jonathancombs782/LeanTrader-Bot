@@ -1,7 +1,7 @@
 # futures_smoke.py
 from __future__ import annotations
 from dotenv import load_dotenv
-from crypto_router import ExchangeRouter
+from router import ExchangeRouter
 
 load_dotenv()
 

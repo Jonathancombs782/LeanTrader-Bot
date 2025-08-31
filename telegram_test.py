@@ -26,3 +26,4 @@ if __name__ == "__main__":
         print("⚠️ Missing TELEGRAM_BOT_TOKEN or TELEGRAM_CHAT_ID in .env")
     else:
         send_test_message()
+# telegram_test.py

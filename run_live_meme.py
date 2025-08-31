@@ -20,6 +20,10 @@ from ledger import log_entry, log_exit, daily_pnl_text
 from acct_portfolio import ccxt_summary
 from regional_utils import primary_exchange, fallback_exchange
 
+import json
+from pathlib import Path
+from pprint import pformat
+
 
 # ------- universe helpers (memecoins) -------
 MEME_DEFAULTS = [
@@ -54,6 +58,15 @@ def _normalize_symbols_for_venue(symbols, venue_id: str):
 # --------- minimal CCXT factory ----------
 # ---- exchange factory with optional proxy & sane timeout/backoff ----
 def make_exchange(exchange_id: str, api_key=None, api_secret=None):
+    # Prefer ExchangeRouter when it matches the requested exchange id so safety wrappers apply
+    try:
+        from router import ExchangeRouter
+        router = ExchangeRouter()
+        if getattr(router, 'ex', None) and getattr(router.ex, 'id', '').lower() == exchange_id.lower():
+            return router
+    except Exception:
+        pass
+
     import ccxt
     proxies = None
     proxy_url = os.getenv("HTTP_PROXY") or os.getenv("HTTPS_PROXY") or os.getenv("PROXY_URL")
@@ -107,6 +120,86 @@ def live_loop(exchange_id: str, symbols: list, timeframe: str, cfg: dict,
     log = setup_logger("live_meme", level=os.getenv("LOG_LEVEL","INFO"),
                        log_dir=os.getenv("LOG_DIR","logs"))
     nfy = TelegramNotifier()
+    # helper: preflight self-check to validate environment & markets
+    def preflight_self_check(router, symbols_list):
+        msgs = []
+        ok = True
+        # credentials
+        if not (os.getenv("API_KEY") and os.getenv("API_SECRET")):
+            msgs.append("Missing API_KEY/API_SECRET (env).")
+            ok = False
+        # notifier
+        try:
+            tok = os.getenv("TELEGRAM_BOT_TOKEN","").strip()
+            chat = os.getenv("TELEGRAM_CHAT_ID","").strip()
+            if getattr(nfy, 'enabled', False) and (not tok or not chat):
+                msgs.append("Telegram enabled but token/chat missing.")
+        except Exception:
+            pass
+        # exchange connectivity
+        try:
+            info = router.info()
+            msgs.append(f"Router info OK: {info.get('id') if isinstance(info, dict) else str(info)[:80]}")
+        except Exception as e:
+            msgs.append(f"Router connectivity FAILED: {e}")
+            ok = False
+        # markets resolution
+        missing = [s for s in symbols_list if s not in getattr(router, "markets", {})]
+        if missing:
+            msgs.append(f"Some symbols missing on router: {missing}")
+        else:
+            msgs.append(f"All {len(symbols_list)} symbols resolved on router.")
+        # runtime plan sanity (optional)
+        runtime = Path("runtime")
+        plans_file = runtime / "ultra_plans.json"
+        if plans_file.exists():
+            try:
+                plans = json.loads(plans_file.read_text(encoding="utf-8"))
+                bad = [p for p in plans if (not p.get("entry")) or (not p.get("size_usd"))]
+                msgs.append(f"Found {len(plans)} plans, {len(bad)} appear incomplete.")
+            except Exception:
+                msgs.append("Could not parse runtime/ultra_plans.json")
+        else:
+            msgs.append("No runtime/ultra_plans.json found (dry-run may not have produced plans yet).")
+        return ok, msgs
+
+    # helper: summarize plan files and price debug entries
+    def report_plans():
+        runtime = Path("runtime")
+        plans_file = runtime / "ultra_plans.json"
+        debug_file = runtime / "price_fill_debug.ndjson"
+        summary = []
+        try:
+            if plans_file.exists():
+                plans = json.loads(plans_file.read_text(encoding="utf-8"))
+                summary.append(f"Plans: {len(plans)}")
+                # show top 5 plans (concise)
+                for p in plans[:5]:
+                    summary.append(f"- {p.get('market')} {p.get('action')} entry={p.get('entry')} sl={p.get('sl')} size_usd={p.get('size_usd')}")
+            else:
+                summary.append("Plans: none")
+        except Exception as e:
+            summary.append(f"Plans read error: {e}")
+        try:
+            if debug_file.exists():
+                lines = debug_file.read_text(encoding="utf-8").strip().splitlines()
+                summary.append(f"Price debug rows: {len(lines)}")
+                if lines:
+                    try:
+                        js = json.loads(lines[-1])
+                        summary.append(f"Last debug: {js.get('market')} {js.get('entry')} qty={js.get('qty')}")
+                    except Exception:
+                        summary.append("Could not parse last debug row")
+            else:
+                summary.append("Price debug: none")
+        except Exception as e:
+            summary.append(f"Price debug read error: {e}")
+        body = "\n".join(summary)
+        try:
+            nfy.note("Ultra plan report:\n" + body)
+        except Exception:
+            log.info("Plan report:\n%s", body)
+        return summary
     # Notifier diagnostic: surface enabled flag and presence of token/chat_id
     try:
         enabled = getattr(nfy, 'enabled', False)
@@ -239,6 +332,22 @@ def live_loop(exchange_id: str, symbols: list, timeframe: str, cfg: dict,
             if not parts: 
                 continue
             verb = parts[0].lower()
+            if verb == "/selfcheck":
+                try:
+                    ok, msgs = preflight_self_check(ex, symbols)
+                    out = "\n".join(msgs)
+                    nfy.note("Preflight self-check:\n" + out)
+                    if not ok:
+                        log.warning("Preflight reported critical failures; review before enabling live trading.")
+                except Exception as e:
+                    log.exception("Selfcheck failed: %s", e)
+                continue
+            if verb == "/plan_report" or verb == "/report_plans":
+                try:
+                    report_plans()
+                except Exception as e:
+                    log.exception("Plan report failed: %s", e)
+                continue
             if verb == "/balance":
                 try:
                     nfy.balance_snapshot([ccxt_summary(ex)])

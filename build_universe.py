@@ -4,8 +4,17 @@ import json, re, os
 from pathlib import Path
 
 def build(exchange_id: str, quotes=("USDT","USD"), min_cost_usd: float = 5.0):
-    import ccxt
-    ex = getattr(ccxt, exchange_id)({"enableRateLimit": True, "timeout": 15000})
+    # Prefer ExchangeRouter when possible so markets are loaded via the safe wrapper
+    try:
+        from router import ExchangeRouter
+        router = ExchangeRouter()
+        if getattr(router, 'ex', None) and getattr(router.ex, 'id', '').lower() == exchange_id.lower():
+            ex = router
+        else:
+            raise Exception("router mismatch")
+    except Exception:
+        import ccxt
+        ex = getattr(ccxt, exchange_id)({"enableRateLimit": True, "timeout": 15000})
     markets = ex.load_markets()
     syms = []
     bad = re.compile(r"(UP|DOWN|3L|3S|BULL|BEAR|PERP|^[A-Z]+_[A-Z]+)$", re.I)

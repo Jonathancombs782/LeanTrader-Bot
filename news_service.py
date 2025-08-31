@@ -8,6 +8,7 @@ from typing import List, Dict, Any
 import feedparser
 import pandas as pd
 from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
+from regional_utils import regional_crypto_feeds, regional_fx_feeds
 
 DATA_DIR   = Path("data")
 DATA_DIR.mkdir(parents=True, exist_ok=True)
@@ -59,10 +60,13 @@ def _ensure_files():
         with open(CLEAN_PATH, "w", newline="", encoding="utf-8") as f:
             csv.writer(f).writerow(["ts","source","title","summary","link","score","sent","hits"])
 
+
 def harvest_rss(sources: List[str] | None = None, limit_per_feed: int = 80) -> int:
-    """Append new items to RAW_PATH (dedup by link)."""
     _ensure_files()
-    sources = sources or DEFAULT_RSS
+    if sources is None:
+        # mix both lists; duplicates are okay
+        sources = regional_crypto_feeds() + regional_fx_feeds()
+    # ... (rest of function unchanged)
     seen = set()
     try:
         df = pd.read_csv(RAW_PATH)

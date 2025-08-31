@@ -5,7 +5,7 @@ import argparse
 from typing import Dict, Any, Optional
 import numpy as np
 
-from mt5_adapter import (
+from mt5_adapter_old import (
     mt5_init, bars_df, account_summary_lines,
     min_stop_distance_points, order_send_market,
 )

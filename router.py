@@ -3,9 +3,11 @@ from __future__ import annotations
 
 import os, time, json
 from typing import Dict, Any, List, Optional
+import logging
 
 # Note: import ccxt lazily inside ExchangeRouter when a real exchange is requested.
 ccxt = None
+_log = logging.getLogger("router")
 
 
 def _env(k: str, d: str = "") -> str:
@@ -16,8 +18,17 @@ def _env_bool(k: str, d: bool = False) -> bool:
     return _env(k, "true" if d else "false").strip().lower() in ("1","true","yes","y","on")
 
 def _env_int(k: str, d: int) -> int:
-    try: return int(float(_env(k, str(d))))
-    except: return d
+    try:
+        return int(float(_env(k, str(d))))
+    except Exception:
+        return d
+
+def _env_float(k: str, d: float) -> float:
+    """Parse float env var with safe fallback."""
+    try:
+        return float(_env(k, str(d)))
+    except Exception:
+        return d
 
 
 class ExchangeRouter:
@@ -31,20 +42,40 @@ class ExchangeRouter:
         self.mode = _env("EXCHANGE_MODE", "spot").lower()      # 'spot' | 'linear'
         self.live = _env_bool("ENABLE_LIVE", False)
         self.testnet = _env_bool("BYBIT_TESTNET", False)
-
+        # explicit allow flag required to actually send live orders (extra safety)
+        self.allow_live = _env_bool("ALLOW_LIVE", False)
+        # extra explicit confirmation required in addition to ALLOW_LIVE to prevent accidental live orders
+        # set LIVE_CONFIRM=YES in your environment to enable live order placement when ENABLE_LIVE+ALLOW_LIVE are set
+        self.live_confirm = _env("LIVE_CONFIRM", "").strip().lower() == "yes"
         # Support a paper broker backend when EXCHANGE_ID=paper for safe dry-runs
+        # Initialize paper broker early and force dry-run mode regardless of env flags.
         if self.id == "paper":
             try:
                 from paper_broker import PaperBroker
                 self.ex = PaperBroker(float(_env("PAPER_START_CASH", "5000")))
                 self.markets = self.ex.load_markets() if hasattr(self.ex, 'load_markets') else {}
                 self._exchange_malformed = False
+                # Paper broker is always dry-run even if ENABLE_LIVE was set
+                self.live = False
                 return
             except Exception as e:
                 raise RuntimeError(f"failed to init PaperBroker: {e}") from e
+        if self.live and not self.allow_live:
+            # avoid silently performing live trading unless explicitly allowed
+            print("[router] ENABLE_LIVE requested but ALLOW_LIVE not set -> running in dry-run mode")
+            self.live = False
+        elif self.live and self.allow_live and not self.live_confirm:
+            # require explicit live confirmation token in addition to ALLOW_LIVE
+            print("[router] ENABLE_LIVE and ALLOW_LIVE set but LIVE_CONFIRM not set to 'YES' -> running in dry-run mode")
+            self.live = False
+
 
         api_key = _env("API_KEY") or _env(f"{self.id.upper()}_API_KEY")
         api_sec = _env("API_SECRET") or _env(f"{self.id.upper()}_API_SECRET")
+
+        # If user insisted on live mode via envs, require API credentials to avoid accidental live execution.
+        if self.live and not (api_key and api_sec):
+            raise RuntimeError("Live trading enabled (ENABLE_LIVE/ALLOW_LIVE) but API_KEY/API_SECRET are missing.")
 
         opts: Dict[str, Any] = {
             "enableRateLimit": True,
@@ -62,8 +93,13 @@ class ExchangeRouter:
             if self.mode == "linear":
                 opts["options"]["defaultSubType"] = "linear"
             if self.testnet:
-                # testnet REST base
-                opts["urls"] = {"api": "https://api-testnet.bybit.com"}
+                # testnet REST base; ccxt bybit uses different url fields; set both common forms
+                opts_urls = {"api": "https://api-testnet.bybit.com", "rest": "https://api-testnet.bybit.com"}
+                # merge with existing opts if present
+                if "urls" in opts and isinstance(opts["urls"], dict):
+                    opts["urls"].update(opts_urls)
+                else:
+                    opts["urls"] = opts_urls
         elif self.id == "binance" and self.mode == "linear":
             opts["options"]["defaultType"] = "future"
 
@@ -90,15 +126,14 @@ class ExchangeRouter:
         while attempts < 3:
             try:
                 mkts = self.ex.load_markets()
-                print(f"[router] load_markets raw type={type(mkts)} value={mkts}")
+                _log.debug(f"[router] load_markets raw type={type(mkts)}")
                 break
             except Exception as e:
                 attempts += 1
-                # expose exception detail when debug enabled
-                if os.getenv("CCXT_DEBUG","false").lower() == "true" or os.getenv("TELEGRAM_DEBUG","false").lower() == "true":
-                    print(f"[router] load_markets attempt {attempts} failed: {type(e).__name__}: {e}")
+                if os.getenv("CCXT_DEBUG","false").lower() == "true":
+                    _log.warning(f"[router] load_markets attempt {attempts} failed: {type(e).__name__}: {e}")
                 else:
-                    print(f"[router] load_markets attempt {attempts} failed: {e}")
+                    _log.warning(f"[router] load_markets attempt {attempts} failed: {e}")
                 time.sleep(0.5 * attempts)
                 mkts = None
         try:
@@ -112,8 +147,7 @@ class ExchangeRouter:
                     print(f"[router] fetch_markets fallback failed: {e2}")
             if mkts is None:
                 # Do not raise here; provide a minimal safe default so scanners can proceed.
-                print("[router] load_markets failed; using safe default market list")
-                # mark the exchange object as malformed so we never call into its methods
+                _log.error("[router] load_markets failed; using safe default market list")
                 self._exchange_malformed = True
                 self.markets = {"BTC/USDT": {}, "ETH/USDT": {}, "SOL/USDT": {}, "XRP/USDT": {}, "DOGE/USDT": {}}
                 return
@@ -140,7 +174,7 @@ class ExchangeRouter:
                 print(f"[router] load_markets unexpected type: {type(mkts)} value: {mkts}")
                 self.markets = {}
         except Exception as e:
-            print("[router] load_markets error:", e)
+            print(f"[router] load_markets error: {e}")
             # treat as malformed exchange
             self._exchange_malformed = True
             self.markets = {}
@@ -153,9 +187,11 @@ class ExchangeRouter:
         out: List[str] = []
         for sym, m in self.markets.items():  # ALWAYS .items()
             try:
-                if isinstance(sym, str) and sym.endswith(f"/{quote}") and m.get("spot"):
+                # be defensive: some market entries may be non-dict; require dict for .get()
+                if isinstance(sym, str) and sym.endswith(f"/{quote}") and isinstance(m, dict) and m.get("spot"):
                     out.append(sym)
             except Exception:
+                # keep scanning even if one entry is malformed
                 continue
         return sorted(set(out))
 
@@ -163,7 +199,10 @@ class ExchangeRouter:
         out: List[str] = []
         for sym, m in self.markets.items():
             try:
+                # defensive: ensure m is a dict before calling .get()
                 if not isinstance(sym, str) or not sym.endswith(f"/{quote}"):
+                    continue
+                if not isinstance(m, dict):
                     continue
                 if m.get("linear") or (m.get("swap") and m.get("contract") and m.get("quote") == quote):
                     out.append(sym)
@@ -282,7 +321,7 @@ class ExchangeRouter:
             print(f"[router] fetch_ohlcv {symbol} {timeframe} unexpected result type: {type(result)} value: {result}")
         except Exception as e:
             # Log the original exception for debugging, but fall through to a safe synthetic fallback
-            print(f"[router] fetch_ohlcv {symbol} {timeframe} error:", e)
+            print(f"[router] fetch_ohlcv {symbol} {timeframe} error: {e}")
 
         # --- fallback: synthesize OHLCV using last ticker price so callers can continue in dry-run ---
         try:
@@ -385,12 +424,64 @@ class ExchangeRouter:
         - Attempts to call common ccxt order methods otherwise, with graceful error handling.
         """
         try:
+            # If exchange failed to load markets previously, avoid calling into it
             if getattr(self, "_exchange_malformed", False):
                 print(f"[router] exchange malformed, simulating dry-run order: {side} {amount} {symbol}")
                 return {"ok": False, "dry_run": True, "symbol": symbol, "side": side, "amount": amount}
-            if not self.live:
-                print(f"[router] dry-run order: {side} {amount} {symbol} price={price}")
+
+            # Live-safety: require explicit ALLOW_LIVE env to actually send live orders.
+            # DEFAULT: even if ENABLE_LIVE=true, ALLOW_LIVE must be set to a truthy value.
+            # require both ALLOW_LIVE and LIVE_CONFIRM=YES to proceed with real orders
+            allow_live = _env_bool("ALLOW_LIVE", False) and (_env("LIVE_CONFIRM", "").strip().lower() == "yes")
+            max_order_size = _env_float("MAX_ORDER_SIZE", float("inf"))
+            # Optional USD cap per order to avoid large accidental trades (set LIVE_ORDER_USD)
+            live_order_usd_env = _env("LIVE_ORDER_USD", "")
+            try:
+                live_order_usd = float(live_order_usd_env) if live_order_usd_env else None
+            except Exception:
+                live_order_usd = None
+
+            if not self.live or not allow_live:
+                # still simulate/dry-run when live not allowed
+                if self.live and not allow_live:
+                    print("[router] live trading requested but ALLOW_LIVE not set -> dry-run")
+                else:
+                    print(f"[router] dry-run order: {side} {amount} {symbol} price={price}")
                 return {"ok": False, "dry_run": True, "symbol": symbol, "side": side, "amount": amount}
+
+            # enforce maximum allowed order size when configured
+            try:
+                if max_order_size is not None and max_order_size != float("inf") and float(amount) > float(max_order_size):
+                    msg = f"order amount {amount} exceeds MAX_ORDER_SIZE={max_order_size}"
+                    print(f"[router] {msg}")
+                    return {"ok": False, "error": msg, "symbol": symbol, "side": side, "amount": amount}
+            except Exception:
+                # Don't block on conversion errors; proceed to attempt placing the order
+                pass
+
+            # If a USD per-order cap is configured, attempt to compute the order notional and enforce it.
+            try:
+                if self.live and live_order_usd is not None:
+                    price_for_notional = price
+                    # if price not provided, try to fetch last ticker
+                    if price_for_notional is None:
+                        try:
+                            t = self.fetch_ticker(symbol) or {}
+                            price_for_notional = (t.get("last") or t.get("price") or t.get("close") or t.get("c"))
+                        except Exception:
+                            price_for_notional = None
+                    try:
+                        price_f = float(price_for_notional) if price_for_notional is not None else 0.0
+                    except Exception:
+                        price_f = 0.0
+                    usd_notional = float(amount) * price_f if price_f else 0.0
+                    if usd_notional and usd_notional > float(live_order_usd):
+                        msg = f"order notional ${usd_notional:.2f} exceeds LIVE_ORDER_USD=${live_order_usd:.2f}"
+                        print(f"[router] {msg}")
+                        return {"ok": False, "error": msg, "symbol": symbol, "side": side, "amount": amount, "usd_notional": usd_notional}
+            except Exception:
+                # don't block on notional checks if something goes wrong computing price
+                pass
 
             # prefer centralized safe_create_order if available
             if hasattr(self.ex, "create_order"):
@@ -415,14 +506,7 @@ class ExchangeRouter:
                 except Exception as e:
                     print(f"[router] create_market_order failed: {e}")
                     return {"ok": False, "error": str(e)}
-            if hasattr(self.ex, "create_limit_order") and price is not None:
-                try:
-                    return self.ex.create_limit_order(symbol, side, amount, price)
-                except Exception as e:
-                    print(f"[router] create_limit_order failed: {e}")
-                    return {"ok": False, "error": str(e)}
 
-            return {"ok": False, "error": "no order method available"}
         except Exception as e:
             print(f"[router] safe_place_order {symbol} {side} error: {e}")
             return {"ok": False, "error": str(e)}
@@ -479,3 +563,162 @@ class ExchangeRouter:
     def create_stop_order(self, symbol: str, side: str, amount: float, price: Optional[float] = None, params: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
         # map to create_order; many callers pass stop semantics via 'typ' or params
         return self.safe_place_order(symbol, side, amount, price=price, params=params)
+
+    # ---------- market helpers ----------
+    def precision(self, symbol: str) -> float:
+        """Return a quantity step/precision for a symbol if available, else 0.0"""
+        try:
+            m = self.markets.get(symbol) or {}
+            if not isinstance(m, dict):
+                return 0.0
+            step = m.get("precision") or {}
+            # ccxt sometimes provides 'precision': {'amount': 0.001}
+            if isinstance(step, dict):
+                amt = step.get("amount") or step.get("base") or 0.0
+                try:
+                    return float(amt) if amt else 0.0
+                except Exception:
+                    return 0.0
+            # some markets provide 'lot' or 'step'
+            for key in ("step", "lot", "amount"):
+                v = m.get(key)
+                if v:
+                    try:
+                        return float(v)
+                    except Exception:
+                        pass
+            return 0.0
+        except Exception:
+            return 0.0
+
+    def limits(self, symbol: str) -> Dict[str, Any]:
+        """Return limits dict for symbol if available (min/max qty, price)"""
+        try:
+            m = self.markets.get(symbol) or {}
+            if not isinstance(m, dict):
+                return {}
+            return m.get("limits", {}) or {}
+        except Exception:
+            return {}
+
+def scan_codebase(root: str = ".", py_ext: str = ".py", exclude_dirs=None) -> dict:
+    """
+    Walk `root` and produce a lightweight analysis of Python files:
+      - line counts
+      - AST counts: functions, classes
+      - TODO comments
+      - bare except occurrences (AST-based)
+      - parse errors (if ast.parse fails) with message
+    Returns a dict summary suitable for quick inspection or automated checks.
+    """
+    import ast, os, re, json
+    if exclude_dirs is None:
+        exclude_dirs = {".git", "__pycache__", "venv", "env", "node_modules", "reports"}
+    report = {"files": {}, "totals": {"files": 0, "lines": 0, "functions": 0, "classes": 0, "todos": 0, "bare_excepts": 0, "parse_errors": 0}}
+    for dirpath, dirnames, filenames in os.walk(root):
+        # skip excluded dirs
+        parts = set(p for p in dirpath.split(os.sep) if p)
+        if parts & exclude_dirs:
+            continue
+        for fn in filenames:
+            if not fn.endswith(py_ext):
+                continue
+            path = os.path.join(dirpath, fn)
+            try:
+                with open(path, "r", encoding="utf-8") as f:
+                    src = f.read()
+            except Exception:
+                continue
+            lines = src.count("\n") + (1 if src and not src.endswith("\n") else 0)
+            # parse AST defensively
+            funcs = classes = bare_except = 0
+            parse_error = False
+            parse_error_msg = None
+            try:
+                tree = ast.parse(src)
+                for node in ast.walk(tree):
+                    if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+                        funcs += 1
+                    elif isinstance(node, ast.ClassDef):
+                        classes += 1
+                    elif isinstance(node, ast.ExceptHandler):
+                        if getattr(node, "type", None) is None:
+                            bare_except += 1
+            except Exception as e:
+                # capture parse error message for diagnostics
+                parse_error = True
+                parse_error_msg = str(e)
+                report["totals"]["parse_errors"] += 1
+            todos = len(re.findall(r"\bTODO\b", src, flags=re.IGNORECASE))
+            report["files"][path] = {"lines": lines, "functions": funcs, "classes": classes, "todos": todos, "bare_excepts": bare_except, "parse_error": parse_error, "parse_error_msg": parse_error_msg}
+            report["totals"]["files"] += 1
+            report["totals"]["lines"] += lines
+            report["totals"]["functions"] += funcs
+            report["totals"]["classes"] += classes
+            report["totals"]["todos"] += todos
+            report["totals"]["bare_excepts"] += bare_except
+    return report
+
+def scan_all_files(root: str = ".", include_exts: Optional[List[str]] = None, top_n: int = 10) -> dict:
+    """
+    Walk `root` and return simple stats about all files (not just .py):
+      - counts by extension
+      - total size
+      - top N largest files (path, size)
+    Useful to "check other files" (data, configs, reports, binaries).
+    """
+    import os
+    if include_exts is not None:
+        include_exts = set(e.lower() for e in include_exts)
+    counts = {}
+    total_size = 0
+    files_sizes = []
+    for dirpath, dirnames, filenames in os.walk(root):
+        # skip common venv / git dirs
+        parts = set(p for p in dirpath.split(os.sep) if p)
+        if parts & {".git", "__pycache__", "venv", "env", "node_modules", "reports"}:
+            continue
+        for fn in filenames:
+            path = os.path.join(dirpath, fn)
+            try:
+                st = os.stat(path)
+                sz = st.st_size
+            except Exception:
+                continue
+            _, ext = os.path.splitext(fn)
+            ext = ext.lower() or "<noext>"
+            if include_exts is not None and ext not in include_exts:
+                continue
+            counts[ext] = counts.get(ext, 0) + 1
+            total_size += sz
+            files_sizes.append((path, sz))
+    files_sizes.sort(key=lambda x: x[1], reverse=True)
+    top = [{"path": p, "size": s} for p, s in files_sizes[:top_n]]
+    return {"counts_by_ext": counts, "total_size": total_size, "top_files": top}
+
+def scan_full_project(root: str = ".", py_ext: str = ".py", include_exts: Optional[List[str]] = None, top_n: int = 20) -> dict:
+    """
+    Run a combined project scan:
+      - scan_codebase (Python AST metrics)
+      - scan_all_files (files by extension & largest files)
+    Returns a dict with both sections for quick inspection.
+    """
+    out = {}
+    try:
+        out["codebase"] = scan_codebase(root, py_ext=py_ext)
+    except Exception as e:
+        out["codebase_error"] = str(e)
+    try:
+        out["other_files"] = scan_all_files(root, include_exts=include_exts, top_n=top_n)
+    except Exception as e:
+        out["other_files_error"] = str(e)
+    return out
+
+if __name__ == "__main__":  # simple CLI for quick scanning
+    try:
+        import json, sys
+        root = sys.argv[1] if len(sys.argv) > 1 else "."
+        out = scan_full_project(root)
+        print(json.dumps(out, indent=2))
+    except Exception as e:
+        print(f"[router.scan] error: {e}")

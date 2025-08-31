@@ -141,12 +141,14 @@ def resolve_strategy_and_params():
         try:
             with open(BEST_PATH, "r") as f:
                 data = json.load(f)
+            if not isinstance(data, dict):
+                raise ValueError("best_params.json must contain a JSON object")
             strat_name = data.get("strategy", "trend")
             params = data.get("params", {})
             strat = get_strategy(strat_name, **params)
             return strat, params
         except Exception as e:
-            print("[strategy] failed to load best params:", e)
+            print(f"[strategy] failed to load best params: {e}")
 
     # default
     default = TrendBreakoutStrategy()
@@ -159,3 +161,115 @@ def resolve_strategy_and_params():
         "bb_bw_quantile": default.bb_bw_quantile,
         "atr_period": default.atr_period,
     }
+
+def validate_strategies() -> dict:
+    """
+    Quick sanity checks for available strategy classes and their parameter dataclasses.
+    Returns a dict with per-strategy warnings / basic diagnostics.
+    """
+    import inspect
+    warnings = {}
+    try:
+        strategies = {
+            "TrendBreakoutStrategy": TrendBreakoutStrategy,
+            "NakedForexStrategy": NakedForexStrategy
+        }
+        params = {
+            "TrendBreakoutStrategy": TrendBreakoutParams,
+            "NakedForexStrategy": NakedParams
+        }
+        for name, cls in strategies.items():
+            w = []
+            if not inspect.isclass(cls):
+                w.append("not a class")
+            # entries_and_exits presence and basic signature check
+            if not hasattr(cls, "entries_and_exits"):
+                w.append("missing entries_and_exits method")
+            else:
+                if not callable(getattr(cls, "entries_and_exits", None)):
+                    w.append("entries_and_exits is not callable")
+                try:
+                    fn = getattr(cls, "entries_and_exits")
+                    sig = inspect.signature(fn)
+                    param_names = [p.name for p in sig.parameters.values()]
+                    # Expect at least (self, df, ...) or a 'df'/'dataframe' parameter
+                    if not any(p in param_names for p in ("df", "dataframe", "ohlcv", "bars")) and len(param_names) < 2:
+                        w.append(f"entries_and_exits signature unexpected: {param_names}")
+                except Exception as e:
+                    w.append(f"failed to inspect entries_and_exits signature: {e}")
+            # runtime smoke: try calling entries_and_exits with a tiny valid OHLC dataframe
+            try:
+                inst = cls()  # defaults
+                # minimal dataframe (5 rows) with required columns
+                sample = pd.DataFrame({
+                    "open":  [100.0,100.2,100.1,100.3,100.0],
+                    "high":  [100.5,100.4,100.6,100.7,100.2],
+                    "low":   [99.8,100.0,99.9,100.1,99.7],
+                    "close": [100.2,100.1,100.5,100.3,100.1],
+                })
+                try:
+                    out_df, info = inst.entries_and_exits(sample, atr_stop_mult=1.0, atr_trail_mult=0.5)
+                    if not isinstance(out_df, pd.DataFrame):
+                        w.append("entries_and_exits did not return a DataFrame as first element")
+                    if not isinstance(info, dict):
+                        w.append("entries_and_exits did not return an info dict as second element")
+                except Exception as e:
+                    w.append(f"entries_and_exits raised at runtime on sample data: {e}")
+            except Exception as e:
+                # instantiation/validation failure
+                w.append(f"failed to instantiate or run entries_and_exits: {e}")
+            # simple param checks if dataclass provided
+            pcls = params.get(name)
+            if pcls:
+                try:
+                    inst = pcls()  # use defaults
+                    for fld, val in vars(inst).items():
+                        if isinstance(val, (int, float)):
+                            if isinstance(val, int) and val <= 0:
+                                w.append(f"param {fld} has non-positive default {val}")
+                            if isinstance(val, float) and (math.isnan(val) or math.isinf(val)):
+                                w.append(f"param {fld} default invalid: {val}")
+                except Exception as e:
+                    w.append(f"failed to instantiate params: {e}")
+            warnings[name] = w
+    except Exception as e:
+        return {"error": str(e)}
+    return warnings
+
+def scan_project_with_model(root: str = ".") -> dict:
+    """
+    Combined lightweight scan that:
+      - runs router.scan_codebase(root)
+      - validates strategies in this module
+      - optionally collects other-files summary via router.scan_all_files
+    """
+    try:
+        from router import scan_codebase, scan_all_files
+    except Exception:
+        try:
+            from .router import scan_codebase, scan_all_files
+        except Exception:
+            scan_codebase = None
+            scan_all_files = None
+    result = {"strategies": validate_strategies()}
+    if scan_codebase:
+        try:
+            result["codebase"] = scan_codebase(root)
+        except Exception as e:
+            result["codebase_error"] = str(e)
+    else:
+        result["codebase_error"] = "router.scan_codebase not available"
+    if scan_all_files:
+        try:
+            result["other_files"] = scan_all_files(root)
+        except Exception as e:
+            result["other_files_error"] = str(e)
+    return result
+
+if __name__ == "__main__":  # quick CLI for strategy + codebase checks
+    try:
+        import json, sys
+        root = sys.argv[1] if len(sys.argv) > 1 else "."
+        print(json.dumps(scan_project_with_model(root), indent=2))
+    except Exception as e:
+        print(f"[strategy.scan] error: {e}")

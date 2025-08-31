@@ -9,6 +9,7 @@ from signals_publisher import publish_batch
 from signals_hub import analyze_symbol_ccxt, analyze_symbol_mt5, mtf_confirm
 from mt5_adapter import mt5_init, bars_df as mt5_bars
 from news_adapter import fx_guard_for_symbol, fetch_crypto_sentiment  # NEW
+from pattern_memory import recall, get_score
 
 def env_bool(k: str, d: bool) -> bool:
     return os.getenv(k, str(d)).strip().lower() in ("1","true","yes","y","on")
@@ -70,7 +71,25 @@ def _scan_ccxt(r: ExchangeRouter, sym: str, tf: str, limit: int, min_qv: float, 
             return None
         if not _ok_spread_atr(t, bars, max_spread_bp, min_atr_bp):
             return None
-        return analyze_symbol_ccxt(bars, tf, sym, market="linear" if kind == "linear" else "spot")
+        sig = analyze_symbol_ccxt(bars, tf, sym, market="linear" if kind == "linear" else "spot")
+        # ensure confidence exists; if missing use quality
+        try:
+            if sig is None:
+                return None
+            if sig.get('confidence') is None:
+                sig['confidence'] = float(sig.get('quality', 0.0) or 0.0)
+            # blend with pattern memory score: robustness boost
+            try:
+                prior = get_score(sig) or {}
+                win = float(prior.get('winrate', 0.0))
+                avg_r = float(prior.get('avg_r', 0.0))
+                blend = (0.9 + 0.2 * (win)) * (1.0 + 0.1 * max(-0.5, min(0.5, avg_r)))
+                sig['confidence'] = float(max(0.0, min(1.0, sig['confidence'] * blend)))
+            except Exception:
+                pass
+        except Exception:
+            return None
+        return sig
     except Exception:
         return None
 
@@ -104,7 +123,8 @@ def run_once(args) -> List[Dict[str,Any]]:
         sig = {
             'symbol': plan.get('market') or plan.get('symbol'),
             'side': plan.get('action') or plan.get('side'),
-            'confidence': plan.get('size', plan.get('confidence', 1.0)),
+            # Do not default missing confidence to 1.0 (too optimistic); use 0.0
+            'confidence': float(plan.get('size', plan.get('confidence', 0.0)) or 0.0),
             'tf': args.tf,
             'market': 'crypto',
             'context': plan.get('context', [f"UltraCore god mode"]) or [f"UltraCore god mode"]

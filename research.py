@@ -289,7 +289,16 @@ def main():
     ap.add_argument("--seed", type=int, default=42)
     args = ap.parse_args()
 
-    ex = getattr(ccxt, args.exchange)({"enableRateLimit": True})
+    # Prefer ExchangeRouter when available and matching the requested exchange
+    try:
+        from router import ExchangeRouter
+        router = ExchangeRouter()
+        if getattr(router, 'ex', None) and getattr(router.ex, 'id', '').lower() == args.exchange.lower():
+            ex = router
+        else:
+            raise Exception("router mismatch")
+    except Exception:
+        ex = getattr(ccxt, args.exchange)({"enableRateLimit": True})
     best_across = []
     for sym in [s.strip() for s in args.symbols.split(",") if s.strip()]:
         print(f"=== Optimizing {sym} ===")

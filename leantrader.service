@@ -1,0 +1,16 @@
+[Unit]
+Description=LeanTrader Bot Service
+After=network.target
+
+[Service]
+Type=simple
+User=your_user
+WorkingDirectory=/home/your_user/LeanTrader_ForexPack
+ExecStart=/usr/bin/python3 brain_loop.py
+Restart=always
+RestartSec=10
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

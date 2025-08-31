@@ -1,4 +1,4 @@
-from mt5_adapter import mt5_init
+from mt5_adapter_old import mt5_init
 mt5 = mt5_init()
 ti = mt5.terminal_info()
 ai = mt5.account_info()

@@ -1,0 +1,1 @@
+{"symbol": "ETH/USDT", "had_entry": false, "had_sl": false, "attempts": [{"from": "ticker", "last": 3503.6816322974537}, {"from": "ohlcv", "sl": 3522.340515297516, "last": 3510.8438004258187}], "ts": 1756639186.5484555}

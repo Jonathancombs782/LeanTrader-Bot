@@ -1,7 +1,7 @@
 # crypto_diag.py
 from __future__ import annotations
 import json
-from crypto_router import ExchangeRouter
+from router import ExchangeRouter
 
 def main():
     r = ExchangeRouter()

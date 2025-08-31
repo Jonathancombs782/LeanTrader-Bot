@@ -13,6 +13,27 @@ def _mk_exchange(name: str, testnet: bool) -> Any:
     secret  = os.getenv("CRYPTO_API_SECRET") or ""
     password = os.getenv("CRYPTO_API_PASSWORD") or None
 
+    # Prefer central ExchangeRouter when possible so safety checks (ALLOW_LIVE,
+    # LIVE_CONFIRM, LIVE_ORDER_USD) are applied uniformly. We only use the
+    # router when its configured exchange matches the requested name; otherwise
+    # fall back to a direct ccxt instance.
+    try:
+        from router import ExchangeRouter
+        router = ExchangeRouter()
+        router_ex = getattr(router, 'ex', None)
+        if router_ex and getattr(router_ex, 'id', '').lower() == name.lower():
+            # ensure sandbox/testnet mode is set on the underlying exchange if supported
+            try:
+                if hasattr(router_ex, 'set_sandbox_mode'):
+                    router_ex.set_sandbox_mode(testnet)
+            except Exception:
+                pass
+            return router
+    except Exception:
+        # if router isn't available or fails, fall back to direct ccxt exchange
+        pass
+
+    # Fallback: construct a plain ccxt exchange instance (unchanged behavior)
     klass = getattr(ccxt, name)
     ex = klass({
         "apiKey": api_key,
@@ -23,7 +44,10 @@ def _mk_exchange(name: str, testnet: bool) -> Any:
     })
     # testnet routing for binance-like exchanges
     if name == "binance":
-        ex.set_sandbox_mode(testnet)
+        try:
+            ex.set_sandbox_mode(testnet)
+        except Exception:
+            pass
     return ex
 
 def ohlcv_df(exchange: str, symbol: str, timeframe: str, lookback_days: int, testnet: bool) -> pd.DataFrame:

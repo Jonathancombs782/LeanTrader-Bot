@@ -5,46 +5,130 @@ from __future__ import annotations
 import os
 from typing import Dict, Any, Optional, Tuple
 
-from risk_engine import Equity, plan_crypto, plan_fx
+try:
+    from risk_engine import Equity, plan_crypto, plan_fx
+except Exception:
+    # risk_engine may be unavailable in some test environments; provide light fallbacks
+    Equity = float
+    def plan_crypto(*a, **k):
+        return {}
+    def plan_fx(*a, **k):
+        return {}
+
 from session_filter import crypto_session_weight, fx_session_weight
 from order_utils import place_market, safe_create_order
 
 EXCHANGE_MODE = os.getenv("EXCHANGE_MODE", "spot").lower()   # "spot" | "linear"
+
+# Safety / sizing defaults
+RISK_PCT_PER_TRADE = float(os.getenv("RISK_PCT_PER_TRADE", "1.0"))  # percent of equity risked per trade
+MIN_NOTIONAL_USD = float(os.getenv("MIN_NOTIONAL_USD", "10"))
+FUT_DEFAULT_LEVERAGE = int(os.getenv("FUT_DEFAULT_LEVERAGE", "3"))
 
 # ---------- merge helpers ----------
 def _merge_weight(sig: Dict[str, Any], base_conf: float, sess_w: float) -> float:
     # confidence * session weight, clipped 0..1
     return max(0.0, min(1.0, base_conf * sess_w))
 
-def attach_plan(sig: Dict[str, Any], equity: Equity) -> Dict[str, Any]:
+def attach_plan(sig: Dict[str, Any], equity: Any) -> Dict[str, Any]:
     """
     Given a signal dict {market, symbol, side, entry, sl, [atr], [tf] ...}
     return enriched dict with qty, tp ladder, leverage hints, and session tag.
     """
     s = dict(sig)  # copy
-    mkt = s.get("market","crypto").lower()
-    side = s.get("side","buy").lower()
-    atr  = float(s.get("atr", 0.0) or 0.0)
-    entry = float(s["entry"]); sl = float(s["sl"])
+    mkt = s.get("market", "crypto").lower()
+    side = s.get("side", "buy").lower()
+    atr = float(s.get("atr", 0.0) or 0.0)
+    entry = float(s.get("entry", 0.0) or 0.0)
+    sl = float(s.get("sl", 0.0) or 0.0)
 
-    if mkt.startswith("fx"):
-        sess, w = fx_session_weight(s["symbol"])
-        plan = plan_fx(entry, sl, side, equity, symbol=s["symbol"], atr=atr)
-    else:
-        sess, w = crypto_session_weight(s["symbol"])
-        lev = int(os.getenv("FUT_DEFAULT_LEVERAGE","3")) if EXCHANGE_MODE!="spot" else None
-        plan = plan_crypto(entry, sl, side, equity, leverage=lev, atr=atr)
+    # Guard: if entry or sl missing/zero, mark plan as non-executable and avoid huge qty
+    if entry <= 0.0 or sl <= 0.0:
+        s['qty'] = 0.0
+        # demote confidence so it won't be selected
+        s['confidence'] = float(s.get('confidence', s.get('quality', 0.0)) or 0.0) * 0.0
+        s.setdefault('context', []).append('missing_price_or_sl')
+        # ensure TP/SL fields exist but are zero-safe
+        s.setdefault('tp1', 0.0); s.setdefault('tp2', 0.0); s.setdefault('tp3', 0.0)
+        s.setdefault('entry', entry); s.setdefault('sl', sl)
+        return s
 
-    s["qty"] = plan.qty
-    s["tp1"], s["tp2"], s["tp3"] = plan.tp1, plan.tp2, plan.tp3
-    s["leverage"] = plan.leverage
-    s["session"] = sess
-    s["session_w"] = w
-    base = float(s.get("confidence", s.get("quality", 0.0)) or 0.0)
-    s["confidence"] = _merge_weight(s, base, w)
-    s.setdefault("context", []).append(f"Session={sess} (w×{w:.2f})")
-    if plan.warnings:
-        s["context"].extend([f"⚠ {x}" for x in plan.warnings])
+    # compute raw R (price distance). If invalid, fallback to small fraction
+    R = abs(entry - sl) if (entry and sl and entry != sl) else max(0.001, abs(entry) * 0.003)
+
+    # equity may be an object or numeric; try to get numeric total
+    try:
+        eq_val = float(getattr(equity, 'total', equity) or equity)
+    except Exception:
+        try: eq_val = float(equity or 5000.0)
+        except Exception: eq_val = 5000.0
+
+    # compute risk per trade in USD
+    risk_per_trade = (RISK_PCT_PER_TRADE / 100.0) * eq_val
+
+    # naive qty estimate: if entry price in quote (e.g., USD), qty = risk_per_trade / R
+    try:
+        qty_by_risk = risk_per_trade / R if R > 0 else 0.0
+    except Exception:
+        qty_by_risk = 0.0
+
+    # fallback notional-based qty
+    try:
+        qty_notional = MIN_NOTIONAL_USD / entry if entry > 0 else 0.0
+    except Exception:
+        qty_notional = 0.0
+
+    raw_qty = max(qty_by_risk, qty_notional)
+
+    # clamp raw_qty to a sane multiple of equity to avoid absurd sizes when R is tiny
+    try:
+        max_qty = max(1.0, eq_val * 10.0)
+        if raw_qty > max_qty:
+            raw_qty = max_qty
+    except Exception:
+        pass
+
+    # clamp qty using exchange precision/step if router available on sig
+    try:
+        ex = None
+        if 'router' in s and hasattr(s['router'], 'precision'):
+            ex = s['router']
+        # if exchange provided as ExchangeRouter instance
+        if ex is None:
+            from router import ExchangeRouter
+            # no router instance; leave raw_qty
+        else:
+            step = ex.precision(s.get('symbol'))
+            try:
+                # round down to nearest step
+                raw_qty = float(int(raw_qty / step) * step) if step and step > 0 else raw_qty
+            except Exception:
+                pass
+    except Exception:
+        pass
+
+    # leverage hint for futures
+    lev = FUT_DEFAULT_LEVERAGE if EXCHANGE_MODE != 'spot' else None
+
+    s['qty'] = float(max(0.0, raw_qty))
+    s['leverage'] = lev
+
+    # populate tp ladder: default 1x,2x,3x multiples of R
+    if not all(k in s for k in ('tp1', 'tp2', 'tp3')):
+        if side == 'buy':
+            s['tp1'] = entry + 1.0 * R
+            s['tp2'] = entry + 2.0 * R
+            s['tp3'] = entry + 3.0 * R
+        else:
+            s['tp1'] = entry - 1.0 * R
+            s['tp2'] = entry - 2.0 * R
+            s['tp3'] = entry - 3.0 * R
+
+    s['session'] = s.get('session', 'auto')
+    s['session_w'] = s.get('session_w', 1.0)
+    base = float(s.get('confidence', s.get('quality', 0.0)) or 0.0)
+    s['confidence'] = _merge_weight(s, base, s['session_w'])
+    s.setdefault('context', []).append(f"risk_pct={RISK_PCT_PER_TRADE}% min_notional={MIN_NOTIONAL_USD}")
     return s
 
 # ---------- CCXT OCO best-effort ----------

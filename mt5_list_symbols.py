@@ -3,7 +3,7 @@ from __future__ import annotations
 import argparse
 from typing import List, Tuple
 
-from mt5_adapter import mt5_init
+from mt5_adapter_old import mt5_init
 import MetaTrader5 as mt5
 
 
