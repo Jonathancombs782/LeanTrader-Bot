@@ -1,6 +1,7 @@
 # guardrails.py
 from dataclasses import dataclass
 
+
 @dataclass
 class GuardConfig:
     cooldown_bars: int = 3
@@ -8,6 +9,7 @@ class GuardConfig:
     daily_profit_lock_bps: int = 50
     spread_bps_threshold: int = 8
     max_trades_per_day: int = 40
+
 
 class TradeGuard:
     def __init__(self, cfg: GuardConfig):
@@ -39,8 +41,8 @@ class TradeGuard:
 
     def require_pause(self) -> bool:
         return self.loss_streak >= self.cfg.max_loss_streak
+
     def reset_daily(self):
         self.trades_today = 0
         self.loss_streak = 0
         self.cooldown = 0
-        

@@ -1,13 +1,15 @@
+import os  # noqa: F401  # intentionally kept
+import random
+from typing import Dict
+
+import gym
 import numpy as np
 import pandas as pd
 from sklearn.preprocessing import MinMaxScaler
-from tensorflow.keras.models import Sequential
-from tensorflow.keras.layers import LSTM, Dense, Dropout
-import gym
 from stable_baselines3 import PPO
-import random
-import os
-from typing import Dict
+from tensorflow.keras.layers import LSTM, Dense, Dropout
+from tensorflow.keras.models import Sequential
+
 
 class MLStrategyEngine:
     def __init__(self):
@@ -19,18 +21,21 @@ class MLStrategyEngine:
 
     def build_lstm(self):
         """Build LSTM model for time-series prediction."""
-        self.lstm_model = Sequential([
-            LSTM(100, return_sequences=True, input_shape=(60, 1)),
-            Dropout(0.2),
-            LSTM(100, return_sequences=False),
-            Dropout(0.2),
-            Dense(25),
-            Dense(1)
-        ])
-        self.lstm_model.compile(optimizer='adam', loss='mean_squared_error')
+        self.lstm_model = Sequential(
+            [
+                LSTM(100, return_sequences=True, input_shape=(60, 1)),
+                Dropout(0.2),
+                LSTM(100, return_sequences=False),
+                Dropout(0.2),
+                Dense(25),
+                Dense(1),
+            ]
+        )
+        self.lstm_model.compile(optimizer="adam", loss="mean_squared_error")
 
     def build_rl_env(self):
         """Custom RL environment for trading."""
+
         class TradingEnv(gym.Env):
             def __init__(self, data):
                 super().__init__()
@@ -44,7 +49,7 @@ class MLStrategyEngine:
                 reward = random.uniform(-1, 1)  # Placeholder; use real PnL calc
                 self.current_step += 1
                 done = self.current_step >= len(self.data) - 1
-                obs = self.data[self.current_step:self.current_step+60]
+                obs = self.data[self.current_step : self.current_step + 60]
                 return obs, reward, done, {}
 
             def reset(self):
@@ -74,8 +79,11 @@ class MLStrategyEngine:
             results.append(pnl)
         return {
             "avg_pnl": np.mean(results),
-            "sharpe_ratio": np.mean(results) / np.std(results) if np.std(results) > 0 else 0,
-            "max_drawdown": min(results)
+            "sharpe_ratio": (
+                np.mean(results) / np.std(results) if np.std(results) > 0 else 0
+            ),
+            "max_drawdown": min(results),
         }
+
 
 # Usage: Integrate into UltraCore or BrainLoop for predictions and strategy calls.

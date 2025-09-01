@@ -1,21 +1,29 @@
 # auto_pilot.py
 from __future__ import annotations
-import os, time, json  # noqa: F401
-from typing import List, Dict, Any
+
+import os  # noqa: F401
+import time
+from typing import Any, Dict, List
 
 import pandas as pd
-
 from dotenv import load_dotenv
+
 load_dotenv()
 
-from router import ExchangeRouter            # your renamed router
-from brain import Brain, Memory, VolSizer, Guards
+# local imports after dotenv/init
+from router import ExchangeRouter  # noqa: E402
+
+from brain import Brain, Guards, Memory, VolSizer  # noqa: E402
+from router import ExchangeRouter  # your renamed router  # noqa: E402
+
 
 def to_df(ohlcv: List[List[float]]) -> pd.DataFrame:
-    if not ohlcv: return pd.DataFrame()
-    df = pd.DataFrame(ohlcv, columns=["time","open","high","low","close","volume"])
+    if not ohlcv:
+        return pd.DataFrame()
+    df = pd.DataFrame(ohlcv, columns=["time", "open", "high", "low", "close", "volume"])
     df["time"] = pd.to_datetime(df["time"], unit="ms", utc=True)
     return df
+
 
 def fetch_df(r: ExchangeRouter, symbol: str, tf: str, limit: int = 240) -> pd.DataFrame:
     try:
@@ -24,6 +32,7 @@ def fetch_df(r: ExchangeRouter, symbol: str, tf: str, limit: int = 240) -> pd.Da
     except Exception as e:
         print(f"[data] {symbol} {tf} error: {e}")
         return pd.DataFrame()
+
 
 def account_balance_usd(r: ExchangeRouter) -> float:
     try:
@@ -36,6 +45,7 @@ def account_balance_usd(r: ExchangeRouter) -> float:
     except Exception:
         return 0.0
 
+
 def main() -> None:
     r = ExchangeRouter()
     b = Brain()
@@ -44,10 +54,12 @@ def main() -> None:
 
     tf = os.getenv("BRAIN_TF", "1m")
     mode = r.mode
-    print(f"router={{'paper': {r.paper}, 'testnet': {r.testnet}, 'mode': '{mode}', 'live': {r.live}}}")
+    print(
+        f"router={{'paper': {r.paper}, 'testnet': {r.testnet}, 'mode': '{mode}', 'live': {r.live}}}"
+    )
 
     # choose symbols (USDT majors)
-    symbols = ["BTC/USDT","ETH/USDT","SOL/USDT","XRP/USDT","DOGE/USDT"]
+    symbols = ["BTC/USDT", "ETH/USDT", "SOL/USDT", "XRP/USDT", "DOGE/USDT"]
     print("scan:", symbols)
 
     state: Dict[str, Dict[str, Any]] = {}  # symbol -> {side, entry, qty/notional}
@@ -55,14 +67,15 @@ def main() -> None:
         ok, why = guards.day_ok()
         if not ok:
             print(f"[halt] {why}")
-            time.sleep(60); continue
+            time.sleep(60)
+            continue
 
         bal = account_balance_usd(r)
         sizer = VolSizer(bal)
 
         for sym in symbols:
             df = fetch_df(r, sym, tf, limit=240)
-            if len(df) < 60: 
+            if len(df) < 60:
                 print(f"[skip] {sym} no bars")
                 continue
 
@@ -71,7 +84,6 @@ def main() -> None:
                 continue
 
             stake_usd = sizer.usd(df)
-            sess_mult = 1.0
             price = float(df["close"].iloc[-1])
 
             # funding guard for futures
@@ -80,7 +92,11 @@ def main() -> None:
                 try:
                     if hasattr(r.ex, "fetch_funding_rate"):
                         fr = r.ex.fetch_funding_rate(sym)
-                        f = float(fr.get("fundingRate", 0)) if isinstance(fr, dict) else None
+                        f = (
+                            float(fr.get("fundingRate", 0))
+                            if isinstance(fr, dict)
+                            else None
+                        )
                 except Exception:
                     f = None
                 okf, whyf = guards.funding_ok(f)
@@ -113,8 +129,16 @@ def main() -> None:
                 res = r.place_spot_market(sym, side, notional=notional)
                 ok = res.get("ok")
                 if ok:
-                    state[sym] = {"side": side, "entry": price, "sl": adv.sl, "tp": adv.tp, "notional": notional}
-                    print(f"[open] spot {sym} {side} ${notional:.2f} @ {price:.4f} | {adv.reason}")
+                    state[sym] = {
+                        "side": side,
+                        "entry": price,
+                        "sl": adv.sl,
+                        "tp": adv.tp,
+                        "notional": notional,
+                    }
+                    print(
+                        f"[open] spot {sym} {side} ${notional:.2f} @ {price:.4f} | {adv.reason}"
+                    )
                 else:
                     print(f"[fail] spot {sym} {res}")
             else:
@@ -124,27 +148,43 @@ def main() -> None:
                 res = r.place_futures_market(sym, side, qty=qty, leverage=lev)
                 ok = res.get("ok")
                 if ok:
-                    state[sym] = {"side": side, "entry": price, "sl": adv.sl, "tp": adv.tp, "qty": qty}
-                    print(f"[open] fut {sym} {side} {qty:.6f} @ {price:.4f} x{lev} | {adv.reason}")
+                    state[sym] = {
+                        "side": side,
+                        "entry": price,
+                        "sl": adv.sl,
+                        "tp": adv.tp,
+                        "qty": qty,
+                    }
+                    print(
+                        f"[open] fut {sym} {side} {qty:.6f} @ {price:.4f} x{lev} | {adv.reason}"
+                    )
                 else:
                     print(f"[fail] fut {sym} {res}")
 
         time.sleep(20)
 
-def _close(r: ExchangeRouter, sym: str, st: Dict[str,Any], price_now: float) -> Dict[str,Any]:
+
+def _close(
+    r: ExchangeRouter, sym: str, st: Dict[str, Any], price_now: float
+) -> Dict[str, Any]:
     side = st["side"]
     entry = st["entry"]
     pnl = (price_now - entry) if side == "buy" else (entry - price_now)
     if r.mode == "spot":
         # simulate: opposite side notional
         notional = st["notional"]
-        res = r.place_spot_market(sym, "sell" if side == "buy" else "buy", notional=notional)
+        res = r.place_spot_market(
+            sym, "sell" if side == "buy" else "buy", notional=notional
+        )
     else:
         qty = st["qty"]
-        res = r.place_futures_market(sym, "sell" if side == "buy" else "buy", qty=qty, close=True)
+        res = r.place_futures_market(
+            sym, "sell" if side == "buy" else "buy", qty=qty, close=True
+        )
     res["pnl"] = float(pnl)
     print(f"[close] {sym} {side} pnl≈{pnl:.4f} @ {price_now:.4f}")
     return res
+
 
 if __name__ == "__main__":
     main()

@@ -1,16 +1,19 @@
 # dashboard_reporter.py
 from __future__ import annotations
-import time, math
+
+import json
+import time
 from dataclasses import dataclass
-from typing import Dict, List, Tuple
+from pathlib import Path
+from typing import Dict, List
 
 from cross_examiner import cross_examine
 from notifier import TelegramNotifier
-from pathlib import Path
-import json
 
-DASH = Path("runtime"); DASH.mkdir(exist_ok=True)
+DASH = Path("runtime")
+DASH.mkdir(exist_ok=True)
 SNAP = DASH / "snapshot.json"
+
 
 def update_snapshot(payload: dict) -> None:
     try:
@@ -21,37 +24,56 @@ def update_snapshot(payload: dict) -> None:
         pass
 
 
-def _side_emoji(side: str|None) -> str:
+def _side_emoji(side: str | None) -> str:
     return "🟢" if side == "buy" else "⚪"
+
 
 def _fmt_prob(p: float) -> str:
     return f"{p:0.2f}"
 
+
 @dataclass
 class TFView:
-    prob: float         # 0..1
-    side: str|None      # "buy" or None
-    price: float        # last price
+    prob: float  # 0..1
+    side: str | None  # "buy" or None
+    price: float  # last price
+
 
 class DashboardReporter:
     """
     Collects latest per-timeframe decisions per symbol, and periodically
     posts a compact dashboard to Telegram summarizing alignment across TFs.
     """
+
     def __init__(self, every_sec: int = 900, max_symbols: int = 12):
         self.every_sec = int(max(60, every_sec))
         self.max_symbols = max_symbols
         self._last_emit = 0.0
-        self._cache: Dict[str, Dict[str, TFView]] = {}   # symbol -> {tf -> TFView}
+        self._cache: Dict[str, Dict[str, TFView]] = {}  # symbol -> {tf -> TFView}
         self._tg = TelegramNotifier()
 
-    def update(self, symbol: str, timeframe: str, prob: float, side: str|None, price: float):
-        sym = symbol.upper(); tf = timeframe.lower()
-        self._cache.setdefault(sym, {})[tf] = TFView(prob=float(prob), side=side, price=float(price))
+    def update(
+        self, symbol: str, timeframe: str, prob: float, side: str | None, price: float
+    ):
+        sym = symbol.upper()
+        tf = timeframe.lower()
+        self._cache.setdefault(sym, {})[tf] = TFView(
+            prob=float(prob), side=side, price=float(price)
+        )
 
     def _build_symbol_block(self, symbol: str, views: Dict[str, TFView]) -> str:
         # sort TFs by "importance" (short to long)
-        order = {"1m":1,"3m":2,"5m":3,"15m":4,"30m":5,"1h":6,"2h":7,"4h":8,"1d":9}
+        order = {
+            "1m": 1,
+            "3m": 2,
+            "5m": 3,
+            "15m": 4,
+            "30m": 5,
+            "1h": 6,
+            "2h": 7,
+            "4h": 8,
+            "1d": 9,
+        }
         tfs = sorted(views.keys(), key=lambda x: order.get(x, 99))
         frame_probs = {tf: views[tf].prob for tf in tfs}
         frame_sides = {tf: views[tf].side for tf in tfs}

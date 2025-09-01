@@ -1,38 +1,49 @@
 # run_live_meme.py
 from __future__ import annotations
-import os, sys, time, math, argparse, datetime as dt
+
+import argparse
+import datetime as dt  # noqa: F401  # intentionally kept
+import os
+import sys
+import time
 from pathlib import Path
-import pandas as pd
+
+import pandas as pd  # noqa: F401  # intentionally kept
 from dotenv import load_dotenv
 
 PROJECT_ROOT = Path(__file__).resolve().parent
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.append(str(PROJECT_ROOT))
 
-from utils import load_config, setup_logger, bps_to_frac
-from strategy import TrendBreakoutStrategy
-from risk import RiskConfig
-from guardrails import GuardConfig, TradeGuard
-
-from notifier import TelegramNotifier, CMD_INBOX
-from news_service import bullets_for
-from ledger import log_entry, log_exit, daily_pnl_text
-from acct_portfolio import ccxt_summary
-from regional_utils import primary_exchange, fallback_exchange
-
 import json
 from pathlib import Path
-from pprint import pformat
+from pprint import pformat  # noqa: F401  # intentionally kept
 
+from acct_portfolio import ccxt_summary  # noqa: E402
+from guardrails import GuardConfig, TradeGuard  # noqa: E402
+from ledger import daily_pnl_text, log_entry, log_exit  # noqa: E402
+from news_service import bullets_for  # noqa: F401, E402  # intentionally kept
+from notifier import CMD_INBOX, TelegramNotifier  # noqa: E402
+from regional_utils import (  # noqa: F401, E402  # intentionally kept
+    fallback_exchange, primary_exchange)
+from risk import RiskConfig  # noqa: E402
+from strategy import TrendBreakoutStrategy  # noqa: E402
+from utils import bps_to_frac, load_config, setup_logger  # noqa: E402
 
 # ------- universe helpers (memecoins) -------
 MEME_DEFAULTS = [
-    "DOGE/USDT", "SHIB/USDT", "PEPE/USDT", "BONK/USDT", "WIF/USDT",
-    "FLOKI/USDT", "BABYDOGE/USDT"
+    "DOGE/USDT",
+    "SHIB/USDT",
+    "PEPE/USDT",
+    "BONK/USDT",
+    "WIF/USDT",
+    "FLOKI/USDT",
+    "BABYDOGE/USDT",
 ]
 
 # ---- error throttle (in-memory) ----
 _ERROR_MUTE = {}  # key -> next_allowed_ts
+
 
 def notify_once(notifier, key: str, message: str, cooldown_sec: int = 900):
     now = time.time()
@@ -55,39 +66,50 @@ def _normalize_symbols_for_venue(symbols, venue_id: str):
         return out
     return symbols
 
+
 # --------- minimal CCXT factory ----------
 # ---- exchange factory with optional proxy & sane timeout/backoff ----
 def make_exchange(exchange_id: str, api_key=None, api_secret=None):
     # Prefer ExchangeRouter when it matches the requested exchange id so safety wrappers apply
     try:
         from router import ExchangeRouter
+
         router = ExchangeRouter()
-        if getattr(router, 'ex', None) and getattr(router.ex, 'id', '').lower() == exchange_id.lower():
+        if (
+            getattr(router, "ex", None)
+            and getattr(router.ex, "id", "").lower() == exchange_id.lower()
+        ):
             return router
     except Exception:
         pass
 
     import ccxt
+
     proxies = None
-    proxy_url = os.getenv("HTTP_PROXY") or os.getenv("HTTPS_PROXY") or os.getenv("PROXY_URL")
+    proxy_url = (
+        os.getenv("HTTP_PROXY") or os.getenv("HTTPS_PROXY") or os.getenv("PROXY_URL")
+    )
     if proxy_url:
         proxies = {"http": proxy_url, "https": proxy_url}
-    ex = getattr(ccxt, exchange_id)({
-        "apiKey": api_key or os.getenv("API_KEY"),
-        "secret": api_secret or os.getenv("API_SECRET"),
-        "enableRateLimit": True,
-        "timeout": 15000,
-        **({"proxies": proxies} if proxies else {}),
-        "options": {
-            "defaultType": "spot"
+    ex = getattr(ccxt, exchange_id)(
+        {
+            "apiKey": api_key or os.getenv("API_KEY"),
+            "secret": api_secret or os.getenv("API_SECRET"),
+            "enableRateLimit": True,
+            "timeout": 15000,
+            **({"proxies": proxies} if proxies else {}),
+            "options": {"defaultType": "spot"},
         }
-    })
+    )
     return ex
 
+
 def _consume_commands():
-    if not CMD_INBOX.exists(): return []
+    if not CMD_INBOX.exists():
+        return []
     try:
         import json
+
         with open(CMD_INBOX, "r", encoding="utf-8") as f:
             lines = [x.strip() for x in f if x.strip()]
         CMD_INBOX.unlink(missing_ok=True)
@@ -96,12 +118,14 @@ def _consume_commands():
             try:
                 d = json.loads(line)
                 c = d.get("cmd")
-                if c: cmds.append(c)
+                if c:
+                    cmds.append(c)
             except Exception:
                 pass
         return cmds
     except Exception:
         return []
+
 
 def _parse_qty(s: str, default: float) -> float:
     try:
@@ -110,16 +134,27 @@ def _parse_qty(s: str, default: float) -> float:
     except Exception:
         return default
 
+
 print("run_live_meme.py starting…")
 
-def live_loop(exchange_id: str, symbols: list, timeframe: str, cfg: dict,
-              fixed_stake_usd: float = 1.5,
-              balance_every_min: float | None = 30.0,
-              report_hour: str | None = "21:00"):
+
+def live_loop(
+    exchange_id: str,
+    symbols: list,
+    timeframe: str,
+    cfg: dict,
+    fixed_stake_usd: float = 1.5,
+    balance_every_min: float | None = 30.0,
+    report_hour: str | None = "21:00",
+):
     load_dotenv()
-    log = setup_logger("live_meme", level=os.getenv("LOG_LEVEL","INFO"),
-                       log_dir=os.getenv("LOG_DIR","logs"))
+    log = setup_logger(
+        "live_meme",
+        level=os.getenv("LOG_LEVEL", "INFO"),
+        log_dir=os.getenv("LOG_DIR", "logs"),
+    )
     nfy = TelegramNotifier()
+
     # helper: preflight self-check to validate environment & markets
     def preflight_self_check(router, symbols_list):
         msgs = []
@@ -130,16 +165,18 @@ def live_loop(exchange_id: str, symbols: list, timeframe: str, cfg: dict,
             ok = False
         # notifier
         try:
-            tok = os.getenv("TELEGRAM_BOT_TOKEN","").strip()
-            chat = os.getenv("TELEGRAM_CHAT_ID","").strip()
-            if getattr(nfy, 'enabled', False) and (not tok or not chat):
+            tok = os.getenv("TELEGRAM_BOT_TOKEN", "").strip()
+            chat = os.getenv("TELEGRAM_CHAT_ID", "").strip()
+            if getattr(nfy, "enabled", False) and (not tok or not chat):
                 msgs.append("Telegram enabled but token/chat missing.")
         except Exception:
             pass
         # exchange connectivity
         try:
             info = router.info()
-            msgs.append(f"Router info OK: {info.get('id') if isinstance(info, dict) else str(info)[:80]}")
+            msgs.append(
+                f"Router info OK: {info.get('id') if isinstance(info, dict) else str(info)[:80]}"
+            )
         except Exception as e:
             msgs.append(f"Router connectivity FAILED: {e}")
             ok = False
@@ -155,12 +192,16 @@ def live_loop(exchange_id: str, symbols: list, timeframe: str, cfg: dict,
         if plans_file.exists():
             try:
                 plans = json.loads(plans_file.read_text(encoding="utf-8"))
-                bad = [p for p in plans if (not p.get("entry")) or (not p.get("size_usd"))]
+                bad = [
+                    p for p in plans if (not p.get("entry")) or (not p.get("size_usd"))
+                ]
                 msgs.append(f"Found {len(plans)} plans, {len(bad)} appear incomplete.")
             except Exception:
                 msgs.append("Could not parse runtime/ultra_plans.json")
         else:
-            msgs.append("No runtime/ultra_plans.json found (dry-run may not have produced plans yet).")
+            msgs.append(
+                "No runtime/ultra_plans.json found (dry-run may not have produced plans yet)."
+            )
         return ok, msgs
 
     # helper: summarize plan files and price debug entries
@@ -175,7 +216,9 @@ def live_loop(exchange_id: str, symbols: list, timeframe: str, cfg: dict,
                 summary.append(f"Plans: {len(plans)}")
                 # show top 5 plans (concise)
                 for p in plans[:5]:
-                    summary.append(f"- {p.get('market')} {p.get('action')} entry={p.get('entry')} sl={p.get('sl')} size_usd={p.get('size_usd')}")
+                    summary.append(
+                        f"- {p.get('market')} {p.get('action')} entry={p.get('entry')} sl={p.get('sl')} size_usd={p.get('size_usd')}"
+                    )
             else:
                 summary.append("Plans: none")
         except Exception as e:
@@ -187,7 +230,9 @@ def live_loop(exchange_id: str, symbols: list, timeframe: str, cfg: dict,
                 if lines:
                     try:
                         js = json.loads(lines[-1])
-                        summary.append(f"Last debug: {js.get('market')} {js.get('entry')} qty={js.get('qty')}")
+                        summary.append(
+                            f"Last debug: {js.get('market')} {js.get('entry')} qty={js.get('qty')}"
+                        )
                     except Exception:
                         summary.append("Could not parse last debug row")
             else:
@@ -200,23 +245,34 @@ def live_loop(exchange_id: str, symbols: list, timeframe: str, cfg: dict,
         except Exception:
             log.info("Plan report:\n%s", body)
         return summary
+
     # Notifier diagnostic: surface enabled flag and presence of token/chat_id
     try:
-        enabled = getattr(nfy, 'enabled', False)
-        token = getattr(nfy, 'token', '') or os.getenv('TELEGRAM_BOT_TOKEN','')
-        chat = getattr(nfy, 'chat_id', '') or os.getenv('TELEGRAM_CHAT_ID','')
+        enabled = getattr(nfy, "enabled", False)
+        token = getattr(nfy, "token", "") or os.getenv("TELEGRAM_BOT_TOKEN", "")
+        chat = getattr(nfy, "chat_id", "") or os.getenv("TELEGRAM_CHAT_ID", "")
         token_ok = bool(token.strip())
         chat_ok = bool(str(chat).strip())
-        log.info('Notifier enabled=%s token_present=%s chat_id_present=%s', enabled, token_ok, chat_ok)
+        log.info(
+            "Notifier enabled=%s token_present=%s chat_id_present=%s",
+            enabled,
+            token_ok,
+            chat_ok,
+        )
         if not enabled:
-            log.warning('Telegram notifier disabled. To enable, set TELEGRAM_ENABLED=true and TELEGRAM_BOT_TOKEN/TELEGRAM_CHAT_ID in your .env or environment.')
+            log.warning(
+                "Telegram notifier disabled. To enable, set TELEGRAM_ENABLED=true and TELEGRAM_BOT_TOKEN/TELEGRAM_CHAT_ID in your .env or environment."
+            )
         elif not token_ok or not chat_ok:
-            log.warning('Telegram notifier enabled but missing token or chat id. Check TELEGRAM_BOT_TOKEN and TELEGRAM_CHAT_ID.')
+            log.warning(
+                "Telegram notifier enabled but missing token or chat id. Check TELEGRAM_BOT_TOKEN and TELEGRAM_CHAT_ID."
+            )
     except Exception:
-        log.exception('Notifier diagnostic failed')
+        log.exception("Notifier diagnostic failed")
 
-    from router import ExchangeRouter
-    from ultra_core import UltraCore
+    from router import ExchangeRouter  # noqa: E402
+    from ultra_core import UltraCore  # noqa: E402
+
     ex = ExchangeRouter()
     # Diagnostic: show router info and a small market sample to help debugging startup
     try:
@@ -230,8 +286,12 @@ def live_loop(exchange_id: str, symbols: list, timeframe: str, cfg: dict,
             log.info("Could not sample markets")
     except Exception as e:
         log.error("Router init diagnostics failed: %s", e)
-    log.info("Starting meme loop exchange=%s symbols=%s timeframe=%s",
-             exchange_id, symbols, timeframe)
+    log.info(
+        "Starting meme loop exchange=%s symbols=%s timeframe=%s",
+        exchange_id,
+        symbols,
+        timeframe,
+    )
     symbols = _normalize_symbols_for_venue(symbols, exchange_id)
     # Resolve symbols against router markets where possible and log mapping
     resolved = []
@@ -242,7 +302,11 @@ def live_loop(exchange_id: str, symbols: list, timeframe: str, cfg: dict,
                 resolved.append(s)
             else:
                 # try swapping USD/USDT
-                alt = s.replace('/USDT', '/USD') if s.endswith('/USDT') else s.replace('/USD', '/USDT')
+                alt = (
+                    s.replace("/USDT", "/USD")
+                    if s.endswith("/USDT")
+                    else s.replace("/USD", "/USDT")
+                )
                 if alt in ex.markets:
                     resolved.append(alt)
                 else:
@@ -257,30 +321,30 @@ def live_loop(exchange_id: str, symbols: list, timeframe: str, cfg: dict,
     nfy.hello(f"{exchange_id} (meme)", symbols, timeframe)
     # Startup health summary: try to post balances and daily pnl if notifier enabled
     try:
-        if getattr(nfy, 'enabled', False):
+        if getattr(nfy, "enabled", False):
             try:
                 nfy.balance_snapshot([ccxt_summary(ex)])
             except Exception:
-                nfy.note('balance snapshot failed at startup')
+                nfy.note("balance snapshot failed at startup")
             try:
                 nfy.daily_pnl(daily_pnl_text())
             except Exception:
-                nfy.note('daily PnL summary failed at startup')
+                nfy.note("daily PnL summary failed at startup")
     except Exception:
-        log.info('Notifier startup summary skipped')
+        log.info("Notifier startup summary skipped")
     ultra = UltraCore(ex, None, logger=log)
 
-    fee_frac  = bps_to_frac(cfg.get("fee_bps", 10))
-    slip_frac = bps_to_frac(cfg.get("slippage_bps", 3))
+    bps_to_frac(cfg.get("fee_bps", 10))
+    bps_to_frac(cfg.get("slippage_bps", 3))
 
-    strat = TrendBreakoutStrategy(
+    TrendBreakoutStrategy(
         ema_fast=cfg["strategy"]["ema_fast"],
         ema_slow=cfg["strategy"]["ema_slow"],
         bb_period=cfg["strategy"]["bb_period"],
         bb_std=cfg["strategy"]["bb_std"],
         bb_bw_lookback=cfg["strategy"]["bb_bandwidth_lookback"],
         bb_bw_quantile=cfg["strategy"]["bb_bandwidth_quantile"],
-        atr_period=cfg["risk"]["atr_period"]
+        atr_period=cfg["risk"]["atr_period"],
     )
     risk_cfg = RiskConfig(
         initial_equity=cfg["risk"]["initial_equity"],
@@ -291,14 +355,16 @@ def live_loop(exchange_id: str, symbols: list, timeframe: str, cfg: dict,
         atr_trail_mult=cfg["risk"]["atr_trail_mult"],
         atr_period=cfg["risk"]["atr_period"],
     )
-    guard = TradeGuard(GuardConfig(**cfg["guards"]))
+    TradeGuard(GuardConfig(**cfg["guards"]))
 
-    live_enabled = os.getenv("ENABLE_LIVE","false").lower() == "true"
-    equity = float(risk_cfg.initial_equity)
+    live_enabled = os.getenv("ENABLE_LIVE", "false").lower() == "true"
+    float(risk_cfg.initial_equity)
     open_pos: dict = {}
 
     day_tag = dt.datetime.utcnow().strftime("%Y-%m-%d")
-    next_bal_ts = time.time() + (balance_every_min or 0) * 60 if balance_every_min else None
+    next_bal_ts = (
+        time.time() + (balance_every_min or 0) * 60 if balance_every_min else None
+    )
 
     def maybe_daily_report(force=False):
         nonlocal day_tag
@@ -308,7 +374,9 @@ def live_loop(exchange_id: str, symbols: list, timeframe: str, cfg: dict,
             trigger = True
         elif report_hour:
             hh, mm = [int(x) for x in report_hour.split(":")]
-            trigger = (now.strftime("%Y-%m-%d") != day_tag) or (now.hour==hh and now.minute==mm)
+            trigger = (now.strftime("%Y-%m-%d") != day_tag) or (
+                now.hour == hh and now.minute == mm
+            )
         if trigger:
             # use daily_pnl_text from ledger for a compact report
             try:
@@ -329,7 +397,7 @@ def live_loop(exchange_id: str, symbols: list, timeframe: str, cfg: dict,
         nfy.poll_commands(throttle_ms=0)
         for cmd in _consume_commands():
             parts = cmd.split()
-            if not parts: 
+            if not parts:
                 continue
             verb = parts[0].lower()
             if verb == "/selfcheck":
@@ -338,7 +406,9 @@ def live_loop(exchange_id: str, symbols: list, timeframe: str, cfg: dict,
                     out = "\n".join(msgs)
                     nfy.note("Preflight self-check:\n" + out)
                     if not ok:
-                        log.warning("Preflight reported critical failures; review before enabling live trading.")
+                        log.warning(
+                            "Preflight reported critical failures; review before enabling live trading."
+                        )
                 except Exception as e:
                     log.exception("Selfcheck failed: %s", e)
                 continue
@@ -354,26 +424,41 @@ def live_loop(exchange_id: str, symbols: list, timeframe: str, cfg: dict,
                 except Exception as e:
                     nfy.note(str(e))
                 continue
-            if verb in ("/buy","/sell","/flat"):
-                sym = parts[1] if len(parts)>=2 else None
-                qty = _parse_qty(parts[2], 0.0) if len(parts)>=3 else 0.0
-                if not sym: 
+            if verb in ("/buy", "/sell", "/flat"):
+                sym = parts[1] if len(parts) >= 2 else None
+                qty = _parse_qty(parts[2], 0.0) if len(parts) >= 3 else 0.0
+                if not sym:
                     continue
                 try:
                     if verb == "/flat":
                         if sym in open_pos and live_enabled:
                             side = "sell" if open_pos[sym]["amount"] > 0 else "buy"
                             ex.safe_place_order(sym, side, abs(open_pos[sym]["amount"]))
-                            log_exit(f"{sym}|{timeframe}|{int(time.time())}", exit_px=0.0, status="closed")
+                            log_exit(
+                                f"{sym}|{timeframe}|{int(time.time())}",
+                                exit_px=0.0,
+                                status="closed",
+                            )
                             del open_pos[sym]
                         continue
                     if qty <= 0:
                         px = ex.safe_fetch_ticker(sym)["last"]
                         qty = max(0.0, float(fixed_stake_usd) / max(1e-9, px))
-                    side = "buy" if verb=="/buy" else "sell"
+                    side = "buy" if verb == "/buy" else "sell"
                     if live_enabled:
                         ex.safe_place_order(sym, side, qty)
-                    log_entry(venue=exchange_id, market="meme", symbol=sym, tf=timeframe, side=side, entry_px=0.0, qty=qty, sl=None, tp=None, meta={"tag": "cmd"})
+                    log_entry(
+                        venue=exchange_id,
+                        market="meme",
+                        symbol=sym,
+                        tf=timeframe,
+                        side=side,
+                        entry_px=0.0,
+                        qty=qty,
+                        sl=None,
+                        tp=None,
+                        meta={"tag": "cmd"},
+                    )
                 except Exception as e:
                     log.error("Command error %s: %s", cmd, e)
 
@@ -394,10 +479,11 @@ def live_loop(exchange_id: str, symbols: list, timeframe: str, cfg: dict,
 
         time.sleep(5)
 
+
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--exchange", default=os.getenv("EXCHANGE_ID","binanceus"))
-    ap.add_argument("--symbols", default="")                          # optional explicit list
+    ap.add_argument("--exchange", default=os.getenv("EXCHANGE_ID", "binanceus"))
+    ap.add_argument("--symbols", default="")  # optional explicit list
     ap.add_argument("--timeframe", default="1m")
     ap.add_argument("--stake_usd", type=float, default=1.5)
     ap.add_argument("--balance_every", type=float, default=30.0)
@@ -409,9 +495,14 @@ def main():
         symbols = [s.strip() for s in args.symbols.split(",") if s.strip()]
     else:
         symbols = MEME_DEFAULTS
-    live_loop(args.exchange, symbols, args.timeframe, cfg,
-              fixed_stake_usd=args.stake_usd,
-              balance_every_min=args.balance_every,
-              report_hour="21:00")
-    
+    live_loop(
+        args.exchange,
+        symbols,
+        args.timeframe,
+        cfg,
+        fixed_stake_usd=args.stake_usd,
+        balance_every_min=args.balance_every,
+        report_hour="21:00",
+    )
+
     # ...existing code...

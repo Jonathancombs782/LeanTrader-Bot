@@ -1,4 +1,7 @@
-import os, sys, json, traceback
+import json
+import os
+import sys
+import traceback
 
 # ensure project root is importable
 proj_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
@@ -9,6 +12,7 @@ if proj_root not in sys.path:
 os.environ.setdefault("EXCHANGE_ID", "paper")
 os.environ.setdefault("PAPER_START_CASH", "10000")
 os.environ.setdefault("ENABLE_LIVE", "false")
+
 
 def run():
     out = {"errors": [], "results": {}}
@@ -50,6 +54,7 @@ def run():
         out["errors"].append(f"safe_fetch_balance failed: {e}")
 
     print(json.dumps(out, indent=2))
+
 
 if __name__ == "__main__":
     run()

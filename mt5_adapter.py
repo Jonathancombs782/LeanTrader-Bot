@@ -1,14 +1,21 @@
 # mt5_adapter.py
 from __future__ import annotations
+
 import os
-from typing import Optional, Dict, Any
+from typing import Any, Dict, Optional  # noqa: F401  # intentionally kept
+
 from dotenv import load_dotenv
+
 try:
     import MetaTrader5 as mt5  # type: ignore
 except Exception:
     mt5 = None
 
 load_dotenv()
+
+# local runtime imports (allowed after dotenv)
+from router import ExchangeRouter  # noqa: E402
+
 
 def _envs() -> Dict[str, str]:
     return {
@@ -17,6 +24,7 @@ def _envs() -> Dict[str, str]:
         "PASSWORD": os.getenv("MT5_PASSWORD", ""),
         "SERVER": os.getenv("MT5_SERVER", ""),
     }
+
 
 def mt5_init(path: Optional[str] = None):
     if mt5 is None:
@@ -27,11 +35,16 @@ def mt5_init(path: Optional[str] = None):
         code, desc = mt5.last_error()
         raise RuntimeError(f"mt5.initialize failed: ({code}) {desc}")
     if env["LOGIN"] and env["PASSWORD"] and env["SERVER"]:
-        if not mt5.login(int(env["LOGIN"]), password=env["PASSWORD"], server=env["SERVER"]):
+        if not mt5.login(
+            int(env["LOGIN"]), password=env["PASSWORD"], server=env["SERVER"]
+        ):
             code, desc = mt5.last_error()
             mt5.shutdown()
-            raise RuntimeError(f"mt5.login failed: ({code}) {desc} (server={env['SERVER']})")
+            raise RuntimeError(
+                f"mt5.login failed: ({code}) {desc} (server={env['SERVER']})"
+            )
     return mt5
+
 
 def ensure_symbol(symbol: str) -> None:
     info = mt5.symbol_info(symbol)
@@ -41,20 +54,41 @@ def ensure_symbol(symbol: str) -> None:
         if not mt5.symbol_select(symbol, True):
             raise RuntimeError(f"symbol_select({symbol}) failed")
 
+
 def _normalize_rates_df(df):
-    import pandas as pd
+    import pandas as pd  # noqa: E402
+
     if df is None or len(df) == 0:
-        return pd.DataFrame(columns=[
-            "time","open","high","low","close","tick_volume","spread","real_volume"
-        ])
+        return pd.DataFrame(
+            columns=[
+                "time",
+                "open",
+                "high",
+                "low",
+                "close",
+                "tick_volume",
+                "spread",
+                "real_volume",
+            ]
+        )
     df = pd.DataFrame(df)
     # Normalize common aliases
     lower = {str(c).lower(): c for c in df.columns}
-    if "vol" in lower:   df.rename(columns={lower["vol"]:"tick_volume"}, inplace=True)
+    if "vol" in lower:
+        df.rename(columns={lower["vol"]: "tick_volume"}, inplace=True)
     if "volume" in lower and "tick_volume" not in df.columns:
-        df.rename(columns={lower["volume"]:"tick_volume"}, inplace=True)
+        df.rename(columns={lower["volume"]: "tick_volume"}, inplace=True)
     # Ensure required cols
-    required = ["time","open","high","low","close","tick_volume","spread","real_volume"]
+    required = [
+        "time",
+        "open",
+        "high",
+        "low",
+        "close",
+        "tick_volume",
+        "spread",
+        "real_volume",
+    ]
     for c in required:
         if c not in df.columns:
             df[c] = 0
@@ -64,13 +98,21 @@ def _normalize_rates_df(df):
         pass
     return df[required]
 
+
 def bars_df(symbol: str, timeframe_str: str, limit: int = 200):
-    import pandas as pd
+    import pandas as pd  # noqa: E402
+
     ensure_symbol(symbol)
     tf_map = {
-        "M1": mt5.TIMEFRAME_M1, "M5": mt5.TIMEFRAME_M5, "M15": mt5.TIMEFRAME_M15,
-        "M30": mt5.TIMEFRAME_M30, "H1": mt5.TIMEFRAME_H1, "H4": mt5.TIMEFRAME_H4,
-        "D1": mt5.TIMEFRAME_D1, "W1": mt5.TIMEFRAME_W1, "MN1": mt5.TIMEFRAME_MN1,
+        "M1": mt5.TIMEFRAME_M1,
+        "M5": mt5.TIMEFRAME_M5,
+        "M15": mt5.TIMEFRAME_M15,
+        "M30": mt5.TIMEFRAME_M30,
+        "H1": mt5.TIMEFRAME_H1,
+        "H4": mt5.TIMEFRAME_H4,
+        "D1": mt5.TIMEFRAME_D1,
+        "W1": mt5.TIMEFRAME_W1,
+        "MN1": mt5.TIMEFRAME_MN1,
     }
     tf = tf_map.get(timeframe_str.upper())
     if tf is None:
@@ -80,6 +122,7 @@ def bars_df(symbol: str, timeframe_str: str, limit: int = 200):
         code, desc = mt5.last_error()
         raise RuntimeError(f"copy_rates_from_pos failed: ({code}) {desc}")
     return _normalize_rates_df(pd.DataFrame(list(rates)))
+
 
 def account_summary_lines():
     info = mt5.account_info()
@@ -95,7 +138,7 @@ def account_summary_lines():
         except Exception:
             pass
     return [
-        f"Account: {getattr(info,'name','')} ({getattr(info,'login','')})",
+        f"Account: {getattr(info, 'name', '')} ({getattr(info, 'login', '')})",
         f"Balance: {float(info.balance):.2f}  Equity: {float(info.equity):.2f}",
         f"Margin: {float(info.margin):.2f}    Positions: {pos_n}  (uPnL {u_pnl:.2f})",
     ]

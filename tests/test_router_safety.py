@@ -1,5 +1,6 @@
-import os
-import pytest
+import os  # noqa: F401  # intentionally kept
+
+import pytest  # noqa: F401  # intentionally kept
 
 from router import ExchangeRouter
 

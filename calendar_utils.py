@@ -1,14 +1,15 @@
 # calendar_utils.py
 from __future__ import annotations
 
-import os
+# os removed; not required in this module
 import csv
 import datetime as dt
 from pathlib import Path
-from typing import Dict, Any, List
+from typing import Any, Dict, List
 
 DATA_DIR = Path("data")
 CAL_PATH = DATA_DIR / "calendar.csv"
+
 
 # Simple currency tags for FX pairs
 def _fx_tags(symbol: str) -> List[str]:
@@ -16,6 +17,7 @@ def _fx_tags(symbol: str) -> List[str]:
     if len(s) >= 6:
         return [s[:3].upper(), s[3:6].upper()]
     return [symbol[:3].upper()]
+
 
 def _parse_row(row: Dict[str, str]) -> Dict[str, Any]:
     # expected headers: time,currency,impact,event,forecast,previous
@@ -27,6 +29,7 @@ def _parse_row(row: Dict[str, str]) -> Dict[str, Any]:
     out["currency"] = (row.get("currency") or "").upper()
     out["impact"] = (row.get("impact") or "").upper()
     return out
+
 
 def _load_today_events() -> List[Dict[str, Any]]:
     if not CAL_PATH.exists():
@@ -41,6 +44,7 @@ def _load_today_events() -> List[Dict[str, Any]]:
             if rr["time"].date() == dt.datetime.utcnow().date():
                 out.append(rr)
     return out
+
 
 def risk_adjust_for_calendar(symbol: str, is_fx: bool) -> Dict[str, Any]:
     """
@@ -72,8 +76,8 @@ def risk_adjust_for_calendar(symbol: str, is_fx: bool) -> Dict[str, Any]:
     if hit:
         titles = "; ".join([e["event"] for e in hit[:3]])
         return {
-            "size_mult": 0.5,         # halve position around event
-            "block_entries": True,    # block fresh entries in the window
-            "notes": f"High-impact {tags} event within {window_min}m: {titles}"
+            "size_mult": 0.5,  # halve position around event
+            "block_entries": True,  # block fresh entries in the window
+            "notes": f"High-impact {tags} event within {window_min}m: {titles}",
         }
     return {"size_mult": 1.0, "block_entries": False, "notes": ""}

@@ -2,10 +2,11 @@
 from __future__ import annotations
 
 import sys
+
 import pandas as pd  # only used to pretty-print the last few rows
 
 # Use the adapter we already wired
-from mt5_adapter_old import mt5_init, account_summary_lines, bars_df
+from mt5_adapter_old import account_summary_lines, bars_df, mt5_init
 
 
 def main() -> None:
@@ -31,7 +32,9 @@ def main() -> None:
         return
 
     last_close = float(df["close"].iloc[-1])
-    print(f"\nFetched {len(df)} bars for {symbol} {timeframe}. Last close={last_close:.5f}")
+    print(
+        f"\nFetched {len(df)} bars for {symbol} {timeframe}. Last close={last_close:.5f}"
+    )
 
     # Optional: show current open positions using the MT5 handle
     try:
@@ -40,7 +43,9 @@ def main() -> None:
         for p in pos[:5]:
             try:
                 d = p._asdict()
-                print(f" - {d.get('symbol')} lots={d.get('volume')} pnl={d.get('profit')}")
+                print(
+                    f" - {d.get('symbol')} lots={d.get('volume')} pnl={d.get('profit')}"
+                )
             except Exception:
                 print(f" - {p}")
     except Exception as e:

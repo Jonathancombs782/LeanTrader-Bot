@@ -1,16 +1,19 @@
 # bybit_adapter.py
 from __future__ import annotations
 
-import os, math, time
-from typing import Dict, Any, Optional, List, Tuple
+import math
+import os  # noqa: F401
+from typing import Any, Dict, List, Optional, Tuple
+
 from dotenv import load_dotenv
 
 try:
     import ccxt  # type: ignore
-except Exception as e:  # pragma: no cover
+except Exception:  # pragma: no cover
     ccxt = None
 
 load_dotenv()
+
 
 # -------------------------------------------------
 # Exchange init
@@ -37,12 +40,13 @@ def bybit_init(
         # still allow creating a Bybit instance even if EXCHANGE_ID is something else
         pass
 
-    key = api_key or os.getenv("API_KEY") or ""
-    sec = api_secret or os.getenv("API_SECRET") or ""
+    api_key or os.getenv("API_KEY") or ""
+    api_secret or os.getenv("API_SECRET") or ""
 
-    default_type = (os.getenv("EXCHANGE_MODE") or mode or "spot").lower()
+    (os.getenv("EXCHANGE_MODE") or mode or "spot").lower()
 
-    from router import ExchangeRouter
+    from router import ExchangeRouter  # noqa: E402
+
     router = ExchangeRouter()
     # If you ever want testnet:
     # router.ex.set_sandbox_mode(True)
@@ -57,6 +61,7 @@ def _load_markets(ex) -> Dict[str, Any]:
         return ex.load_markets()
     return ex.markets
 
+
 def map_symbol(symbol: str) -> str:
     """
     Normalize common variations (USD -> USDT for spot).
@@ -65,6 +70,7 @@ def map_symbol(symbol: str) -> str:
     if s.endswith("/USD"):
         s = s.replace("/USD", "/USDT")
     return s
+
 
 def price_amount_precisions(ex, symbol: str) -> Tuple[int, int, float, float]:
     """
@@ -76,11 +82,11 @@ def price_amount_precisions(ex, symbol: str) -> Tuple[int, int, float, float]:
         raise RuntimeError(f"Unknown market {symbol!r} on {ex.id}")
 
     price_prec = int(m.get("precision", {}).get("price", 8))
-    amt_prec   = int(m.get("precision", {}).get("amount", 8))
+    amt_prec = int(m.get("precision", {}).get("amount", 8))
 
-    limits     = m.get("limits", {}) or {}
-    min_cost   = float(limits.get("cost", {}).get("min") or 0.0)  # min notional
-    step_amt   = float(limits.get("amount", {}).get("step") or 0.0)
+    limits = m.get("limits", {}) or {}
+    min_cost = float(limits.get("cost", {}).get("min") or 0.0)  # min notional
+    step_amt = float(limits.get("amount", {}).get("step") or 0.0)
 
     # Bybit sometimes puts filters under info
     if min_cost <= 0:
@@ -91,6 +97,7 @@ def price_amount_precisions(ex, symbol: str) -> Tuple[int, int, float, float]:
             pass
 
     return price_prec, amt_prec, min_cost, step_amt or 0.0
+
 
 def floor_to_step(x: float, step: float, digits: int) -> float:
     if step and step > 0:
@@ -107,10 +114,13 @@ def floor_to_step(x: float, step: float, digits: int) -> float:
 # -------------------------------------------------
 # Data & balances
 # -------------------------------------------------
-def fetch_ohlcv(ex, symbol: str, timeframe: str = "1m", limit: int = 200) -> List[List[float]]:
+def fetch_ohlcv(
+    ex, symbol: str, timeframe: str = "1m", limit: int = 200
+) -> List[List[float]]:
     # Use router safe wrapper
     s = map_symbol(symbol)
     return ex.safe_fetch_ohlcv(s, timeframe=timeframe, limit=limit)
+
 
 def account_summary_lines(ex, quote: str = "USDT") -> List[str]:
     try:
@@ -121,7 +131,7 @@ def account_summary_lines(ex, quote: str = "USDT") -> List[str]:
     lines: List[str] = []
     total = 0.0
 
-    totals = (bal.get("total") or {})
+    totals = bal.get("total") or {}
     for asset, amt in sorted(totals.items()):
         try:
             v = float(amt or 0)
@@ -149,6 +159,7 @@ def account_summary_lines(ex, quote: str = "USDT") -> List[str]:
     return lines
 
 
+
 # -------------------------------------------------
 # Orders (SPOT, market)
 # -------------------------------------------------
@@ -170,13 +181,18 @@ def ensure_can_trade(ex, symbol: str, side: str, usd_stake: float) -> Tuple[str,
     qty = floor_to_step(qty_raw, step_amt, amt_digits)
 
     if qty <= 0:
-        raise RuntimeError(f"Stake {usd_stake} too small for {ccxt_sym} (step={step_amt})")
+        raise RuntimeError(
+            f"Stake {usd_stake} too small for {ccxt_sym} (step={step_amt})"
+        )
 
     if notional > 0 and qty * last < notional:
         need = notional / last
-        raise RuntimeError(f"Stake too small: need ≥ {notional} notional (~{need:.6f} units)")
+        raise RuntimeError(
+            f"Stake too small: need ≥ {notional} notional (~{need:.6f} units)"
+        )
 
     return ccxt_sym, qty
+
 
 def order_market(
     ex,
@@ -199,7 +215,7 @@ def order_market(
     try:
         o = ex.safe_place_order(ccxt_sym, side, qty)
         filled = float(o.get("filled") or 0.0)
-        px     = float((o.get("average") or o.get("price") or 0.0))
+        px = float((o.get("average") or o.get("price") or 0.0))
         return {
             "ok": True,
             "id": str(o.get("id") or ""),

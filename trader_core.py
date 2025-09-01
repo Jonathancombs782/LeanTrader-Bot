@@ -1,26 +1,36 @@
 # trader_core.py
 from __future__ import annotations
 
-import os, time
-from typing import List, Dict, Any, Optional
-from dotenv import load_dotenv
-import pandas as pd
+import os
+import time
+from typing import (Any, Dict, List,  # noqa: F401  # intentionally kept
+                    Optional)
 
-from session_clock import fx_session_active, minutes_to_next_open
-from volatility import vol_hot
+import pandas as pd
+from dotenv import load_dotenv
+
+from futures_signals import calc_contract_qty_usdt, fut_side_from_ema
 from mt5_adapter import mt5_init
 from mt5_signals import fetch_bars_safe, gen_signal, place_mt5_signal
+from risk_guard import RiskConfig, RiskManager
 from router import ExchangeRouter
-from risk_guard import RiskManager, RiskConfig
-from futures_signals import fut_side_from_ema, calc_contract_qty_usdt
-from skillbook import update_vol_stats, personalized_thresholds
+from session_clock import fx_session_active, minutes_to_next_open
+from skillbook import personalized_thresholds, update_vol_stats
+from volatility import vol_hot
 
 load_dotenv()
 
-ENABLE_LIVE = (os.getenv("ENABLE_LIVE") or "false").strip().lower() in ("1","true","yes","on")
+ENABLE_LIVE = (os.getenv("ENABLE_LIVE") or "false").strip().lower() in (
+    "1",
+    "true",
+    "yes",
+    "on",
+)
+
 
 def _csv(s: str) -> List[str]:
     return [x.strip() for x in (s or "").split(",") if x.strip()]
+
 
 def _lots_for(symbol: str, tf: str) -> float:
     env_key = f"LOTS_{tf.upper()}"
@@ -29,6 +39,7 @@ def _lots_for(symbol: str, tf: str) -> float:
     if "XAU" in symbol.upper():
         base *= float(os.getenv("XAU_LOT_MULT", "0.6") or "0.6")
     return base
+
 
 def _stake_for_tf(tf: str, kind: str = "SPOT") -> float:
     # SPOT stake per TF or FUT stake per TF
@@ -39,6 +50,7 @@ def _stake_for_tf(tf: str, kind: str = "SPOT") -> float:
     except Exception:
         return default
 
+
 def _fut_leverage(symbol: str) -> float:
     # Per-symbol leverage (env) with fallback
     s = symbol.upper().replace("/", "_")
@@ -47,6 +59,7 @@ def _fut_leverage(symbol: str) -> float:
         return float(v)
     except Exception:
         return 5.0
+
 
 class TraderCore:
     def __init__(
@@ -90,11 +103,17 @@ class TraderCore:
                     continue
 
                 # symbol-aware thresholds (XAU stricter)
-                atr_th, bbw_th = personalized_thresholds(sym, self.base_atr_th, self.base_bbw_th)
+                atr_th, bbw_th = personalized_thresholds(
+                    sym, self.base_atr_th, self.base_bbw_th
+                )
                 v = vol_hot(df, atr_th=atr_th, bbw_th=bbw_th)
-                update_vol_stats("FX", sym, tf, v.get("atr_pct", 0.0), v.get("bbw", 0.0))
+                update_vol_stats(
+                    "FX", sym, tf, v.get("atr_pct", 0.0), v.get("bbw", 0.0)
+                )
                 if not v["hot"]:
-                    print(f"[FX] {sym} {tf}: cool (ATR%={v['atr_pct']:.4f}, BBW={v['bbw']:.4f})")
+                    print(
+                        f"[FX] {sym} {tf}: cool (ATR%={v['atr_pct']:.4f}, BBW={v['bbw']:.4f})"
+                    )
                     continue
 
                 sig = gen_signal(df)
@@ -103,9 +122,13 @@ class TraderCore:
                     continue
 
                 lots = _lots_for(sym, tf)
-                print(f"[FX] {sym} {tf}: {sig['side'].upper()} lots={lots:.2f} SL={sig['sl']:.5f} TP={sig['tp']:.5f} live={ENABLE_LIVE}")
+                print(
+                    f"[FX] {sym} {tf}: {sig['side'].upper()} lots={lots:.2f} SL={sig['sl']:.5f} TP={sig['tp']:.5f} live={ENABLE_LIVE}"
+                )
                 if ENABLE_LIVE:
-                    res = place_mt5_signal(self.mt5, sym, sig["side"], lots, sig["sl"], sig["tp"])
+                    res = place_mt5_signal(
+                        self.mt5, sym, sig["side"], lots, sig["sl"], sig["tp"]
+                    )
                     print(" -> order:", res)
 
     # ---------- Crypto Spot ----------
@@ -118,17 +141,30 @@ class TraderCore:
                     if not rows:
                         df = pd.DataFrame()
                     else:
-                        df = pd.DataFrame(rows, columns=["time","open","high","low","close","volume"])
+                        df = pd.DataFrame(
+                            rows,
+                            columns=["time", "open", "high", "low", "close", "volume"],
+                        )
                         df["time"] = pd.to_datetime(df["time"], unit="ms")
                 except Exception as e:
                     print(f"[trader_core] safe_fetch_ohlcv failed for {sym} {tf}: {e}")
                     df = pd.DataFrame()
 
-                atr_th, bbw_th = personalized_thresholds(sym, self.base_atr_th, self.base_bbw_th)
-                v = vol_hot(df, atr_th=atr_th, bbw_th=bbw_th) if not df.empty else {"hot": 1.0, "atr_pct":0.0, "bbw":0.0}
-                update_vol_stats("SPOT", sym, tf, v.get("atr_pct",0.0), v.get("bbw",0.0))
+                atr_th, bbw_th = personalized_thresholds(
+                    sym, self.base_atr_th, self.base_bbw_th
+                )
+                v = (
+                    vol_hot(df, atr_th=atr_th, bbw_th=bbw_th)
+                    if not df.empty
+                    else {"hot": 1.0, "atr_pct": 0.0, "bbw": 0.0}
+                )
+                update_vol_stats(
+                    "SPOT", sym, tf, v.get("atr_pct", 0.0), v.get("bbw", 0.0)
+                )
                 if not v["hot"]:
-                    print(f"[SPOT] {sym} {tf}: cool (ATR%={v['atr_pct']:.4f}, BBW={v['bbw']:.4f})")
+                    print(
+                        f"[SPOT] {sym} {tf}: cool (ATR%={v['atr_pct']:.4f}, BBW={v['bbw']:.4f})"
+                    )
                     continue
 
                 if df.empty:
@@ -148,7 +184,9 @@ class TraderCore:
                     print(f"[SPOT] {sym}: blocked by risk: {pre['reason']}")
                     continue
                 qty = self.risk.size_spot(sym) or 0.0
-                print(f"[SPOT] {sym} {tf}: {side.upper()} qty≈{qty:.6f} live={ENABLE_LIVE}")
+                print(
+                    f"[SPOT] {sym} {tf}: {side.upper()} qty≈{qty:.6f} live={ENABLE_LIVE}"
+                )
                 if ENABLE_LIVE:
                     res = self.router.place_spot_market(sym, side, qty)
                     print(" -> order:", res)
@@ -163,18 +201,31 @@ class TraderCore:
                     if not rows:
                         df, px = pd.DataFrame(), 0.0
                     else:
-                        df = pd.DataFrame(rows, columns=["time","open","high","low","close","volume"])
+                        df = pd.DataFrame(
+                            rows,
+                            columns=["time", "open", "high", "low", "close", "volume"],
+                        )
                         df["time"] = pd.to_datetime(df["time"], unit="ms")
                         px = float(df["close"].iloc[-1])
                 except Exception as e:
                     print(f"[trader_core] safe_fetch_ohlcv failed for {sym} {tf}: {e}")
                     df, px = pd.DataFrame(), 0.0
 
-                atr_th, bbw_th = personalized_thresholds(sym, self.base_atr_th, self.base_bbw_th)
-                v = vol_hot(df, atr_th=atr_th, bbw_th=bbw_th) if not df.empty else {"hot": 1.0, "atr_pct":0.0, "bbw":0.0}
-                update_vol_stats("FUT", sym, tf, v.get("atr_pct",0.0), v.get("bbw",0.0))
+                atr_th, bbw_th = personalized_thresholds(
+                    sym, self.base_atr_th, self.base_bbw_th
+                )
+                v = (
+                    vol_hot(df, atr_th=atr_th, bbw_th=bbw_th)
+                    if not df.empty
+                    else {"hot": 1.0, "atr_pct": 0.0, "bbw": 0.0}
+                )
+                update_vol_stats(
+                    "FUT", sym, tf, v.get("atr_pct", 0.0), v.get("bbw", 0.0)
+                )
                 if not v["hot"]:
-                    print(f"[FUT] {sym} {tf}: cool (ATR%={v['atr_pct']:.4f}, BBW={v['bbw']:.4f})")
+                    print(
+                        f"[FUT] {sym} {tf}: cool (ATR%={v['atr_pct']:.4f}, BBW={v['bbw']:.4f})"
+                    )
                     continue
 
                 side = fut_side_from_ema(df) if not df.empty else None
@@ -185,7 +236,9 @@ class TraderCore:
                 stake = _stake_for_tf(tf, "FUT")
                 lev = _fut_leverage(sym)
                 qty = calc_contract_qty_usdt(px, stake, lev, min_qty=0.001, step=0.001)
-                print(f"[FUT] {sym} {tf}: {side.upper()} qty≈{qty:.4f} lev={lev} live={ENABLE_LIVE}")
+                print(
+                    f"[FUT] {sym} {tf}: {side.upper()} qty≈{qty:.4f} lev={lev} live={ENABLE_LIVE}"
+                )
                 if ENABLE_LIVE and qty > 0:
                     # Place market order; your router handles margin mode/hedge/reduce-only defaults
                     res = self.router.place_futures_market(sym, side, qty, leverage=lev)
@@ -193,7 +246,9 @@ class TraderCore:
 
     # ---------- Main loop ----------
     def run_forever(self) -> None:
-        print(f"TraderCore live={ENABLE_LIVE} | FX={self.fx_symbols} | SPOT={self.crypto_spot} | FUT={self.crypto_fut}")
+        print(
+            f"TraderCore live={ENABLE_LIVE} | FX={self.fx_symbols} | SPOT={self.crypto_spot} | FUT={self.crypto_fut}"
+        )
         while True:
             try:
                 if self.fx_symbols:

@@ -21,32 +21,42 @@ ENV (defaults):
 
 from __future__ import annotations
 
-import os, json, time, hmac, hashlib, threading
-from typing import Dict, Any, List, Tuple
+import hashlib
+import hmac
+import json
+import os
+import threading
+import time
 from datetime import datetime
 from pathlib import Path
+from typing import Any, Dict, List, Tuple
 
 # requests is optional; we import lazily where used
 import requests  # make sure it's installed in your venv
 
 # ---- optional memory hooks (safe if absent) ----
 try:
-    from pattern_memory import record as pm_record  # (symbol, tf, df_on_entry, entry_price, meta)
+    from pattern_memory import \
+        record as pm_record  # (symbol, tf, df_on_entry, entry_price, meta)
 except Exception:
     pm_record = None
 
 try:
     # if you maintain outcomes elsewhere you can import your writer here
-    from pattern_memory import set_outcome as pm_set_outcome  # (symbol, tf, entry_ts, outcome, label)
+    from pattern_memory import \
+        set_outcome as pm_set_outcome  # (symbol, tf, entry_ts, outcome, label)
 except Exception:
     pm_set_outcome = None
 
 # ---- Telegram helper (safe no-op if disabled) ----
 try:
-    from tg_utils import send_signal as tg_send  # expects (title: str, lines: list[str])
+    from tg_utils import \
+        send_signal as tg_send  # expects (title: str, lines: list[str])
 except Exception:
+
     def tg_send(_: str, __: List[str]) -> bool:
         return False
+
 
 # ------------ config ------------
 Q_DIR: Path = Path(os.getenv("SIGNALS_QUEUE_DIR", "runtime"))
@@ -61,6 +71,7 @@ WEBHOOK_SECRET = os.getenv("SIGNALS_WEBHOOK_SECRET", "").strip()
 
 SEEN_PATH = Q_DIR / "signals_seen.json"
 Q_DIR.mkdir(parents=True, exist_ok=True)
+
 
 # ------------ token bucket ------------
 class _Bucket:
@@ -82,7 +93,9 @@ class _Bucket:
                 return True
             return False
 
+
 _BUCKET = _Bucket(RATE_PM)
+
 
 # ------------ de-dupe store ------------
 def _load_seen() -> Dict[str, float]:
@@ -94,6 +107,7 @@ def _load_seen() -> Dict[str, float]:
         pass
     return {}
 
+
 def _save_seen(seen: Dict[str, float]) -> None:
     try:
         cutoff = time.time() - DEDUP_S
@@ -103,41 +117,57 @@ def _save_seen(seen: Dict[str, float]) -> None:
     except Exception:
         pass
 
+
 # ------------ helpers ------------
 def _fingerprint(sig: Dict[str, Any]) -> str:
     core = {
         "market": sig.get("market"),
         "symbol": sig.get("symbol"),
-        "tf":     sig.get("tf"),
-        "side":   sig.get("side"),
-        "entry":  round(float(sig.get("entry", 0.0)), 6),
-        "tp1":    round(float(sig.get("tp1",   0.0)), 6),
-        "tp2":    round(float(sig.get("tp2",   0.0)), 6),
-        "tp3":    round(float(sig.get("tp3",   0.0)), 6),
-        "sl":     round(float(sig.get("sl",    0.0)), 6),
+        "tf": sig.get("tf"),
+        "side": sig.get("side"),
+        "entry": round(float(sig.get("entry", 0.0)), 6),
+        "tp1": round(float(sig.get("tp1", 0.0)), 6),
+        "tp2": round(float(sig.get("tp2", 0.0)), 6),
+        "tp3": round(float(sig.get("tp3", 0.0)), 6),
+        "sl": round(float(sig.get("sl", 0.0)), 6),
     }
     s = json.dumps(core, sort_keys=True, separators=(",", ":"))
     return hashlib.sha256(s.encode("utf-8")).hexdigest()
 
+
 def _validate_and_normalize(sig: Dict[str, Any]) -> Dict[str, Any]:
-    req = ["market","symbol","tf","side","entry","tp1","tp2","tp3","sl","confidence"]
+    req = [
+        "market",
+        "symbol",
+        "tf",
+        "side",
+        "entry",
+        "tp1",
+        "tp2",
+        "tp3",
+        "sl",
+        "confidence",
+    ]
     miss = [k for k in req if k not in sig]
     if miss:
         raise ValueError(f"missing keys: {miss}")
     out = dict(sig)
     out["market"] = str(out["market"]).lower()
     out["symbol"] = str(out["symbol"]).upper()
-    out["tf"]     = str(out["tf"]).lower()
-    out["side"]   = str(out["side"]).lower()
-    for k in ["entry","tp1","tp2","tp3","sl","confidence"]:
+    out["tf"] = str(out["tf"]).lower()
+    out["side"] = str(out["side"]).lower()
+    for k in ["entry", "tp1", "tp2", "tp3", "sl", "confidence"]:
         out[k] = float(out[k])
     if not (0.0 <= out["confidence"] <= 1.0):
         raise ValueError("confidence must be within [0,1]")
     # optional
-    if "qty" in out: out["qty"] = float(out["qty"])
-    if "context" not in out: out["context"] = []
+    if "qty" in out:
+        out["qty"] = float(out["qty"])
+    if "context" not in out:
+        out["context"] = []
     # passthrough extras: news bullets, reasons, df snapshot pointer, etc.
     return out
+
 
 def _queue_path() -> Path:
     if ROLL:
@@ -145,11 +175,13 @@ def _queue_path() -> Path:
         return Q_DIR / f"{Q_PREF}-{day}.ndjson"
     return Q_DIR / f"{Q_PREF}.ndjson"
 
+
 def _append_ndjson(payload: Dict[str, Any]) -> Path:
     path = _queue_path()
     with open(path, "a", encoding="utf-8") as f:
         f.write(json.dumps(payload, ensure_ascii=False) + "\n")
     return path
+
 
 def _post_webhook(payload: Dict[str, Any]) -> bool:
     if not WEBHOOK_URL:
@@ -169,15 +201,18 @@ def _post_webhook(payload: Dict[str, Any]) -> bool:
         print("[webhook] error:", e)
         return False
 
+
 def _fmt_price(x: float) -> str:
     return f"{x:.6f}".rstrip("0").rstrip(".")
+
 
 def _q_emoji(q: float) -> str:
     return "🟢" if q >= 0.75 else "🟡" if q >= 0.5 else "🟠" if q >= 0.25 else "🔘"
 
+
 def _render_for_telegram(s: Dict[str, Any]) -> Tuple[str, List[str]]:
-    mkt = s.get("market","").upper()
-    title = f"🚀 Signal {s['symbol']} — {s['side'].upper()} ({mkt} {s.get('tf','?')})"
+    mkt = s.get("market", "").upper()
+    title = f"🚀 Signal {s['symbol']} — {s['side'].upper()} ({mkt} {s.get('tf', '?')})"
     lines = [
         f"Entry: {_fmt_price(s['entry'])} | SL: {_fmt_price(s['sl'])}",
         f"TP1: {_fmt_price(s['tp1'])} | TP2: {_fmt_price(s['tp2'])} | TP3: {_fmt_price(s['tp3'])}",
@@ -194,8 +229,10 @@ def _render_for_telegram(s: Dict[str, Any]) -> Tuple[str, List[str]]:
     lines.append("")
     lines.append(f"Tap: /{side_l} {base} <qty>   /flat {base}   /balance")
     src = "MT5" if mkt == "FX" else "CCXT"
-    lines.append(f"_Source: {src} | TF: {s.get('tf','?')}_")
+    lines.append(f"_Source: {src} | TF: {s.get('tf', '?')}_")
+
     return title, lines
+
 
 # ------------ public API ------------
 def publish_signal(sig: Dict[str, Any]) -> Dict[str, Any]:
@@ -235,13 +272,26 @@ def publish_signal(sig: Dict[str, Any]) -> Dict[str, Any]:
             # if caller embeds a small df snapshot in s.get("df"), pm_record will extract features
             df = s.get("df")
             if df is not None:
-                pm_record(s["symbol"], s["tf"], df, float(s.get("entry", 0.0)),
-                          {"side": s["side"], "conf": s.get("confidence", 0.0), "market": s.get("market","")})
+                pm_record(
+                    s["symbol"],
+                    s["tf"],
+                    df,
+                    float(s.get("entry", 0.0)),
+                    {
+                        "side": s["side"],
+                        "conf": s.get("confidence", 0.0),
+                        "market": s.get("market", ""),
+                    },
+                )
     except Exception:
         pass
 
     # outbound notifications (rate limited)
-    notified: Dict[str, Any] = {"rate_limited": False, "telegram": False, "webhook": False}
+    notified: Dict[str, Any] = {
+        "rate_limited": False,
+        "telegram": False,
+        "webhook": False,
+    }
     if _BUCKET.allow():
         try:
             title, lines = _render_for_telegram(s)
@@ -258,6 +308,7 @@ def publish_signal(sig: Dict[str, Any]) -> Dict[str, Any]:
 
     return {"ok": True, "id": fp, "path": str(path), "notified": notified}
 
+
 def publish_batch(signals: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
     out: List[Dict[str, Any]] = []
     for s in signals:
@@ -267,12 +318,20 @@ def publish_batch(signals: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
             out.append({"ok": False, "error": str(e)})
     return out
 
+
 # ------------ CLI quick test ------------
 if __name__ == "__main__":
     demo = {
-        "market":"crypto","symbol":"BTC/USDT","tf":"5m","side":"buy",
-        "entry": 60000.0, "tp1": 60100.0, "tp2": 60200.0, "tp3": 60400.0,
-        "sl": 59880.0, "confidence": 0.78,
+        "market": "crypto",
+        "symbol": "BTC/USDT",
+        "tf": "5m",
+        "side": "buy",
+        "entry": 60000.0,
+        "tp1": 60100.0,
+        "tp2": 60200.0,
+        "tp3": 60400.0,
+        "sl": 59880.0,
+        "confidence": 0.78,
         "context": ["MTF aligned ↑", "ATR ok", "News tailwind"],
     }
     print(json.dumps(publish_signal(demo), indent=2))

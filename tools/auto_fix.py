@@ -1,16 +1,32 @@
-import os, re, ast, json, argparse
-from typing import List, Dict
+import argparse
+import ast
+import json
+import os
+import re
+from typing import Dict, List
 
-EXCLUDE_DIRS = {".git", "__pycache__", "venv", "env", "node_modules", "reports", "tools"}
+EXCLUDE_DIRS = {
+    ".git",
+    "__pycache__",
+    "venv",
+    "env",
+    "node_modules",
+    "reports",
+    "tools",
+}
 
 # Safe textual fixes (order matters)
 FIX_PATTERNS = [
     # Convert bare except: -> except Exception:
-    (re.compile(r"(^[ \t]*)except\s*:(\s*(#.*)?)$", re.MULTILINE), r"\1except Exception:\2"),
+    (
+        re.compile(r"(^[ \t]*)except\s*:(\s*(#.*)?)$", re.MULTILINE),
+        r"\1except Exception:\2",
+    ),
     # Fix accidental extra paren before colon: `.items()):` -> `.items():`
     (re.compile(r"\.items\(\)\):"), r".items():"),
     # Remove duplicated consecutive identical lines (handled separately)
 ]
+
 
 def remove_consecutive_duplicates(text: str) -> str:
     out_lines: List[str] = []
@@ -23,7 +39,8 @@ def remove_consecutive_duplicates(text: str) -> str:
         out_lines.append(line)
         prev = line
     # preserve trailing newline if present originally
-    return ("\n".join(out_lines) + ("\n" if text.endswith("\n") else ""))
+    return "\n".join(out_lines) + ("\n" if text.endswith("\n") else "")
+
 
 def apply_fixes(text: str) -> (str, List[str]):
     applied = []
@@ -41,8 +58,10 @@ def apply_fixes(text: str) -> (str, List[str]):
         new = new2
     return new, applied
 
+
 def is_python_file(path: str) -> bool:
     return path.endswith(".py")
+
 
 def safe_parse(src: str) -> (bool, str):
     try:
@@ -50,6 +69,7 @@ def safe_parse(src: str) -> (bool, str):
         return True, ""
     except Exception as e:
         return False, str(e)
+
 
 def scan_and_fix(root: str, apply: bool = False) -> Dict[str, Dict]:
     report: Dict[str, Dict] = {}
@@ -72,9 +92,20 @@ def scan_and_fix(root: str, apply: bool = False) -> Dict[str, Dict]:
                 continue
             # initial parse check
             ok_before, err_before = safe_parse(src)
-            entry = {"ok_before": ok_before, "parse_error_before": err_before if not ok_before else "", "applied": [], "ok_after": None, "parse_error_after": None}
+            entry = {
+                "ok_before": ok_before,
+                "parse_error_before": err_before if not ok_before else "",
+                "applied": [],
+                "ok_after": None,
+                "parse_error_after": None,
+            }
             # attempt fixes only if parse failed OR file contains patterns we can fix
-            should_try = (not ok_before) or any(p.search(src) for p, _ in FIX_PATTERNS) or ".items())" in src or "\n" + src.splitlines()[-1] + "\n" in src
+            should_try = (
+                (not ok_before)
+                or any(p.search(src) for p, _ in FIX_PATTERNS)
+                or ".items())" in src
+                or "\n" + src.splitlines()[-1] + "\n" in src
+            )
             if not should_try:
                 entry["reason"] = "no fixes needed"
                 report[rel] = entry
@@ -96,11 +127,20 @@ def scan_and_fix(root: str, apply: bool = False) -> Dict[str, Dict]:
             report[rel] = entry
     return report
 
+
 def main(argv: List[str] = None):
-    p = argparse.ArgumentParser(description="Conservative auto-fixer for common Python repo issues")
+    p = argparse.ArgumentParser(
+        description="Conservative auto-fixer for common Python repo issues"
+    )
     p.add_argument("--root", "-r", default=".", help="Project root")
-    p.add_argument("--apply", action="store_true", help="Write fixes to files (only when parse succeeds)")
-    p.add_argument("--out", "-o", default="tools/auto_fix_report.json", help="Report JSON path")
+    p.add_argument(
+        "--apply",
+        action="store_true",
+        help="Write fixes to files (only when parse succeeds)",
+    )
+    p.add_argument(
+        "--out", "-o", default="tools/auto_fix_report.json", help="Report JSON path"
+    )
     args = p.parse_args(argv)
     os.makedirs(os.path.dirname(args.out) or ".", exist_ok=True)
     report = scan_and_fix(args.root, apply=args.apply)
@@ -113,8 +153,11 @@ def main(argv: List[str] = None):
     written = sum(1 for v in report.values() if v.get("written"))
     parsed_fail_before = sum(1 for v in report.values() if not v.get("ok_before"))
     parsed_fail_after = sum(1 for v in report.values() if not v.get("ok_after"))
-    print(f"Files scanned: {total}, files with attempted fixes: {fixes}, files written: {written}")
+    print(
+        f"Files scanned: {total}, files with attempted fixes: {fixes}, files written: {written}"
+    )
     print(f"Parse failures before: {parsed_fail_before}, after: {parsed_fail_after}")
+
 
 if __name__ == "__main__":
     main()

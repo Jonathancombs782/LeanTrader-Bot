@@ -1,6 +1,7 @@
 # risk.py
 from dataclasses import dataclass
 
+
 @dataclass
 class RiskConfig:
     initial_equity: float = 10000.0
@@ -24,4 +25,3 @@ class RiskConfig:
     min_position_size: float = 0.01
     position_size_step: float = 0.01
     max_position_size: float = 1.0
-    

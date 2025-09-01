@@ -1,8 +1,12 @@
 # tester.py
 from __future__ import annotations
-import pandas as pd, numpy as np
+
 from pathlib import Path
+
+import pandas as pd  # noqa: F401  # intentionally kept
+
 from alpha_engines import ensemble_long_signal
+
 
 def evaluate(df: pd.DataFrame):
     gate, score = ensemble_long_signal(df, 0.72)
@@ -11,6 +15,7 @@ def evaluate(df: pd.DataFrame):
     pnl = (ret * longs.astype(int)).cumsum()
     return pnl.iloc[-1], score.iloc[-200:].mean()
 
+
 # Usage:
 # df must have columns: open,high,low,close,vol
 if __name__ == "__main__":
@@ -18,4 +23,3 @@ if __name__ == "__main__":
     df = pd.read_csv(p, parse_dates=["timestamp"])
     final_pnl, avg_score = evaluate(df)
     print(f"Final PnL: {final_pnl:.4f}, Avg Score (last 200): {avg_score:.4f}")
-    

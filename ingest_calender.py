@@ -1,11 +1,12 @@
 # ingest_calendar.py
 from __future__ import annotations
 
-import os, json, sys
-from pathlib import Path
+import os
 from datetime import datetime, timedelta, timezone
-import requests
+from pathlib import Path
+
 import pandas as pd
+import requests
 from dotenv import load_dotenv
 
 DATA_DIR = Path("data")
@@ -17,6 +18,7 @@ FF_URLS = [
     "https://nfs.faireconomy.media/ff_calendar_nextweek.json",
 ]
 
+
 def fetch_forexfactory() -> pd.DataFrame:
     rows = []
     for url in FF_URLS:
@@ -27,21 +29,25 @@ def fetch_forexfactory() -> pd.DataFrame:
             for it in js:
                 # Fields: "timestamp","country","title","impact","actual","forecast","previous"
                 ts = int(it.get("timestamp", 0))
-                if ts <= 0: continue
+                if ts <= 0:
+                    continue
                 dt_utc = datetime.fromtimestamp(ts, tz=timezone.utc)
                 impact = (it.get("impact") or "").strip().title()
-                rows.append({
-                    "timestamp": dt_utc.isoformat().replace("+00:00","Z"),
-                    "currency": it.get("country", ""),
-                    "event": it.get("title", ""),
-                    "impact": impact if impact else "Low",
-                    "actual": it.get("actual", ""),
-                    "forecast": it.get("forecast", ""),
-                    "previous": it.get("previous", ""),
-                })
+                rows.append(
+                    {
+                        "timestamp": dt_utc.isoformat().replace("+00:00", "Z"),
+                        "currency": it.get("country", ""),
+                        "event": it.get("title", ""),
+                        "impact": impact if impact else "Low",
+                        "actual": it.get("actual", ""),
+                        "forecast": it.get("forecast", ""),
+                        "previous": it.get("previous", ""),
+                    }
+                )
         except Exception as e:
             print("FF fetch error:", e)
     return pd.DataFrame(rows)
+
 
 def fetch_tradingeconomics(d1: str, d2: str, apikey: str) -> pd.DataFrame:
     # Free guest key also works: guest:guest (limited)
@@ -55,19 +61,32 @@ def fetch_tradingeconomics(d1: str, d2: str, apikey: str) -> pd.DataFrame:
             # TE fields vary; unify
             dt_utc = pd.to_datetime(it.get("Date"), utc=True)
             impact = (it.get("Importance", "") or "").strip().title()
-            rows.append({
-                "timestamp": dt_utc.isoformat().replace("+00:00","Z"),
-                "currency": it.get("Country", ""),
-                "event": it.get("Event", ""),
-                "impact": impact if impact else "Low",
-                "actual": it.get("Actual", ""),
-                "forecast": it.get("Forecast", ""),
-                "previous": it.get("Previous", ""),
-            })
+            rows.append(
+                {
+                    "timestamp": dt_utc.isoformat().replace("+00:00", "Z"),
+                    "currency": it.get("Country", ""),
+                    "event": it.get("Event", ""),
+                    "impact": impact if impact else "Low",
+                    "actual": it.get("Actual", ""),
+                    "forecast": it.get("Forecast", ""),
+                    "previous": it.get("Previous", ""),
+                }
+            )
         return pd.DataFrame(rows)
     except Exception as e:
         print("TE fetch error:", e)
-        return pd.DataFrame(columns=["timestamp","currency","event","impact","actual","forecast","previous"])
+        return pd.DataFrame(
+            columns=[
+                "timestamp",
+                "currency",
+                "event",
+                "impact",
+                "actual",
+                "forecast",
+                "previous",
+            ]
+        )
+
 
 def main():
     load_dotenv()
@@ -86,17 +105,35 @@ def main():
     df = pd.concat([df_ff, df_te], ignore_index=True)
     if df.empty:
         print("No events fetched; writing empty calendar.csv.")
-        df = pd.DataFrame(columns=["timestamp","currency","event","impact","actual","forecast","previous"])
+        df = pd.DataFrame(
+            columns=[
+                "timestamp",
+                "currency",
+                "event",
+                "impact",
+                "actual",
+                "forecast",
+                "previous",
+            ]
+        )
 
     # Normalize
     df["timestamp"] = pd.to_datetime(df["timestamp"], utc=True)
-    df["impact"] = df["impact"].str.title().replace({"Medium": "Medium", "High": "High"}).fillna("Low")
-    df = df.sort_values("timestamp").drop_duplicates(subset=["timestamp","event","currency"])
+    df["impact"] = (
+        df["impact"]
+        .str.title()
+        .replace({"Medium": "Medium", "High": "High"})
+        .fillna("Low")
+    )
+    df = df.sort_values("timestamp").drop_duplicates(
+        subset=["timestamp", "event", "currency"]
+    )
 
     # Save high-impact only (what your filters expect)
     df_high = df[df["impact"] == "High"].copy()
     df_high.to_csv(OUT_CSV, index=False)
     print(f"Wrote {len(df_high)} high-impact rows to {OUT_CSV}")
+
 
 if __name__ == "__main__":
     main()

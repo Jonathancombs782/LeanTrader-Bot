@@ -1,14 +1,16 @@
 # session_clock.py
 from __future__ import annotations
+
 from dataclasses import dataclass
 from datetime import datetime, time, timedelta, timezone
-from zoneinfo import ZoneInfo
 from typing import Optional
+from zoneinfo import ZoneInfo
 
 LONDON = ZoneInfo("Europe/London")
 NEWYORK = ZoneInfo("America/New_York")
 TOKYO = ZoneInfo("Asia/Tokyo")
 SYDNEY = ZoneInfo("Australia/Sydney")
+
 
 @dataclass
 class Window:
@@ -16,17 +18,20 @@ class Window:
     start: time
     end: time
 
+
 # Core sessions (local clock in each region)
-LONDON_WIN  = Window(LONDON,  time(7, 0),  time(17, 0))
-NEWYORK_WIN = Window(NEWYORK, time(8, 0),  time(17, 0))
-TOKYO_WIN   = Window(TOKYO,   time(9, 0),  time(18, 0))
-SYDNEY_WIN  = Window(SYDNEY,  time(9, 0),  time(18, 0))
+LONDON_WIN = Window(LONDON, time(7, 0), time(17, 0))
+NEWYORK_WIN = Window(NEWYORK, time(8, 0), time(17, 0))
+TOKYO_WIN = Window(TOKYO, time(9, 0), time(18, 0))
+SYDNEY_WIN = Window(SYDNEY, time(9, 0), time(18, 0))
+
 
 def _in_window(win: Window, now_utc: datetime) -> bool:
     now_local = now_utc.astimezone(win.tz)
     start = datetime.combine(now_local.date(), win.start, tzinfo=win.tz)
-    end   = datetime.combine(now_local.date(), win.end,   tzinfo=win.tz)
+    end = datetime.combine(now_local.date(), win.end, tzinfo=win.tz)
     return start <= now_local <= end
+
 
 def fx_session_active(symbol: str, now_utc: Optional[datetime] = None) -> bool:
     """
@@ -40,7 +45,7 @@ def fx_session_active(symbol: str, now_utc: Optional[datetime] = None) -> bool:
     """
     s = symbol.upper()
     now_utc = now_utc or datetime.now(timezone.utc)
-    base = s.replace(":", "/").split("/")[0]
+    s.replace(":", "/").split("/")[0]
 
     is_london = any(k in s for k in ("EUR", "GBP", "XAU", "XAG"))
     is_newyork = any(k in s for k in ("USD", "XAU", "XAG"))
@@ -48,11 +53,16 @@ def fx_session_active(symbol: str, now_utc: Optional[datetime] = None) -> bool:
     is_sydney = any(k in s for k in ("AUD", "NZD"))
 
     active = False
-    if is_london:  active |= _in_window(LONDON_WIN, now_utc)
-    if is_newyork: active |= _in_window(NEWYORK_WIN, now_utc)
-    if is_tokyo:   active |= _in_window(TOKYO_WIN, now_utc)
-    if is_sydney:  active |= _in_window(SYDNEY_WIN, now_utc)
+    if is_london:
+        active |= _in_window(LONDON_WIN, now_utc)
+    if is_newyork:
+        active |= _in_window(NEWYORK_WIN, now_utc)
+    if is_tokyo:
+        active |= _in_window(TOKYO_WIN, now_utc)
+    if is_sydney:
+        active |= _in_window(SYDNEY_WIN, now_utc)
     return active
+
 
 def minutes_to_next_open(symbol: str, now_utc: Optional[datetime] = None) -> int:
     now_utc = now_utc or datetime.now(timezone.utc)
@@ -61,10 +71,14 @@ def minutes_to_next_open(symbol: str, now_utc: Optional[datetime] = None) -> int
 
     wins = []
     s = symbol.upper()
-    if any(k in s for k in ("EUR","GBP","XAU","XAG")): wins.append(LONDON_WIN)
-    if "USD" in s or any(k in s for k in ("XAU","XAG")): wins.append(NEWYORK_WIN)
-    if "JPY" in s: wins.append(TOKYO_WIN)
-    if any(k in s for k in ("AUD","NZD")): wins.append(SYDNEY_WIN)
+    if any(k in s for k in ("EUR", "GBP", "XAU", "XAG")):
+        wins.append(LONDON_WIN)
+    if "USD" in s or any(k in s for k in ("XAU", "XAG")):
+        wins.append(NEWYORK_WIN)
+    if "JPY" in s:
+        wins.append(TOKYO_WIN)
+    if any(k in s for k in ("AUD", "NZD")):
+        wins.append(SYDNEY_WIN)
     if not wins:
         return 60
 

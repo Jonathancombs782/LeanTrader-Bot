@@ -6,6 +6,7 @@ dict shapes so callers can handle results uniformly.
 """
 
 from __future__ import annotations
+
 from typing import Any, Dict, Optional
 
 
@@ -17,21 +18,25 @@ def place_market(ex: Any, symbol: str, side: str, amount: float) -> Dict[str, An
     side = side.lower()
     # Router-style helper
     try:
-        if hasattr(ex, 'place_spot_market'):
-            return ex.place_spot_market(symbol, side, qty=amount) if callable(getattr(ex, 'place_spot_market')) else ex.place_spot_market(symbol, side, amount)
-        if hasattr(ex, 'safe_place_order'):
+        if hasattr(ex, "place_spot_market"):
+            return (
+                ex.place_spot_market(symbol, side, qty=amount)
+                if callable(getattr(ex, "place_spot_market"))
+                else ex.place_spot_market(symbol, side, amount)
+            )
+        if hasattr(ex, "safe_place_order"):
             return ex.safe_place_order(symbol, side, amount)
-        if hasattr(ex, 'create_order'):
+        if hasattr(ex, "create_order"):
             try:
                 # Use centralized safe_create_order to normalize adapter signatures
-                return safe_create_order(ex, 'market', symbol, side, amount)
-            except Exception as e:
+                return safe_create_order(ex, "market", symbol, side, amount)
+            except Exception:
                 # Fall back to trying the adapter directly if safe_create_order fails
                 try:
-                    return ex.create_order(symbol, 'market', side, amount)
+                    return ex.create_order(symbol, "market", side, amount)
                 except Exception:
                     try:
-                        return ex.create_order(symbol, 'market', side, amount, None)
+                        return ex.create_order(symbol, "market", side, amount, None)
                     except Exception as e2:
                         return {"ok": False, "error": str(e2)}
     except Exception as e:
@@ -63,23 +68,33 @@ def place_oco_ccxt(
     # 2) TP
     if take_px is not None:
         try:
-            if hasattr(ex, 'safe_place_order'):
-                res["tp"] = ex.safe_place_order(symbol, opp_side, amount, price=take_px, params={})
-            elif hasattr(ex, 'create_limit_order'):
+            if hasattr(ex, "safe_place_order"):
+                res["tp"] = ex.safe_place_order(
+                    symbol, opp_side, amount, price=take_px, params={}
+                )
+            elif hasattr(ex, "create_limit_order"):
                 try:
-                    res["tp"] = ex.create_limit_order(symbol, opp_side, amount, float(take_px))
+                    res["tp"] = ex.create_limit_order(
+                        symbol, opp_side, amount, float(take_px)
+                    )
                 except Exception:
                     # fall back to centralized safe_create_order
                     try:
-                        res["tp"] = safe_create_order(ex, 'limit', symbol, opp_side, amount, float(take_px))
+                        res["tp"] = safe_create_order(
+                            ex, "limit", symbol, opp_side, amount, float(take_px)
+                        )
                     except Exception:
                         res["tp"] = {"ok": False, "error": "tp create failed"}
-            elif hasattr(ex, 'create_order'):
+            elif hasattr(ex, "create_order"):
                 try:
-                    res["tp"] = safe_create_order(ex, 'limit', symbol, opp_side, amount, float(take_px), params={})
+                    res["tp"] = safe_create_order(
+                        ex, "limit", symbol, opp_side, amount, float(take_px), params={}
+                    )
                 except Exception:
                     try:
-                        res["tp"] = safe_create_order(ex, 'limit', symbol, opp_side, amount, float(take_px))
+                        res["tp"] = safe_create_order(
+                            ex, "limit", symbol, opp_side, amount, float(take_px)
+                        )
                     except Exception:
                         res["tp"] = {"ok": False, "error": "tp create failed"}
             else:
@@ -91,23 +106,33 @@ def place_oco_ccxt(
     if stop_px is not None:
         try:
             params = {"stopPrice": float(stop_px)}
-            if hasattr(ex, 'safe_place_order'):
-                res["sl"] = ex.safe_place_order(symbol, opp_side, amount, price=None, params=params)
-            elif hasattr(ex, 'create_stop_order'):
+            if hasattr(ex, "safe_place_order"):
+                res["sl"] = ex.safe_place_order(
+                    symbol, opp_side, amount, price=None, params=params
+                )
+            elif hasattr(ex, "create_stop_order"):
                 try:
-                    res["sl"] = ex.create_stop_order(symbol, opp_side, amount, float(stop_px), params=params)
+                    res["sl"] = ex.create_stop_order(
+                        symbol, opp_side, amount, float(stop_px), params=params
+                    )
                 except Exception:
                     # fall back to centralized safe_create_order
                     try:
-                        res["sl"] = safe_create_order(ex, 'stop', symbol, opp_side, amount, float(stop_px))
+                        res["sl"] = safe_create_order(
+                            ex, "stop", symbol, opp_side, amount, float(stop_px)
+                        )
                     except Exception:
                         res["sl"] = {"ok": False, "error": "sl create failed"}
-            elif hasattr(ex, 'create_order'):
+            elif hasattr(ex, "create_order"):
                 try:
-                    res["sl"] = safe_create_order(ex, 'stop', symbol, opp_side, amount, None, params=params)
+                    res["sl"] = safe_create_order(
+                        ex, "stop", symbol, opp_side, amount, None, params=params
+                    )
                 except Exception:
                     try:
-                        res["sl"] = safe_create_order(ex, 'stop', symbol, opp_side, amount, float(stop_px))
+                        res["sl"] = safe_create_order(
+                            ex, "stop", symbol, opp_side, amount, float(stop_px)
+                        )
                     except Exception:
                         res["sl"] = {"ok": False, "error": "sl create failed"}
             else:
@@ -118,7 +143,15 @@ def place_oco_ccxt(
     return res
 
 
-def safe_create_order(ex: Any, typ: str, symbol: str, side: str, amount: float, price: Optional[float] = None, params: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+def safe_create_order(
+    ex: Any,
+    typ: str,
+    symbol: str,
+    side: str,
+    amount: float,
+    price: Optional[float] = None,
+    params: Optional[Dict[str, Any]] = None,
+) -> Dict[str, Any]:
     """
     Centralized, defensive create_order helper.
     Tries common adapter methods in a safe order and returns a stable dict or raw response.
@@ -129,59 +162,67 @@ def safe_create_order(ex: Any, typ: str, symbol: str, side: str, amount: float, 
     try:
         typ = (typ or "").lower()
         # prefer router/adapter safe wrappers
-        if hasattr(ex, 'safe_place_order'):
+        if hasattr(ex, "safe_place_order"):
             return ex.safe_place_order(symbol, side, amount, price=price, params=params)
 
         # explicit market/limit/stop shims
-        if typ == 'market':
-            if hasattr(ex, 'create_market_order'):
+        if typ == "market":
+            if hasattr(ex, "create_market_order"):
                 try:
                     return ex.create_market_order(symbol, side, amount)
                 except Exception:
                     pass
-            if hasattr(ex, 'create_order'):
+            if hasattr(ex, "create_order"):
                 try:
-                    return ex.create_order(symbol, 'market', side, amount)
+                    return ex.create_order(symbol, "market", side, amount)
                 except Exception:
                     pass
 
-        if typ == 'limit':
-            if hasattr(ex, 'create_limit_order'):
+        if typ == "limit":
+            if hasattr(ex, "create_limit_order"):
                 try:
                     return ex.create_limit_order(symbol, side, amount, price)
                 except Exception:
                     pass
-            if hasattr(ex, 'create_order'):
+            if hasattr(ex, "create_order"):
                 try:
-                    return ex.create_order(symbol, 'limit', side, amount, price, params or {})
+                    return ex.create_order(
+                        symbol, "limit", side, amount, price, params or {}
+                    )
                 except Exception:
                     try:
-                        return ex.create_order(symbol, 'limit', side, amount, price)
+                        return ex.create_order(symbol, "limit", side, amount, price)
                     except Exception:
                         pass
 
-        if typ in ('stop', 'stop_market', 'stop-limit'):
-            if hasattr(ex, 'create_stop_order'):
+        if typ in ("stop", "stop_market", "stop-limit"):
+            if hasattr(ex, "create_stop_order"):
                 try:
-                    return ex.create_stop_order(symbol, side, amount, price, params=params)
+                    return ex.create_stop_order(
+                        symbol, side, amount, price, params=params
+                    )
                 except Exception:
                     pass
-            if hasattr(ex, 'create_order'):
+            if hasattr(ex, "create_order"):
                 try:
-                    return ex.create_order(symbol, 'stop', side, amount, price, params or {})
+                    return ex.create_order(
+                        symbol, "stop", side, amount, price, params or {}
+                    )
                 except Exception:
                     try:
-                        return ex.create_order(symbol, 'stop', side, amount, price)
+                        return ex.create_order(symbol, "stop", side, amount, price)
                     except Exception:
                         pass
 
         # last resort: try generic create_order if present
-        if hasattr(ex, 'create_order'):
+        if hasattr(ex, "create_order"):
             try:
-                return ex.create_order(symbol, typ or 'market', side, amount, price, params or {})
+                return ex.create_order(
+                    symbol, typ or "market", side, amount, price, params or {}
+                )
             except Exception:
                 try:
-                    return ex.create_order(symbol, typ or 'market', side, amount)
+                    return ex.create_order(symbol, typ or "market", side, amount)
                 except Exception as e:
                     # return normalized error dict instead of raising
                     return {"ok": False, "error": str(e)}

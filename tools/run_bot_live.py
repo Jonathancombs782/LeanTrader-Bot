@@ -1,6 +1,6 @@
+import json
 import os
 import sys
-import json
 
 # ensure project root importable
 proj_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
@@ -16,7 +16,9 @@ def bars_to_df(bars):
     import pandas as pd
 
     if not bars:
-        return pd.DataFrame(columns=["open", "high", "low", "close", "volume", "timestamp"])
+        return pd.DataFrame(
+            columns=["open", "high", "low", "close", "volume", "timestamp"]
+        )
 
     rows = []
     for r in bars:
@@ -71,10 +73,24 @@ def main(symbol: str = None, timeframe: str = "1m", limit: int = 200):
         return
 
     # safety gates
-    enable_live = os.getenv("ENABLE_LIVE", "false").strip().lower() in ("1", "true", "yes", "y", "on")
-    allow_live = os.getenv("ALLOW_LIVE", "false").strip().lower() in ("1", "true", "yes", "y", "on")
+    enable_live = os.getenv("ENABLE_LIVE", "false").strip().lower() in (
+        "1",
+        "true",
+        "yes",
+        "y",
+        "on",
+    )
+    allow_live = os.getenv("ALLOW_LIVE", "false").strip().lower() in (
+        "1",
+        "true",
+        "yes",
+        "y",
+        "on",
+    )
     if not (enable_live and allow_live):
-        out["errors"].append("ENABLE_LIVE and ALLOW_LIVE must both be set to enable live orders")
+        out["errors"].append(
+            "ENABLE_LIVE and ALLOW_LIVE must both be set to enable live orders"
+        )
         print(json.dumps(out, indent=2))
         return
 
@@ -117,7 +133,9 @@ def main(symbol: str = None, timeframe: str = "1m", limit: int = 200):
             return
         atr_stop_mult = float(os.getenv("ATR_STOP_MULT", "1.0"))
         atr_trail_mult = float(os.getenv("ATR_TRAIL_MULT", "0.5"))
-        sig_df, info = strat.entries_and_exits(sample, atr_stop_mult=atr_stop_mult, atr_trail_mult=atr_trail_mult)
+        sig_df, info = strat.entries_and_exits(
+            sample, atr_stop_mult=atr_stop_mult, atr_trail_mult=atr_trail_mult
+        )
         out["results"]["strategy_info"] = info
         last = sig_df.iloc[-1].to_dict() if not sig_df.empty else {}
         out["results"]["last_row"] = last
@@ -137,14 +155,20 @@ def main(symbol: str = None, timeframe: str = "1m", limit: int = 200):
             usdt_free = guess_usdt_balance(bal)
             out["results"]["usdt_free_estimate"] = usdt_free
             usd_target = float(os.getenv("LIVE_ORDER_USD", "10.0"))
-            price = float(last.get("close") or (df["close"].iloc[-1] if not df.empty else 0.0) or 0.0)
+            price = float(
+                last.get("close")
+                or (df["close"].iloc[-1] if not df.empty else 0.0)
+                or 0.0
+            )
             amount = (usd_target / price) if price > 0 else 0.0
         max_order = os.getenv("MAX_ORDER_SIZE")
         if max_order:
             try:
                 max_order_f = float(max_order)
                 if amount > max_order_f:
-                    out["results"]["order_rejected"] = f"computed amount {amount} > MAX_ORDER_SIZE {max_order_f}"
+                    out["results"][
+                        "order_rejected"
+                    ] = f"computed amount {amount} > MAX_ORDER_SIZE {max_order_f}"
                     print(json.dumps(out, indent=2))
                     return
             except Exception:
@@ -160,7 +184,10 @@ def main(symbol: str = None, timeframe: str = "1m", limit: int = 200):
             res = ex.safe_place_order(symbol, "buy", amount, price=None, params={})
             out["results"]["placed_order"] = res
         else:
-            out["results"]["placed_order"] = {"ok": False, "note": "no long signal or zero amount"}
+            out["results"]["placed_order"] = {
+                "ok": False,
+                "note": "no long signal or zero amount",
+            }
     except Exception as e:
         out["errors"].append(f"order placement error: {e}")
 

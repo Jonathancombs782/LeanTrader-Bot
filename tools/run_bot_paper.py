@@ -1,4 +1,7 @@
-import os, sys, json, time
+import json
+import os  # noqa: F401  # intentionally kept
+import sys
+
 # ensure project root importable
 proj_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 if proj_root not in sys.path:
@@ -9,24 +12,39 @@ os.environ.setdefault("EXCHANGE_ID", "paper")
 os.environ.setdefault("ENABLE_LIVE", "false")
 os.environ.setdefault("ALLOW_LIVE", "false")
 
+
 def bars_to_df(bars):
     # bars: list of [ts, o, h, l, c, v]
     import pandas as pd
+
     if not bars:
-        return pd.DataFrame(columns=["open","high","low","close","volume","timestamp"])
+        return pd.DataFrame(
+            columns=["open", "high", "low", "close", "volume", "timestamp"]
+        )
     rows = []
     for r in bars:
         ts, o, h, l, c, v = r[:6]
-        rows.append({"timestamp": int(ts), "open": float(o), "high": float(h), "low": float(l), "close": float(c), "volume": float(v)})
+        rows.append(
+            {
+                "timestamp": int(ts),
+                "open": float(o),
+                "high": float(h),
+                "low": float(l),
+                "close": float(c),
+                "volume": float(v),
+            }
+        )
     df = pd.DataFrame(rows)
     # keep time order if needed
     return df
+
 
 def run_once(symbol=None, timeframe="1m", limit=200):
     out = {"errors": [], "results": {}}
     try:
         from router import ExchangeRouter
-        from strategy import resolve_strategy_and_params, get_strategy
+        from strategy import (get_strategy,  # noqa: F401  # intentionally kept
+                              resolve_strategy_and_params)
     except Exception as e:
         out["errors"].append(f"import error: {e}")
         print(json.dumps(out, indent=2))
@@ -76,7 +94,9 @@ def run_once(symbol=None, timeframe="1m", limit=200):
         # default ATR multipliers (adjust as needed)
         atr_stop_mult = float(os.getenv("ATR_STOP_MULT", "1.0"))
         atr_trail_mult = float(os.getenv("ATR_TRAIL_MULT", "0.5"))
-        sig_df, info = strat.entries_and_exits(sample, atr_stop_mult=atr_stop_mult, atr_trail_mult=atr_trail_mult)
+        sig_df, info = strat.entries_and_exits(
+            sample, atr_stop_mult=atr_stop_mult, atr_trail_mult=atr_trail_mult
+        )
         out["results"]["strategy_info"] = info
         # examine last signal
         last = sig_df.iloc[-1].to_dict() if not sig_df.empty else {}
@@ -100,6 +120,7 @@ def run_once(symbol=None, timeframe="1m", limit=200):
         out["errors"].append(f"order attempt failed: {e}")
 
     print(json.dumps(out, indent=2))
+
 
 if __name__ == "__main__":
     run_once()

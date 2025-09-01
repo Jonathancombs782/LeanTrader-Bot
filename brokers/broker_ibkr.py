@@ -1,8 +1,10 @@
 import os
-# time and math not used; keep imports lean
 
 from dotenv import load_dotenv
 from ib_insync import IB, Forex, MarketOrder
+
+# time and math not used; keep imports lean
+
 
 
 class IBKRBroker:
@@ -41,14 +43,16 @@ class IBKRBroker:
             rows = []
             for b in bars[-limit:]:
                 # b.date is a datetime; convert to epoch seconds
-                rows.append([
-                    int(b.date.timestamp()),
-                    b.open,
-                    b.high,
-                    b.low,
-                    b.close,
-                    b.volume,
-                ])
+                rows.append(
+                    [
+                        int(b.date.timestamp()),
+                        b.open,
+                        b.high,
+                        b.low,
+                        b.close,
+                        b.volume,
+                    ]
+                )
             return rows
         except Exception as e:
             print(f"[broker_ibkr] fetch_ohlcv failed for {symbol}: {e}")

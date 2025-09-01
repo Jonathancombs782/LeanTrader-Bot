@@ -1,25 +1,34 @@
 # volatility.py
 from __future__ import annotations
-import pandas as pd
-import numpy as np
+
 from typing import Dict
 
+import numpy as np
+import pandas as pd
+
+
 def atr(df: pd.DataFrame, n: int = 14) -> pd.Series:
-    if df.empty or not all(c in df for c in ("high","low","close")):
+    if df.empty or not all(c in df for c in ("high", "low", "close")):
         return pd.Series([], dtype=float)
-    h, l, c = df["high"], df["low"], df["close"]
-    tr = pd.concat([(h - l), (h - c.shift()).abs(), (l - c.shift()).abs()], axis=1).max(axis=1)
+    h, low, c = df["high"], df["low"], df["close"]
+    tr = pd.concat([(h - low), (h - c.shift()).abs(), (low - c.shift()).abs()], axis=1).max(
+        axis=1
+    )
     return tr.rolling(n, min_periods=1).mean()
+
 
 def bb_width(df: pd.DataFrame, n: int = 20, k: float = 2.0) -> pd.Series:
     if df.empty or "close" not in df:
         return pd.Series([], dtype=float)
     m = df["close"].rolling(n, min_periods=1).mean()
     s = df["close"].rolling(n, min_periods=1).std(ddof=0)
-    upper, lower = m + k*s, m - k*s
+    upper, lower = m + k * s, m - k * s
     return (upper - lower) / m.replace(0, np.nan)
 
-def vol_hot(df: pd.DataFrame, atr_th: float = 0.003, bbw_th: float = 0.02) -> Dict[str, float]:
+
+def vol_hot(
+    df: pd.DataFrame, atr_th: float = 0.003, bbw_th: float = 0.02
+) -> Dict[str, float]:
     """Return latest ATR% and BBW and whether 'hot' >= thresholds."""
     if df.empty or "close" not in df:
         return {"atr_pct": 0.0, "bbw": 0.0, "hot": 0.0}

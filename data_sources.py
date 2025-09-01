@@ -1,8 +1,9 @@
 # data_sources.py
 from __future__ import annotations
 
-import os, time, math, random
-from typing import List, Dict, Optional, Any, Tuple
+import os  # noqa: F401
+import random
+from typing import Any, Dict, List, Optional
 
 # ccxt is optional in FX-only setups
 try:
@@ -22,16 +23,18 @@ USER_AGENT = (
 # Keys are ccxt ids.
 EX_ROUTES: Dict[str, List[str]] = {
     "binanceus": ["gateio", "kraken", "okx", "kucoin"],
-    "binance":   ["kraken", "okx", "kucoin", "gateio"],
-    "bybit":     ["gateio", "okx", "kucoin", "kraken"],
-    "kraken":    ["okx", "gateio", "binance"],
-    "okx":       ["kraken", "gateio", "binance"],
-    "kucoin":    ["gateio", "okx", "kraken"],
-    "gateio":    ["kraken", "okx", "kucoin", "binance"],
+    "binance": ["kraken", "okx", "kucoin", "gateio"],
+    "bybit": ["gateio", "okx", "kucoin", "kraken"],
+    "kraken": ["okx", "gateio", "binance"],
+    "okx": ["kraken", "gateio", "binance"],
+    "kucoin": ["gateio", "okx", "kraken"],
+    "gateio": ["kraken", "okx", "kucoin", "binance"],
 }
+
 
 def _has_ccxt() -> bool:
     return ccxt is not None
+
 
 def _build_ex(ex_id: str):
     """
@@ -45,8 +48,12 @@ def _build_ex(ex_id: str):
     # (safe_fetch_ohlcv, safe_fetch_ticker) are used consistently.
     try:
         from router import ExchangeRouter
+
         router = ExchangeRouter()
-        if getattr(router, 'ex', None) and getattr(router.ex, 'id', '').lower() == ex_id.lower():
+        if (
+            getattr(router, "ex", None)
+            and getattr(router.ex, "id", "").lower() == ex_id.lower()
+        ):
             return router
     except Exception:
         pass
@@ -58,13 +65,14 @@ def _build_ex(ex_id: str):
         "headers": {"User-Agent": USER_AGENT},
     }
     # If user provided keys for this venue, attach them
-    env_key  = os.getenv("API_KEY") or ""
-    env_sec  = os.getenv("API_SECRET") or ""
-    env_id   = (os.getenv("EXCHANGE_ID") or "").lower().strip()
+    env_key = os.getenv("API_KEY") or ""
+    env_sec = os.getenv("API_SECRET") or ""
+    env_id = (os.getenv("EXCHANGE_ID") or "").lower().strip()
     if env_id == ex_id and env_key and env_sec:
         cfg["apiKey"] = env_key
         cfg["secret"] = env_sec
     return klass(cfg)
+
 
 def _map_symbol_for(ex_id: str, symbol: str) -> str:
     """
@@ -78,21 +86,41 @@ def _map_symbol_for(ex_id: str, symbol: str) -> str:
 
     quote = quote.upper()
     # Most crypto venues want USDT
-    if ex_id in ("binanceus", "binance", "bybit", "okx", "kucoin", "gateio") and quote == "USD":
+    if (
+        ex_id in ("binanceus", "binance", "bybit", "okx", "kucoin", "gateio")
+        and quote == "USD"
+    ):
         return f"{base}/USDT"
     return symbol
+
 
 def _is_geo_or_cred_error(e: Exception) -> bool:
     s = str(e).lower()
     # common patterns: 403 forbidden cloudfront, requires apikey, not available in your country, etc.
-    return any(k in s for k in [
-        "403", "forbidden", "cloudfront", "your country", "requires \"apikey\"", "requires 'apikey'",
-        "permission", "denied", "not available in your country"
-    ])
+    return any(
+        k in s
+        for k in [
+            "403",
+            "forbidden",
+            "cloudfront",
+            "your country",
+            'requires "apikey"',
+            "requires 'apikey'",
+            "permission",
+            "denied",
+            "not available in your country",
+        ]
+    )
 
-def fetch_ohlcv_router(ex_primary, symbol: str, timeframe: str, limit: int = 400,
-                       since: Optional[int] = None,
-                       backups: Optional[List[str]] = None) -> List[List[Any]]:
+
+def fetch_ohlcv_router(
+    ex_primary,
+    symbol: str,
+    timeframe: str,
+    limit: int = 400,
+    since: Optional[int] = None,
+    backups: Optional[List[str]] = None,
+) -> List[List[Any]]:
     """
     Try primary ccxt exchange first.  If it fails with geo/API-key issues,
     automatically fall back through EX_ROUTES (including Gate.io).
@@ -115,7 +143,7 @@ def fetch_ohlcv_router(ex_primary, symbol: str, timeframe: str, limit: int = 400
     try:
         s = _map_symbol_for(primary_id, symbol)
         # If caller passed an ExchangeRouter-like object, prefer its safe wrapper
-        if hasattr(ex_primary, 'safe_fetch_ohlcv'):
+        if hasattr(ex_primary, "safe_fetch_ohlcv"):
             try:
                 rows = ex_primary.safe_fetch_ohlcv(s, timeframe=timeframe, limit=limit, since=since)  # type: ignore[arg-type]
                 if rows:
@@ -124,7 +152,9 @@ def fetch_ohlcv_router(ex_primary, symbol: str, timeframe: str, limit: int = 400
                 print(f"[data_sources] safe_fetch_ohlcv primary failed: {e}")
                 # fall through to try direct fetch
         try:
-            rows = ex_primary.fetch_ohlcv(s, timeframe=timeframe, limit=limit, since=since)
+            rows = ex_primary.fetch_ohlcv(
+                s, timeframe=timeframe, limit=limit, since=since
+            )
             if rows:
                 return rows
             tried.append(primary_id)
@@ -152,5 +182,7 @@ def fetch_ohlcv_router(ex_primary, symbol: str, timeframe: str, limit: int = 400
             tried.append(ex_id)
             continue
     # If we reach here no route returned data; return empty list rather than raise so callers can handle gracefully
-    print(f"[data_sources] fetch_ohlcv_router no data for {symbol}@{timeframe}; tried={tried}; last_err={last_err}")
+    print(
+        f"[data_sources] fetch_ohlcv_router no data for {symbol}@{timeframe}; tried={tried}; last_err={last_err}"
+    )
     return []

@@ -2,22 +2,27 @@
 ultra_scout.py
 Ultra Scouting Engine: News, Social, Web, Research, and Pattern Discovery
 """
-import requests
-import re
+
 import json
-import random
-import time
-from bs4 import BeautifulSoup
-from typing import List, Dict, Any, Optional  # ensure Optional imported
-import numpy as np
-import threading
 import os
+import random
+import re
+import threading
+import time
 from datetime import datetime
+from typing import Any, Dict, List, Optional  # ensure Optional imported
+
+import numpy as np
+import requests
+from bs4 import BeautifulSoup
 
 # NOTE: heavy / optional libraries are loaded lazily inside the class to avoid import-time failures.
 
+
 class UltraScout:
-    def __init__(self, max_threads: Optional[int] = None, user_agent: Optional[str] = None):
+    def __init__(
+        self, max_threads: Optional[int] = None, user_agent: Optional[str] = None
+    ):
         self.sources = [
             "https://www.investing.com/news/cryptocurrency-news",
             "https://cryptopanic.com/news",
@@ -41,14 +46,21 @@ class UltraScout:
 
         # network/session
         self.session = requests.Session()
-        self.session.headers.update({
-            "User-Agent": user_agent or os.getenv("ULTRA_USER_AGENT", "UltraScout/1.0 (+https://example.com)"),
-            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-        })
+        self.session.headers.update(
+            {
+                "User-Agent": user_agent
+                or os.getenv(
+                    "ULTRA_USER_AGENT", "UltraScout/1.0 (+https://example.com)"
+                ),
+                "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+            }
+        )
         self.request_timeout = float(os.getenv("ULTRA_REQUEST_TIMEOUT", "8.0"))
 
         # concurrency
-        self.max_threads = int(max_threads or int(os.getenv("ULTRA_SCOUT_THREADS", "4")))
+        self.max_threads = int(
+            max_threads or int(os.getenv("ULTRA_SCOUT_THREADS", "4"))
+        )
         self._lock = threading.Lock()
 
         # optional components (lazy)
@@ -65,6 +77,7 @@ class UltraScout:
         if self._sentiment_analyzer is None:
             try:
                 from transformers import pipeline
+
                 self._sentiment_analyzer = pipeline("sentiment-analysis")
             except Exception:
                 self._sentiment_analyzer = None
@@ -74,7 +87,10 @@ class UltraScout:
         if self._anomaly_detector is None:
             try:
                 from sklearn.ensemble import IsolationForest
-                self._anomaly_detector = IsolationForest(contamination=0.05, random_state=0)
+
+                self._anomaly_detector = IsolationForest(
+                    contamination=0.05, random_state=0
+                )
             except Exception:
                 self._anomaly_detector = None
         return self._anomaly_detector
@@ -83,6 +99,7 @@ class UltraScout:
         if self._rl_model is None:
             try:
                 from stable_baselines3 import PPO
+
                 # NOTE: a real trading env should be passed here; keep placeholder minimal and lazy.
                 # Do not train at init.
                 self._rl_model = PPO
@@ -94,6 +111,7 @@ class UltraScout:
         if self._gpt_client is None:
             try:
                 import openai as _openai
+
                 _openai.api_key = os.getenv("OPENAI_API_KEY") or ""
                 if not _openai.api_key:
                     self._gpt_client = None
@@ -109,7 +127,11 @@ class UltraScout:
     def fetch_onchain_analytics(self, token_address: str) -> Dict[str, Any]:
         api_key = os.getenv("ETHERSCAN_API_KEY")
         if not api_key:
-            return {"token": token_address, "whale_moves": random.randint(0, 5), "volume": random.uniform(1000, 100000)}
+            return {
+                "token": token_address,
+                "whale_moves": random.randint(0, 5),
+                "volume": random.uniform(1000, 100000),
+            }
         try:
             url = f"https://api.etherscan.io/api?module=account&action=txlist&address={token_address}&apikey={api_key}"
             r = self.session.get(url, timeout=self.request_timeout)
@@ -117,23 +139,46 @@ class UltraScout:
             txs = data.get("result", []) if isinstance(data, dict) else []
             whale_moves = sum(1 for tx in txs if float(tx.get("value", 0) or 0) > 1e18)
             volume = sum(float(tx.get("value", 0) or 0) for tx in txs)
-            return {"token": token_address, "whale_moves": whale_moves, "volume": volume}
+            return {
+                "token": token_address,
+                "whale_moves": whale_moves,
+                "volume": volume,
+            }
         except Exception as e:
-            return {"token": token_address, "error": str(e), "whale_moves": 0, "volume": 0.0}
+            return {
+                "token": token_address,
+                "error": str(e),
+                "whale_moves": 0,
+                "volume": 0.0,
+            }
 
     def run_backtest(self, strategy: str, params: Dict[str, Any]) -> Dict[str, Any]:
         try:
             import optuna
+
             def objective(trial):
                 # placeholder objective; integrate real backtester here
                 return random.uniform(-1, 2)
-            study = optuna.create_study(direction="maximize")
-            study.optimize(objective, n_trials=int(os.getenv("ULTRA_BACKTEST_TRIALS", "8")))
-            return {"strategy": strategy, "params": study.best_params, "score": study.best_value}
-        except Exception:
-            return {"strategy": strategy, "params": params, "score": random.uniform(-1, 2)}
 
-    def swarm_collaboration(self, signals: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+            study = optuna.create_study(direction="maximize")
+            study.optimize(
+                objective, n_trials=int(os.getenv("ULTRA_BACKTEST_TRIALS", "8"))
+            )
+            return {
+                "strategy": strategy,
+                "params": study.best_params,
+                "score": study.best_value,
+            }
+        except Exception:
+            return {
+                "strategy": strategy,
+                "params": params,
+                "score": random.uniform(-1, 2),
+            }
+
+    def swarm_collaboration(
+        self, signals: List[Dict[str, Any]]
+    ) -> List[Dict[str, Any]]:
         agents = int(os.getenv("ULTRA_SWARM_AGENTS", "5"))
         out = []
         for sig in signals:
@@ -149,15 +194,29 @@ class UltraScout:
         alerts = []
         try:
             if det:
-                features = [[float(t.get("pnl", 0) or 0), float(t.get("volume", 0) or 0)] for t in trades]
+                features = [
+                    [float(t.get("pnl", 0) or 0), float(t.get("volume", 0) or 0)]
+                    for t in trades
+                ]
                 preds = det.fit_predict(features)
-                alerts += [f"Anomaly in trade {i}: {trades[i]}" for i, p in enumerate(preds) if p == -1]
-            alerts += [f"High PnL detected: {t.get('symbol','?')} {t.get('pnl')}" for t in trades if abs(float(t.get("pnl", 0) or 0)) > float(os.getenv("ULTRA_PNL_ALERT", "10000"))]
+                alerts += [
+                    f"Anomaly in trade {i}: {trades[i]}"
+                    for i, p in enumerate(preds)
+                    if p == -1
+                ]
+            alerts += [
+                f"High PnL detected: {t.get('symbol', '?')} {t.get('pnl')}"
+                for t in trades
+                if abs(float(t.get("pnl", 0) or 0))
+                > float(os.getenv("ULTRA_PNL_ALERT", "10000"))
+            ]
         except Exception:
             # fallback simple check
             for t in trades:
                 if abs(float(t.get("pnl", 0) or 0)) > 10000:
-                    alerts.append(f"High PnL detected: {t.get('symbol','?')} {t.get('pnl')}")
+                    alerts.append(
+                        f"High PnL detected: {t.get('symbol', '?')} {t.get('pnl')}"
+                    )
         return alerts
 
     def broker_api_integration(self, broker_name: str) -> Dict[str, Any]:
@@ -204,7 +263,8 @@ class UltraScout:
                 resp = gpt.ChatCompletion.create(
                     model=os.getenv("ULTRA_GPT_MODEL", "gpt-3.5-turbo"),
                     messages=[{"role": "user", "content": message}],
-                    max_tokens=128, temperature=0.0
+                    max_tokens=128,
+                    temperature=0.0,
                 )
                 # try common response shapes in order
                 try:
@@ -226,7 +286,9 @@ class UltraScout:
     # -------------------------
     # News / social scraping
     # -------------------------
-    def fetch_news(self, sources: Optional[List[str]] = None, max_per_source: int = 10) -> List[str]:
+    def fetch_news(
+        self, sources: Optional[List[str]] = None, max_per_source: int = 10
+    ) -> List[str]:
         sources = sources if sources is not None else list(self.sources)
         headlines: List[str] = []
 
@@ -314,11 +376,22 @@ class UltraScout:
                     out[t] = 0.0
             return out
         # fallback simple heuristic
-        pos_words = ["bull", "pump", "breakout", "moon", "win", "profit", "surge", "rally"]
+        pos_words = [
+            "bull",
+            "pump",
+            "breakout",
+            "moon",
+            "win",
+            "profit",
+            "surge",
+            "rally",
+        ]
         neg_words = ["bear", "dump", "crash", "loss", "risk", "fear", "selloff"]
         out = {}
         for t in texts:
-            s = sum(t.lower().count(w) for w in pos_words) - sum(t.lower().count(w) for w in neg_words)
+            s = sum(t.lower().count(w) for w in pos_words) - sum(
+                t.lower().count(w) for w in neg_words
+            )
             out[t] = float(s)
         return out
 
@@ -331,8 +404,14 @@ class UltraScout:
             try:
                 resp = gpt.ChatCompletion.create(
                     model=os.getenv("ULTRA_GPT_MODEL", "gpt-3.5-turbo"),
-                    messages=[{"role": "user", "content": f"Classify sentiment (positive/negative/neutral) for trading impact: {t}"}],
-                    max_tokens=32, temperature=0.0
+                    messages=[
+                        {
+                            "role": "user",
+                            "content": f"Classify sentiment (positive/negative/neutral) for trading impact: {t}",
+                        }
+                    ],
+                    max_tokens=32,
+                    temperature=0.0,
                 )
                 txt = ""
                 try:
@@ -355,11 +434,14 @@ class UltraScout:
     def scrape_patterns(self) -> List[str]:
         patterns: List[str] = []
         try:
-            r = self.session.get("https://github.com/search?q=trading+strategy", timeout=self.request_timeout)
+            r = self.session.get(
+                "https://github.com/search?q=trading+strategy",
+                timeout=self.request_timeout,
+            )
             soup = BeautifulSoup(r.text, "html.parser")
             for a in soup.select("a[href]"):
                 href = a.get("href")
-                if href and re.search(r'/[\w-]+/([\w-]+)', href):
+                if href and re.search(r"/[\w-]+/([\w-]+)", href):
                     patterns.append(href)
         except Exception:
             pass
@@ -370,6 +452,7 @@ class UltraScout:
             if len(prices) < 20:
                 return "neutral"
             from sklearn.cluster import KMeans
+
             data = np.array(prices).reshape(-1, 1)
             kmeans = KMeans(n_clusters=3, random_state=0).fit(data)
             clusters = kmeans.labels_
@@ -379,7 +462,9 @@ class UltraScout:
                 return "bear"
         except Exception:
             pass
-        fast = float(np.mean(prices[-5:])) if len(prices) >= 5 else float(np.mean(prices))
+        fast = (
+            float(np.mean(prices[-5:])) if len(prices) >= 5 else float(np.mean(prices))
+        )
         slow = float(np.mean(prices[-20:])) if len(prices) >= 20 else fast
         if fast > slow:
             return "bull"
@@ -397,12 +482,23 @@ class UltraScout:
         self.patterns = patterns
         self.sentiment = sentiment
         # generate synthetic trend samples if no price data available
-        self.trends = list({self.detect_trends([random.uniform(0.9, 1.1) for _ in range(30)]) for _ in range(5)})
+        self.trends = list(
+            {
+                self.detect_trends([random.uniform(0.9, 1.1) for _ in range(30)])
+                for _ in range(5)
+            }
+        )
         self.last_update = time.time()
         # swarm & satellite placeholders
         patterns = self.swarm_ai_decision(patterns)
         satellite = self.satellite_data_fusion("BTC")
-        return {"headlines": headlines, "sentiment": sentiment, "patterns": patterns, "trends": self.trends, "satellite": satellite}
+        return {
+            "headlines": headlines,
+            "sentiment": sentiment,
+            "patterns": patterns,
+            "trends": self.trends,
+            "satellite": satellite,
+        }
 
     def swarm_ai_decision(self, signals: List[Any]) -> List[Any]:
         try:
@@ -473,5 +569,6 @@ class UltraScout:
             "7) Start with conservative Kelly sizing and low leverage; enable auto-trade only after stable paper PnL.",
         ]
         return recs
+
 
 # For integration: UltraCore can call UltraScout.scout_all() and use results for reasoning, planning, and learning.

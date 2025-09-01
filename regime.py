@@ -1,7 +1,9 @@
 # regime.py
 from __future__ import annotations
+
+import numpy as np  # noqa: F401  # intentionally kept
 import pandas as pd
-import numpy as np
+
 
 def detect_regime(df_feat: pd.DataFrame) -> str:
     """
@@ -15,4 +17,6 @@ def detect_regime(df_feat: pd.DataFrame) -> str:
         if last_bw > 0.02 and abs(ema_slope) > 0.0:
             return "trend"
     return "chop"
+
+
 # regime.py

@@ -1,8 +1,9 @@
 # crypto_cctx.py
 from __future__ import annotations
 
-import os
-from typing import Dict, Any, Optional, List
+# os unused at module-level
+from typing import Any, Dict, List, Optional
+
 from dotenv import load_dotenv
 
 try:
@@ -10,7 +11,8 @@ try:
 except Exception:
     ccxt = None
 
-import time
+import time  # noqa: F401
+
 import pandas as pd
 
 load_dotenv()
@@ -20,7 +22,8 @@ def make_exchange(ex_id: Optional[str] = None):
     if ccxt is None:
         raise RuntimeError("ccxt not installed: pip install ccxt")
 
-    from router import ExchangeRouter
+    from router import ExchangeRouter  # noqa: E402
+
     router = ExchangeRouter()
     return router
 
@@ -39,10 +42,12 @@ def map_symbol(ex_id: str, symbol: str) -> str:
     return f"{base}/{quote}"
 
 
-def fetch_ohlcv_df(ex, symbol: str, timeframe: str = "1m", limit: int = 200) -> pd.DataFrame:
+def fetch_ohlcv_df(
+    ex, symbol: str, timeframe: str = "1m", limit: int = 200
+) -> pd.DataFrame:
     sym = map_symbol(ex.id, symbol)
     rows = ex.safe_fetch_ohlcv(sym, timeframe=timeframe, limit=limit)
-    df = pd.DataFrame(rows, columns=["time","open","high","low","close","volume"])
+    df = pd.DataFrame(rows, columns=["time", "open", "high", "low", "close", "volume"])
     if not df.empty:
         df["time"] = pd.to_datetime(df["time"], unit="ms")
     return df
@@ -79,6 +84,7 @@ def balance_lines(ex) -> List[str]:
     if not lines:
         lines = ["(no balances or all zero)"]
     return lines
+
 
 
 def market_order_spot(ex, symbol: str, side: str, qty: float) -> Dict[str, Any]:

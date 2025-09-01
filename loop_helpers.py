@@ -1,21 +1,28 @@
 # loop_helpers.py
 from __future__ import annotations
-import os, time
-from typing import Optional, Dict, Any, List
 
-from notifier import TelegramNotifier
+import os
+import time
+from typing import Any, Dict, List, Optional
 
 # We use your existing portfolio helpers (file renamed to acct_portfolio)
 from acct_portfolio import ccxt_summary, mt5_summary
+from notifier import TelegramNotifier
+
 
 def _has_api_keys() -> bool:
-    return bool((os.getenv("API_KEY") or "").strip()) and bool((os.getenv("API_SECRET") or "").strip())
+    return bool((os.getenv("API_KEY") or "").strip()) and bool(
+        (os.getenv("API_SECRET") or "").strip()
+    )
 
-def maybe_post_balance(notif: TelegramNotifier,
-                       exchange_or_kind: Any,
-                       seconds_every: int = 3600,
-                       state: Optional[Dict[str, Any]] = None,
-                       prefer: str = "auto"):
+
+def maybe_post_balance(
+    notif: TelegramNotifier,
+    exchange_or_kind: Any,
+    seconds_every: int = 3600,
+    state: Optional[Dict[str, Any]] = None,
+    prefer: str = "auto",
+):
     """
     Throttled portfolio snapshot to Telegram.
     - If `exchange_or_kind` is a ccxt exchange instance => crypto summary
@@ -37,7 +44,9 @@ def maybe_post_balance(notif: TelegramNotifier,
             if _has_api_keys():
                 lines = ccxt_summary(exchange=exchange_or_kind)
             else:
-                notif.note("portfolio unavailable: set API_KEY/API_SECRET to enable balance.")
+                notif.note(
+                    "portfolio unavailable: set API_KEY/API_SECRET to enable balance."
+                )
                 state["last_balance_ts"] = now
                 return state
 

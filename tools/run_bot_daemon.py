@@ -1,4 +1,9 @@
-import os, sys, json, time, subprocess, datetime
+import datetime
+import json
+import os
+import subprocess
+import sys
+import time
 from typing import Any, Dict
 
 proj_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
@@ -52,11 +57,19 @@ def run_live_once() -> Dict[str, Any]:
         proc = subprocess.run(cmd, capture_output=True, text=True, timeout=300)
         out = proc.stdout.strip()
         if not out:
-            return {"error": "no stdout from run_bot_live", "stdout": proc.stdout, "stderr": proc.stderr}
+            return {
+                "error": "no stdout from run_bot_live",
+                "stdout": proc.stdout,
+                "stderr": proc.stderr,
+            }
         try:
             return json.loads(out)
         except Exception:
-            return {"error": "failed to parse JSON", "stdout": out, "stderr": proc.stderr}
+            return {
+                "error": "failed to parse JSON",
+                "stdout": out,
+                "stderr": proc.stderr,
+            }
     except Exception as e:
         return {"error": f"subprocess failed: {e}"}
 
@@ -65,6 +78,7 @@ def get_balance_estimate() -> float:
     # import ExchangeRouter locally to avoid import when not needed
     try:
         from router import ExchangeRouter
+
         ex = ExchangeRouter()
         bal = ex.safe_fetch_balance()
         return guess_usdt_balance(bal)
@@ -75,7 +89,12 @@ def get_balance_estimate() -> float:
 def main():
     poll_interval = float(os.getenv("POLL_INTERVAL", "60"))  # seconds between cycles
     daily_max_loss = float(os.getenv("DAILY_MAX_LOSS", "100.0"))  # USD
-    circuit_enabled = os.getenv("CIRCUIT_BREAKER_ENABLED", "true").strip().lower() in ("1", "true", "yes", "on")
+    circuit_enabled = os.getenv("CIRCUIT_BREAKER_ENABLED", "true").strip().lower() in (
+        "1",
+        "true",
+        "yes",
+        "on",
+    )
 
     state = load_state()
     today = str(datetime.date.today())
@@ -84,13 +103,17 @@ def main():
         save_state(state)
 
     prev_balance = get_balance_estimate()
-    print(f"[daemon] starting: prev_balance_estimate={prev_balance} USD, daily_loss={state['cumulative_loss']} USD")
+    print(
+        f"[daemon] starting: prev_balance_estimate={prev_balance} USD, daily_loss={state['cumulative_loss']} USD"
+    )
 
     try:
         while True:
             # Safety: if circuit enabled and cumulative loss exceeded, stop
             if circuit_enabled and state.get("cumulative_loss", 0.0) >= daily_max_loss:
-                print(f"[daemon] circuit-breaker active: cumulative_loss={state.get('cumulative_loss')} >= DAILY_MAX_LOSS={daily_max_loss}")
+                print(
+                    f"[daemon] circuit-breaker active: cumulative_loss={state.get('cumulative_loss')} >= DAILY_MAX_LOSS={daily_max_loss}"
+                )
                 break
 
             result = run_live_once()
@@ -106,18 +129,24 @@ def main():
             curr_balance = get_balance_estimate()
             delta = prev_balance - curr_balance  # positive if we lost USD
             if delta > 0:
-                state["cumulative_loss"] = round(float(state.get("cumulative_loss", 0.0)) + float(delta), 8)
+                state["cumulative_loss"] = round(
+                    float(state.get("cumulative_loss", 0.0)) + float(delta), 8
+                )
                 state["last_delta"] = float(delta)
                 state["date"] = today
                 save_state(state)
-                print(f"[daemon] loss this run: {delta:.6f} USD -> cumulative {state['cumulative_loss']:.6f} USD")
+                print(
+                    f"[daemon] loss this run: {delta:.6f} USD -> cumulative {state['cumulative_loss']:.6f} USD"
+                )
             else:
                 print(f"[daemon] no loss this run (delta={delta:.6f})")
             prev_balance = curr_balance
 
             # check after update
             if circuit_enabled and state.get("cumulative_loss", 0.0) >= daily_max_loss:
-                print(f"[daemon] circuit-breaker tripped after run: cumulative_loss={state['cumulative_loss']}")
+                print(
+                    f"[daemon] circuit-breaker tripped after run: cumulative_loss={state['cumulative_loss']}"
+                )
                 break
 
             time.sleep(poll_interval)

@@ -1,9 +1,12 @@
 # skillbook.py
 from __future__ import annotations
-import json, os
-from typing import Tuple, Dict
+
+import json
+import os
+from typing import Dict, Tuple
 
 _PATH = os.path.join("runtime", "skill_state.json")
+
 
 def _load() -> Dict:
     try:
@@ -12,6 +15,7 @@ def _load() -> Dict:
     except Exception:
         return {}
 
+
 def _save(d: Dict) -> None:
     os.makedirs(os.path.dirname(_PATH), exist_ok=True)
     tmp = _PATH + ".tmp"
@@ -19,7 +23,10 @@ def _save(d: Dict) -> None:
         json.dump(d, f, indent=2)
     os.replace(tmp, _PATH)
 
-def update_vol_stats(market: str, symbol: str, tf: str, atr_pct: float, bbw: float) -> None:
+
+def update_vol_stats(
+    market: str, symbol: str, tf: str, atr_pct: float, bbw: float
+) -> None:
     """
     Simple EMA-style memory of recent vol per (market,symbol,tf).
     """
@@ -34,7 +41,10 @@ def update_vol_stats(market: str, symbol: str, tf: str, atr_pct: float, bbw: flo
     d[k] = row
     _save(d)
 
-def personalized_thresholds(symbol: str, base_atr_th: float, base_bbw_th: float) -> Tuple[float, float]:
+
+def personalized_thresholds(
+    symbol: str, base_atr_th: float, base_bbw_th: float
+) -> Tuple[float, float]:
     """
     For very volatile symbols (e.g., XAUUSD, BTC/USDT), nudge thresholds upward
     so the bot trades only in cleaner impulses; for quiet symbols, lower them a bit.
@@ -42,7 +52,7 @@ def personalized_thresholds(symbol: str, base_atr_th: float, base_bbw_th: float)
     s = symbol.upper()
     vol_boost = 1.0
     if any(tag in s for tag in ("XAU", "XAG")):
-        vol_boost = 1.25   # be choosier on gold/silver
+        vol_boost = 1.25  # be choosier on gold/silver
     if any(tag in s for tag in ("BTC", "ETH")):
         vol_boost = max(vol_boost, 1.15)
 

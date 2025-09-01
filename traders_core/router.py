@@ -1,11 +1,12 @@
 # router.py
 import os
-from typing import Dict, Any, List
 from pprint import pprint
+from typing import Any, Dict, List
+
 import ccxt
 
-from paper_broker import PaperBroker  # already in your repo
 from order_utils import place_market, safe_create_order
+from paper_broker import PaperBroker  # already in your repo
 
 
 class ExchangeRouter:
@@ -44,9 +45,9 @@ class ExchangeRouter:
 
         try:
             # try ccxt load_markets; some adapters return odd types
-            if hasattr(self.ex, 'load_markets'):
+            if hasattr(self.ex, "load_markets"):
                 self.markets = self.ex.load_markets()
-            elif hasattr(self.ex, 'fetch_markets'):
+            elif hasattr(self.ex, "fetch_markets"):
                 self.markets = self.ex.fetch_markets()
             else:
                 self.markets = {}
@@ -70,7 +71,7 @@ class ExchangeRouter:
                     "ok": True,
                     "paper_cash": getattr(self.ex, "cash", 0.0),
                 }
-            if hasattr(self.ex, 'safe_fetch_balance'):
+            if hasattr(self.ex, "safe_fetch_balance"):
                 return {"ok": True, "balance": self.ex.safe_fetch_balance()}
             try:
                 return {"ok": True, "balance": self.ex.fetch_balance()}
@@ -91,9 +92,7 @@ class ExchangeRouter:
         return [s for s in seeds if s in self.markets]
 
     # -------- data helpers --------
-    def fetch_ohlcv(
-        self, symbol: str, tf: str = "1m", limit: int = 120
-    ):
+    def fetch_ohlcv(self, symbol: str, tf: str = "1m", limit: int = 120):
         # Prefer router's safe wrapper when available.
         # Fall back to direct exchange fetch with guarded errors.
         ex = getattr(self, "ex", None)
@@ -101,9 +100,7 @@ class ExchangeRouter:
             if ex is None:
                 return []
             if hasattr(ex, "safe_fetch_ohlcv"):
-                return ex.safe_fetch_ohlcv(
-                    symbol, timeframe=tf, limit=limit
-                )
+                return ex.safe_fetch_ohlcv(symbol, timeframe=tf, limit=limit)
             try:
                 return ex.fetch_ohlcv(
                     symbol,
@@ -123,7 +120,7 @@ class ExchangeRouter:
 
     def last_price(self, symbol: str) -> float:
         try:
-            if hasattr(self.ex, 'safe_fetch_ticker'):
+            if hasattr(self.ex, "safe_fetch_ticker"):
                 t = self.ex.safe_fetch_ticker(symbol)
             else:
                 t = self.ex.fetch_ticker(symbol)
@@ -144,9 +141,7 @@ class ExchangeRouter:
                 order = self.ex.safe_place_order(symbol, side, qty)
             elif hasattr(self.ex, "create_order"):
                 try:
-                    order = safe_create_order(
-                        self.ex, "market", symbol, side, qty
-                    )
+                    order = safe_create_order(self.ex, "market", symbol, side, qty)
                 except Exception:
                     order = place_market(self.ex, symbol, side, qty)
             else:
@@ -202,9 +197,7 @@ class ExchangeRouter:
             return {"ok": False, "error": str(e)}
 
     # -------- quick scanner --------
-    def scan_top_movers(
-        self, topn: int = 10, quote: str = "USDT", limit: int = 120
-    ):
+    def scan_top_movers(self, topn: int = 10, quote: str = "USDT", limit: int = 120):
         movers = []
         for sym in list(self.markets.keys()):
             if not sym.endswith("/" + quote):

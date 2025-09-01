@@ -1,11 +1,16 @@
-import os, sys, json, argparse
+import argparse
+import json
+import os
+import sys
 from datetime import datetime
+
 
 def _ensure_cwd_in_path(root: str):
     # ensure imports resolve when running from other dirs
     p = os.path.abspath(root)
     if p not in sys.path:
         sys.path.insert(0, p)
+
 
 def run_scans(root: str, out_dir: str, pretty: bool = True):
     _ensure_cwd_in_path(root)
@@ -20,7 +25,12 @@ def run_scans(root: str, out_dir: str, pretty: bool = True):
         scan_project_with_model = None
         print(f"[scan_runner] failed to import strategy.scan_project_with_model: {e}")
 
-    results = {"meta": {"root": os.path.abspath(root), "ts": datetime.utcnow().isoformat() + "Z"}}
+    results = {
+        "meta": {
+            "root": os.path.abspath(root),
+            "ts": datetime.utcnow().isoformat() + "Z",
+        }
+    }
 
     if scan_full_project:
         try:
@@ -59,18 +69,28 @@ def run_scans(root: str, out_dir: str, pretty: bool = True):
     # write merged summary
     fp = os.path.join(out_dir, "scan_summary.json")
     with open(fp, "w", encoding="utf-8") as f:
-        json.dump({"meta": results["meta"], "summary": summary}, f, indent=2 if pretty else None)
+        json.dump(
+            {"meta": results["meta"], "summary": summary},
+            f,
+            indent=2 if pretty else None,
+        )
     print(f"[scan_runner] wrote summary to {fp}")
     return results
 
+
 def main(argv=None):
-    p = argparse.ArgumentParser(description="Run project scans (router + strategy) and save JSON outputs")
+    p = argparse.ArgumentParser(
+        description="Run project scans (router + strategy) and save JSON outputs"
+    )
     p.add_argument("--root", "-r", default=".", help="Project root to scan")
     p.add_argument("--out", "-o", default=".", help="Output directory for JSON results")
-    p.add_argument("--no-pretty", dest="pretty", action="store_false", help="Disable pretty JSON")
+    p.add_argument(
+        "--no-pretty", dest="pretty", action="store_false", help="Disable pretty JSON"
+    )
     args = p.parse_args(argv)
     os.makedirs(args.out, exist_ok=True)
     run_scans(args.root, args.out, pretty=args.pretty)
+
 
 if __name__ == "__main__":
     main()
