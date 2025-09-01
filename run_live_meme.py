@@ -19,16 +19,8 @@ import json
 from pathlib import Path
 from pprint import pformat  # noqa: F401  # intentionally kept
 
-from acct_portfolio import ccxt_summary  # noqa: E402
-from guardrails import GuardConfig, TradeGuard  # noqa: E402
-from ledger import daily_pnl_text, log_entry, log_exit  # noqa: E402
-from news_service import bullets_for  # noqa: F401, E402  # intentionally kept
-from notifier import CMD_INBOX, TelegramNotifier  # noqa: E402
-from regional_utils import (  # noqa: F401, E402  # intentionally kept
-    fallback_exchange, primary_exchange)
-from risk import RiskConfig  # noqa: E402
-from strategy import TrendBreakoutStrategy  # noqa: E402
-from utils import bps_to_frac, load_config, setup_logger  # noqa: E402
+# imports used at runtime are moved into local scope to avoid E402 (imports after runtime init)
+# ...existing code...
 
 # ------- universe helpers (memecoins) -------
 MEME_DEFAULTS = [
@@ -104,27 +96,7 @@ def make_exchange(exchange_id: str, api_key=None, api_secret=None):
     return ex
 
 
-def _consume_commands():
-    if not CMD_INBOX.exists():
-        return []
-    try:
-        import json
-
-        with open(CMD_INBOX, "r", encoding="utf-8") as f:
-            lines = [x.strip() for x in f if x.strip()]
-        CMD_INBOX.unlink(missing_ok=True)
-        cmds = []
-        for line in lines:
-            try:
-                d = json.loads(line)
-                c = d.get("cmd")
-                if c:
-                    cmds.append(c)
-            except Exception:
-                pass
-        return cmds
-    except Exception:
-        return []
+# _consume_commands will be defined inside live_loop where CMD_INBOX is available
 
 
 def _parse_qty(s: str, default: float) -> float:
@@ -148,12 +120,46 @@ def live_loop(
     report_hour: str | None = "21:00",
 ):
     load_dotenv()
+    # local imports to avoid top-level E402 issues
+    from utils import bps_to_frac, load_config, setup_logger
+    from acct_portfolio import ccxt_summary
+    from cmd_reader import read_commands
+    from guardrails import GuardConfig, TradeGuard
+    from ledger import daily_pnl_text, log_entry, log_exit
+    from news_service import bullets_for
+    from notifier import CMD_INBOX, TelegramNotifier
+    from regional_utils import fallback_exchange, primary_exchange
+    from risk import RiskConfig
+    from strategy import TrendBreakoutStrategy
+
     log = setup_logger(
         "live_meme",
         level=os.getenv("LOG_LEVEL", "INFO"),
         log_dir=os.getenv("LOG_DIR", "logs"),
     )
     nfy = TelegramNotifier()
+
+    def _consume_commands():
+        if not CMD_INBOX.exists():
+            return []
+        try:
+            import json
+
+            with open(CMD_INBOX, "r", encoding="utf-8") as f:
+                lines = [x.strip() for x in f if x.strip()]
+            CMD_INBOX.unlink(missing_ok=True)
+            cmds = []
+            for line in lines:
+                try:
+                    d = json.loads(line)
+                    c = d.get("cmd")
+                    if c:
+                        cmds.append(c)
+                except Exception:
+                    pass
+            return cmds
+        except Exception:
+            return []
 
     # helper: preflight self-check to validate environment & markets
     def preflight_self_check(router, symbols_list):
@@ -489,6 +495,7 @@ def main():
     ap.add_argument("--balance_every", type=float, default=30.0)
     args = ap.parse_args()
 
+    from utils import load_config
     cfg = load_config("config.yml")
 
     if args.symbols.strip():
