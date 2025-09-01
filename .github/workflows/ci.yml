@@ -43,7 +43,8 @@ jobs:
 
       - name: Guard for ALLOW_LIVE literals
         run: |
-          if git grep -n "ALLOW_LIVE.*=.*true" || git grep -n "ALLOW_LIVE.*=.*1"; then
+          # Only search tracked source files; exclude .github, DOCS and README to avoid false-positives
+          if git grep -n "ALLOW_LIVE.*=.*true" -- ':!\.github' ':!DOCS' ':!README*' || git grep -n "ALLOW_LIVE.*=.*1" -- ':!\.github' ':!DOCS' ':!README*'; then
             echo "Found ALLOW_LIVE literal in code; remove before merging"
             exit 1
           fi

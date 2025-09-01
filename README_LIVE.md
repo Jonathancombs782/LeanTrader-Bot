@@ -40,16 +40,16 @@ Quick commands:
   - Testnet (demo)
   - Set testnet flag and testnet keys, then:
     - PowerShell example (use placeholders instead of literal true/1 values):
-      $env:ENABLE_LIVE="true"; $env:ALLOW_LIVE="<your_value>"; $env:API_KEY="test_key"; $env:API_SECRET="test_secret"; $env:BYBIT_TESTNET="true"
+      $env:ENABLE_LIVE="<true|false>"; $env:ALLOW_LIVE="<your_value>"; $env:API_KEY="<test_key>"; $env:API_SECRET="<test_secret>"; $env:BYBIT_TESTNET="<true|false>"
     - python tools/run_bot_live.py
 
 -- Live (real funds) — *be extremely careful*
-  - Set real keys and safety limits (use placeholders where applicable):
-    - ENABLE_LIVE=true
-    - ALLOW_LIVE=<your_value>
-    - API_KEY / API_SECRET
-    - MAX_ORDER_SIZE (recommended very small)
-    - LIVE_ORDER_USD or LIVE_ORDER_AMOUNT
+- Set real keys and safety limits (use placeholders where applicable):
+  - ENABLE_LIVE=<your_value> (e.g. "true" when you intend to go live)
+  - ALLOW_LIVE=<your_value>
+  - API_KEY / API_SECRET
+  - MAX_ORDER_SIZE (recommended very small)
+  - LIVE_ORDER_USD or LIVE_ORDER_AMOUNT
   - python tools/run_bot_live.py
 
 Notes:
