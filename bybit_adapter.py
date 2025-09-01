@@ -45,7 +45,7 @@ def bybit_init(
 
     (os.getenv("EXCHANGE_MODE") or mode or "spot").lower()
 
-    from router import ExchangeRouter  # noqa: E402
+    from router import ExchangeRouter
 
     router = ExchangeRouter()
     # If you ever want testnet:
