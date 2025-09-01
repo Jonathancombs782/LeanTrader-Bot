@@ -16,16 +16,8 @@ PROJECT_ROOT = Path(__file__).resolve().parent
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.append(str(PROJECT_ROOT))
 
-from acct_portfolio import ccxt_summary  # pretty balances  # noqa: E402
-from cmd_reader import read_commands  # writes by notifier.poll_commands()  # noqa: E402
-from guardrails import GuardConfig, TradeGuard  # noqa: E402
-from ledger import daily_pnl_text  # noqa: E402
-from notifier import TelegramNotifier  # noqa: E402
-from order_utils import place_market  # noqa: E402
-from risk import RiskConfig  # noqa: E402
-from strategy import TrendBreakoutStrategy  # noqa: E402
-# ---- local modules (must exist) ----
-from utils import load_config, setup_logger  # noqa: E402
+# Top-level imports that must remain at top
+# ...existing code...
 
 # avoid importing safe_create_order at top-level to prevent redefinition warnings
 
@@ -140,6 +132,9 @@ def place_oco_ccxt(
     NOTE: Some venues require margin/stop trigger params; we keep it minimal & best-effort.
     """
     # Best-effort entry then optional TP/SL as siblings. This function never raises.
+    # local import to avoid top-level import after runtime init
+    from order_utils import place_market, safe_create_order
+
     try:
         order = None
         # entry
@@ -150,10 +145,8 @@ def place_oco_ccxt(
                 order = place_market(ex, symbol, side, qty)
         except Exception:
             # last resort: try create_order
-            try:
-                from order_utils import safe_create_order  # noqa: E402
-
-                order = safe_create_order(ex, "market", symbol, side, qty)
+                try:
+                    order = safe_create_order(ex, "market", symbol, side, qty)
             except Exception:
                 order = {"ok": False, "error": "entry failed"}
 
@@ -312,6 +305,16 @@ def main():
     ap.add_argument("--balance_every", type=int, default=30)  # minutes
     args = ap.parse_args()
 
+    # local imports (moved from top-level to avoid E402 warnings)
+    from utils import load_config, setup_logger
+    from acct_portfolio import ccxt_summary
+    from cmd_reader import read_commands
+    from guardrails import GuardConfig, TradeGuard
+    from ledger import daily_pnl_text
+    from notifier import TelegramNotifier
+    from risk import RiskConfig
+    from strategy import TrendBreakoutStrategy
+
     cfg = load_config("config.yml")
     log = setup_logger(
         "live",
@@ -362,8 +365,8 @@ def main():
     last_bal_ts = 0.0
 
     # --- UltraCore god mode integration ---
-    from ultra_core import UltraCore  # noqa: E402
-    from universe import Universe  # noqa: E402
+    from ultra_core import UltraCore
+    from universe import Universe
 
     ultra_universe = Universe(router) if hasattr(router, "markets") else None
     ultra = UltraCore(router, ultra_universe, logger=log)
