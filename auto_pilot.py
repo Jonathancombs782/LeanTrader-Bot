@@ -10,11 +10,8 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-# local imports after dotenv/init
-from router import ExchangeRouter  # noqa: E402
-
-from brain import Brain, Guards, Memory, VolSizer  # noqa: E402
-from router import ExchangeRouter  # your renamed router  # noqa: E402
+# imports moved into main() to avoid top-level E402 annotations
+...existing code...
 
 
 def to_df(ohlcv: List[List[float]]) -> pd.DataFrame:
@@ -47,6 +44,9 @@ def account_balance_usd(r: ExchangeRouter) -> float:
 
 
 def main() -> None:
+    from router import ExchangeRouter
+    from brain import Brain, Guards, Memory, VolSizer
+
     r = ExchangeRouter()
     b = Brain()
     mem = Memory()
