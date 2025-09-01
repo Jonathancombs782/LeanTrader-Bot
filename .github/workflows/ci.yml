@@ -26,6 +26,8 @@ jobs:
           else
             python -m pip install pytest
           fi
+          # Ensure pytest is available regardless
+          python -m pip install pytest
 
       - name: Lint (flake8)
         run: |
