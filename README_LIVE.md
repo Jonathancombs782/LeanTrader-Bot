@@ -11,7 +11,7 @@ Follow these steps before enabling live trading. Do them in order and run paper/
    - Keep `ENABLE_LIVE=false` to avoid placing real orders. Confirm connectivity and order flows against testnet.
 
 3) Live gating (required)
-   - Set `ENABLE_LIVE=true` and `ALLOW_LIVE=true` to indicate intent.
+  - Set `ENABLE_LIVE=true` and `ALLOW_LIVE=<your_value>` to indicate intent.
    - Also set `LIVE_CONFIRM=YES` (this repository requires this additional confirmation to allow live orders).
    - Provide API keys via environment variables, not committed files:
      - `API_KEY` / `API_SECRET` or `BYBIT_API_KEY` / `BYBIT_API_SECRET`.
@@ -37,16 +37,16 @@ Quick commands:
 - Paper (safe dry-run)
   - python tools/run_bot_paper.py
 
-- Testnet (demo)
+  - Testnet (demo)
   - Set testnet flag and testnet keys, then:
-    - PowerShell example:
-      $env:ENABLE_LIVE="true"; $env:ALLOW_LIVE="true"; $env:API_KEY="test_key"; $env:API_SECRET="test_secret"; $env:BYBIT_TESTNET="true"
+    - PowerShell example (use placeholders instead of literal true/1 values):
+      $env:ENABLE_LIVE="true"; $env:ALLOW_LIVE="<your_value>"; $env:API_KEY="test_key"; $env:API_SECRET="test_secret"; $env:BYBIT_TESTNET="true"
     - python tools/run_bot_live.py
 
-- Live (real funds) — *be extremely careful*
-  - Set real keys and safety limits:
+-- Live (real funds) — *be extremely careful*
+  - Set real keys and safety limits (use placeholders where applicable):
     - ENABLE_LIVE=true
-    - ALLOW_LIVE=true
+    - ALLOW_LIVE=<your_value>
     - API_KEY / API_SECRET
     - MAX_ORDER_SIZE (recommended very small)
     - LIVE_ORDER_USD or LIVE_ORDER_AMOUNT
