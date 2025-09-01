@@ -8,7 +8,7 @@ Prerequisites
 
 Required environment variables
 - ENABLE_LIVE=true           # primary flag to enable live code paths
-- ALLOW_LIVE=true            # additional explicit allow flag
+- # ALLOW_LIVE=true            # additional explicit allow flag (do not set literal in repo)
 - LIVE_CONFIRM=YES           # final confirmation required to perform live orders
 - API_KEY, API_SECRET        # exchange credentials
 - EXCHANGE_ID                # e.g., bybit, binance, paper
