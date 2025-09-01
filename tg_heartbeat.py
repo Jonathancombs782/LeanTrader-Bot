@@ -11,8 +11,7 @@ from typing import Any, Dict, List
 
 from dotenv import load_dotenv
 
-from notifier import TelegramNotifier
-from router import ExchangeRouter
+# notifier and router are imported at runtime inside main() to avoid top-level side-effects
 
 RUNTIME = pathlib.Path("runtime")
 RUNTIME.mkdir(exist_ok=True)

@@ -13,8 +13,7 @@ except Exception:
 
 load_dotenv()
 
-# local runtime imports (allowed after dotenv)
-from router import ExchangeRouter  # noqa: E402
+# local runtime imports are performed inside functions to avoid top-level side effects
 
 
 def _envs() -> Dict[str, str]:

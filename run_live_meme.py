@@ -276,8 +276,8 @@ def live_loop(
     except Exception:
         log.exception("Notifier diagnostic failed")
 
-    from router import ExchangeRouter  # noqa: E402
-    from ultra_core import UltraCore  # noqa: E402
+    from router import ExchangeRouter
+    from ultra_core import UltraCore
 
     ex = ExchangeRouter()
     # Diagnostic: show router info and a small market sample to help debugging startup

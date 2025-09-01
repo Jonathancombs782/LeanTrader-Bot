@@ -22,7 +22,7 @@ def make_exchange(ex_id: Optional[str] = None):
     if ccxt is None:
         raise RuntimeError("ccxt not installed: pip install ccxt")
 
-    from router import ExchangeRouter  # noqa: E402
+    from router import ExchangeRouter
 
     router = ExchangeRouter()
     return router

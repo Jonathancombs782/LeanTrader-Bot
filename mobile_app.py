@@ -1,8 +1,7 @@
 import kivy
 
 kivy.require("2.0.0")
-from telegram_notifier import TelegramNotifier  # noqa: E402
-from utils import load_config, setup_logger  # noqa: E402
+# runtime imports (TelegramNotifier and utils) are performed inside `main` when the app runs
 import requests
 from kivy.app import App
 from kivy.uix.boxlayout import BoxLayout

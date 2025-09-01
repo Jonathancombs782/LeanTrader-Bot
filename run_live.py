@@ -50,7 +50,7 @@ def _pick_exchanges() -> List[str]:
 
 
 def _make_exchange_trylist() -> List[Any]:
-    import ccxt  # noqa: E402
+    import ccxt
 
     tries = []
     for ex_id in _pick_exchanges():
@@ -74,7 +74,7 @@ def _make_exchange_trylist() -> List[Any]:
 
 
 def ensure_exchange():
-    from router import ExchangeRouter  # noqa: E402
+    from router import ExchangeRouter
 
     router = ExchangeRouter()
     router._load_markets_safe()

@@ -21,8 +21,7 @@ except Exception:
 
 load_dotenv()
 
-# local imports after runtime path/dotenv initialization
-from router import ExchangeRouter  # noqa: E402
+# local imports are used inside functions to avoid top-level runtime dependencies
 
 
 # ---------- helpers ----------
