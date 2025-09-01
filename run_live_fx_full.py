@@ -12,8 +12,8 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-import charting  # noqa: E402
-from news_adapter import fx_guard_for_symbol  # NEW  # noqa: E402
+# move heavy runtime imports into main to avoid E402 at module top
+# charting and news_adapter are imported inside main()
 
 # --- Telegram (minimal) ---
 try:
@@ -226,6 +226,10 @@ def main():
     ap.add_argument("--trail_mult", type=float, default=1.0)
     ap.add_argument("--live", action="store_true")
     args = ap.parse_args()
+
+    # local imports to avoid top-level E402 warnings
+    import charting
+    from news_adapter import fx_guard_for_symbol
 
     mt5_init()
     notif = TelegramNotifier()
