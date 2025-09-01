@@ -7,12 +7,12 @@ Prerequisites
 - Have monitoring and alerts configured (Prometheus/Grafana, Telegram/Email alerts).
 
 Required environment variables
-- ENABLE_LIVE=true           # primary flag to enable live code paths
-- # ALLOW_LIVE=true            # additional explicit allow flag (do not set literal in repo)
-- LIVE_CONFIRM=YES           # final confirmation required to perform live orders
+ - ENABLE_LIVE=<true|false>   # primary flag to enable live code paths (use placeholder)
+ - # ALLOW_LIVE=<your_value>   # additional explicit allow flag (do not set literal in repo)
+ - LIVE_CONFIRM=YES           # final confirmation required to perform live orders
 - API_KEY, API_SECRET        # exchange credentials
 - EXCHANGE_ID                # e.g., bybit, binance, paper
-- BYBIT_TESTNET=true/false   # if using bybit testnet
+ - BYBIT_TESTNET=<true|false>   # if using bybit testnet (use placeholder)
 - MAX_ORDER_SIZE             # optional max quantity per order
 - LIVE_ORDER_USD             # optional USD notional cap per order
 
