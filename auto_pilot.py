@@ -3,7 +3,11 @@ from __future__ import annotations
 
 import os  # noqa: F401
 import time
-from typing import Any, Dict, List
+from typing import Any, Dict, List, TYPE_CHECKING
+
+if TYPE_CHECKING:
+    # avoid runtime import cycles; used only for type checking / annotations
+    from router import ExchangeRouter
 
 import pandas as pd
 from dotenv import load_dotenv
@@ -11,7 +15,6 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # imports moved into main() to avoid top-level E402 annotations
-...existing code...
 
 
 def to_df(ohlcv: List[List[float]]) -> pd.DataFrame:

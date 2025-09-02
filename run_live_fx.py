@@ -12,9 +12,7 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-import charting  # noqa: E402
-from loop_helpers import maybe_post_balance  # noqa: E402
-from notifier import TelegramNotifier  # noqa: E402
+# Heavy runtime imports (charting, loop_helpers, notifier) are imported inside main()
 
 # ---------- MT5 adapter ----------
 try:
@@ -27,12 +25,17 @@ def mt5_init():
     if mt5 is None:
         raise RuntimeError("MetaTrader5 package not installed. pip install MetaTrader5")
 
-    path = os.getenv(
-        "MTS_PATH"
-    )  # e.g. C:\Program Files\OctaFX MetaTrader 5\terminal64.exe
-    if not mt5.initialize(path=path):
+    # Accept either MTS_PATH (legacy) or MT5_PATH env var for the terminal path
+    path = os.getenv("MTS_PATH") or os.getenv("MT5_PATH")
+    # Try to initialize with explicit path when provided, otherwise try default init
+    if path:
+        ok = mt5.initialize(path=path)
+    else:
+        ok = mt5.initialize()
+
+    if not ok:
         code, desc = mt5.last_error()
-        raise RuntimeError(f"mt5.initialize failed: ({code}) {desc}")
+        raise RuntimeError(f"mt5.initialize failed: ({code}) {desc} (path={path!r})")
 
     # Optional login if env provided
     login = os.getenv("MT5_LOGIN")
@@ -149,11 +152,39 @@ def main():
     ap.add_argument("--live", action="store_true", help="place real orders (MT5)")
     args = ap.parse_args()
 
+    # localize heavy/runtime imports to avoid top-level side-effects and
+    # satisfy flake8 undefined-name checks (import only when running main)
+    from notifier import TelegramNotifier
+    import charting
+    from loop_helpers import maybe_post_balance
+
     # init MT5 + Telegram
     mt5_init()
     notif = TelegramNotifier()
     pairs = [p.strip().upper() for p in args.pairs.split(",")]
     notif.hello("FX (MT5)", pairs, args.timeframe)
+
+    # Safety: enforce runtime "no live orders" unless ENABLE_LIVE is explicitly 'true'.
+    # This prevents accidental real orders when a user passed --live but the
+    # environment does not explicitly allow live trading. If EXCHANGE_ID==paper we
+    # keep paper behavior (no override).
+    enable_live_env = os.getenv("ENABLE_LIVE", "").lower() == "true"
+    exchange_id_env = os.getenv("EXCHANGE_ID", "").lower()
+    if exchange_id_env == "paper":
+        notif.note("EXCHANGE_ID=paper detected: running in paper mode; live orders disabled.")
+    elif not enable_live_env and args.live:
+        # Save original and replace with a safe stub that logs and returns False.
+        _orig_mt5_market_order = globals().get("mt5_market_order")
+
+        def _stub_mt5_market_order(symbol: str, volume: float, side: str = "buy") -> bool:
+            notif.note(f"Blocked MT5 live order for {symbol} (ENABLE_LIVE != 'true')")
+            return False
+
+        globals()["_orig_mt5_market_order"] = _orig_mt5_market_order
+        globals()["mt5_market_order"] = _stub_mt5_market_order
+        # disable live flag so rest of code treats it as non-live
+        args.live = False
+        notif.note("Safety: ENABLE_LIVE not set to 'true' — live order sending disabled.")
 
     state = {}
     open_long: Dict[str, Dict[str, Any]] = {}

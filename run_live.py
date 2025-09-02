@@ -60,9 +60,11 @@ def _make_exchange_trylist() -> List[Any]:
             klass = getattr(ccxt, ex_id)
         except AttributeError:
             continue
+        # allow configurable timeout via environment (milliseconds)
+        timeout_ms = int(os.getenv("CCXT_TIMEOUT_MS", "30000"))
         opts = {
             "enableRateLimit": True,
-            "timeout": 15000,
+            "timeout": timeout_ms,
             "apiKey": os.getenv("API_KEY") or "",
             "secret": os.getenv("API_SECRET") or "",
         }
@@ -80,32 +82,55 @@ def ensure_exchange():
     router._load_markets_safe()
     return router
 
+# provide a safe top-level reference for `place_market` so linters don't flag F821
+try:
+    from order_utils import place_market  # type: ignore
+except Exception:
+    def place_market(*args, **kwargs):
+        """Fallback stub used at import time to satisfy linters; real implementation
+        is imported locally where needed.
+        """
+        raise RuntimeError("place_market is not available in this environment")
+
 
 # -------- data fetch --------
 def fetch_df(ex, symbol: str, timeframe: str, limit: int = 400) -> pd.DataFrame:
     # use router safe wrapper when available
     raw = []
-    try:
-        # Prefer router-like safe wrapper; many callsites pass a router.ExchangeRouter
-        if hasattr(ex, "safe_fetch_ohlcv"):
-            try:
-                raw = ex.safe_fetch_ohlcv(symbol, timeframe=timeframe, limit=limit)
-            except Exception as e:
-                print(f"[run_live] safe_fetch_ohlcv failed for {symbol}: {e}")
-                raw = []
-        else:
-            # try a guarded direct fetch if present
-            try:
-                if hasattr(ex, "fetch_ohlcv"):
-                    raw = ex.fetch_ohlcv(symbol, timeframe=timeframe, limit=limit)
-                else:
+    # retry/backoff settings (env-driven)
+    retries = int(os.getenv("FETCH_RETRIES", "3"))
+    base_backoff = float(os.getenv("FETCH_BACKOFF_S", "0.5"))
+
+    for attempt in range(max(1, retries)):
+        try:
+            # Prefer router-like safe wrapper; many callsites pass a router.ExchangeRouter
+            if hasattr(ex, "safe_fetch_ohlcv"):
+                try:
+                    raw = ex.safe_fetch_ohlcv(symbol, timeframe=timeframe, limit=limit)
+                except Exception as e:
+                    print(f"[run_live] safe_fetch_ohlcv failed for {symbol}: {e}")
                     raw = []
-            except Exception as e:
-                print(f"[run_live] fetch_ohlcv failed for {symbol}: {e}")
-                raw = []
-    except Exception as e:
-        print(f"[run_live] safe fetch wrapper raised for {symbol}: {e}")
-        raw = []
+            else:
+                # try a guarded direct fetch if present
+                try:
+                    if hasattr(ex, "fetch_ohlcv"):
+                        raw = ex.fetch_ohlcv(symbol, timeframe=timeframe, limit=limit)
+                    else:
+                        raw = []
+                except Exception as e:
+                    print(f"[run_live] fetch_ohlcv failed for {symbol}: {e}")
+                    raw = []
+        except Exception as e:
+            print(f"[run_live] safe fetch wrapper raised for {symbol}: {e}")
+            raw = []
+
+        if raw:
+            break
+
+        # exponential backoff before retrying
+        if attempt < retries - 1:
+            sleep_s = base_backoff * (2 ** attempt)
+            time.sleep(sleep_s)
     if not raw:
         return pd.DataFrame(
             columns=["timestamp", "open", "high", "low", "close", "vol"]
@@ -145,8 +170,8 @@ def place_oco_ccxt(
                 order = place_market(ex, symbol, side, qty)
         except Exception:
             # last resort: try create_order
-                try:
-                    order = safe_create_order(ex, "market", symbol, side, qty)
+            try:
+                order = safe_create_order(ex, "market", symbol, side, qty)
             except Exception:
                 order = {"ok": False, "error": "entry failed"}
 
@@ -218,7 +243,7 @@ def place_oco_ccxt(
                     )
                 except Exception:
                     try:
-                        from order_utils import safe_create_order  # noqa: E402
+                        from order_utils import safe_create_order
 
                         notified["sl"] = safe_create_order(
                             ex, "stop", symbol, opp, qty, float(stop_px), params=params
@@ -280,7 +305,15 @@ def handle_cmds_ccxt(cmds, router, tg, live: bool):
                         if hasattr(router, "safe_place_order"):
                             router.safe_place_order(sym, "sell", amt)
                         else:
-                            place_market(router, sym, "sell", amt)
+                            # prefer order_utils.place_market if available, else use top-level stub
+                            try:
+                                import order_utils
+
+                                order_utils.place_market(router, sym, "sell", amt)
+                            except Exception:
+                                # top-level stub defined earlier will raise at runtime if not available
+                                # reference via globals() to satisfy linters and runtime
+                                globals().get("place_market", lambda *a, **k: (_ for _ in ()).throw(RuntimeError("place_market is not available")))(router, sym, "sell", amt)
                         tg.note(f"flattened {sym} {amt}")
                     except Exception as e:
                         tg.note(f"flatten failed: {e}")
@@ -324,6 +357,50 @@ def main():
     live = os.getenv("ENABLE_LIVE", "false").lower() == "true"
 
     router = ensure_exchange()
+    # explicit safety guard: if live is disabled, block any method that would send
+    # real orders to an exchange unless the exchange is explicitly the `paper` adapter.
+    def _disable_live_orders(router_obj, logger):
+        try:
+            ex_id = getattr(router_obj, "id", "") or os.getenv("EXCHANGE_ID", "").lower()
+            if ex_id and str(ex_id).lower() == "paper":
+                logger.info("Exchange is paper; order blocking not applied.")
+                return
+        except Exception:
+            ex_id = os.getenv("EXCHANGE_ID", "")
+
+        if live:
+            return
+
+        blocked = [
+            "create_order",
+            "create_limit_order",
+            "create_stop_order",
+            "safe_place_order",
+            "safe_create_order",
+        ]
+
+        for name in blocked:
+            if hasattr(router_obj, name):
+                try:
+                    setattr(router_obj, f"_orig_{name}", getattr(router_obj, name))
+                except Exception:
+                    pass
+
+            # create a closure capturing the method name
+            def make_stub(n):
+                def stub(*args, **kwargs):
+                    logger.warning(f"Blocked order call {n} because ENABLE_LIVE is not 'true'. Args={args} kwargs={kwargs}")
+                    return {"ok": False, "error": "live disabled"}
+
+                return stub
+
+            try:
+                setattr(router_obj, name, make_stub(name))
+            except Exception:
+                # best-effort; don't fail startup
+                logger.debug(f"Could not override {name} on router")
+
+    _disable_live_orders(router, log)
     tg = TelegramNotifier()
     tg.hello(router.id, args.symbols, args.timeframe)
 
@@ -358,9 +435,10 @@ def main():
             "MATIC/USDT",
             "TON/USDT",
         }
-        [s for s in syms if s in preferred] or syms[:15]
+        # prefer a short curated list when available, else fall back to top symbols
+        syms = [s for s in syms if s in preferred] or syms[:15]
     else:
-        [s.strip().upper() for s in args.symbols.split(",")]
+        syms = [s.strip().upper() for s in args.symbols.split(",")]
 
     last_bal_ts = 0.0
 

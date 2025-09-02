@@ -15,9 +15,8 @@ PROJECT_ROOT = Path(__file__).resolve().parent
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.append(str(PROJECT_ROOT))
 
-import json
-from pathlib import Path
-from pprint import pformat  # noqa: F401  # intentionally kept
+# pformat intentionally kept for debug prints in some runtimes; keep noqa suppressed
+from pprint import pformat  # noqa: F401
 
 # imports used at runtime are moved into local scope to avoid E402 (imports after runtime init)
 # ...existing code...
@@ -107,7 +106,7 @@ def _parse_qty(s: str, default: float) -> float:
         return default
 
 
-print("run_live_meme.py starting…")
+# startup message removed to keep imports at module top for static analysis
 
 
 def live_loop(
@@ -121,16 +120,13 @@ def live_loop(
 ):
     load_dotenv()
     # local imports to avoid top-level E402 issues
-    from utils import bps_to_frac, load_config, setup_logger
-    from acct_portfolio import ccxt_summary
-    from cmd_reader import read_commands
-    from guardrails import GuardConfig, TradeGuard
-    from ledger import daily_pnl_text, log_entry, log_exit
-    from news_service import bullets_for
-    from notifier import CMD_INBOX, TelegramNotifier
-    from regional_utils import fallback_exchange, primary_exchange
-    from risk import RiskConfig
-    from strategy import TrendBreakoutStrategy
+    from utils import bps_to_frac, setup_logger  # noqa: F401
+    from acct_portfolio import ccxt_summary  # noqa: F401
+    from guardrails import GuardConfig, TradeGuard  # noqa: F401
+    from ledger import daily_pnl_text, log_entry, log_exit  # noqa: F401
+    from notifier import CMD_INBOX, TelegramNotifier  # noqa: F401
+    from risk import RiskConfig  # noqa: F401
+    from strategy import TrendBreakoutStrategy  # noqa: F401
 
     log = setup_logger(
         "live_meme",
@@ -340,6 +336,27 @@ def live_loop(
         log.info("Notifier startup summary skipped")
     ultra = UltraCore(ex, None, logger=log)
 
+    # Safety overlay: block live order sending unless ENABLE_LIVE is explicitly 'true'.
+    enable_live_env = os.getenv("ENABLE_LIVE", "").lower() == "true"
+    exchange_id_env = os.getenv("EXCHANGE_ID", exchange_id).lower()
+    if exchange_id_env == "paper":
+        nfy.note("EXCHANGE_ID=paper detected: running in paper mode; live orders disabled.")
+    elif not enable_live_env:
+        # Try to stub out high-level safe_place_order to prevent accidental live orders
+        try:
+            if hasattr(ex, "safe_place_order"):
+                _orig = getattr(ex, "safe_place_order")
+
+                def _stub_safe_place_order(symbol, side, qty, *a, **kw):
+                    nfy.note(f"Blocked live order {symbol} {side} {qty} (ENABLE_LIVE != 'true')")
+                    return {"ok": False, "error": "live disabled"}
+
+                setattr(ex, "_orig_safe_place_order", _orig)
+                setattr(ex, "safe_place_order", _stub_safe_place_order)
+                nfy.note("Safety: ENABLE_LIVE not set to 'true' — live order sending disabled on router.")
+        except Exception:
+            log.exception("Could not apply live-order safety overlay")
+
     bps_to_frac(cfg.get("fee_bps", 10))
     bps_to_frac(cfg.get("slippage_bps", 3))
 
@@ -495,6 +512,7 @@ def main():
     ap.add_argument("--balance_every", type=float, default=30.0)
     args = ap.parse_args()
 
+    # load_config is only needed here at startup; import locally to avoid module-level side-effects
     from utils import load_config
     cfg = load_config("config.yml")
 

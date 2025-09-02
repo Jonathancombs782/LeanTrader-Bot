@@ -8,6 +8,11 @@ import os
 import pathlib
 import time
 from typing import Any, Dict, List
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from router import ExchangeRouter
+    from notifier import TelegramNotifier
 
 from dotenv import load_dotenv
 
@@ -64,9 +69,7 @@ def _open_pnl(router: ExchangeRouter, rows: List[Dict[str, Any]]) -> float:
                             else {}
                         )
                     except Exception as e:
-                        print(
-                            f"[tg_heartbeat] fetch_ticker fallback failed for {t['symbol']}: {e}"
-                        )
+                        print(f"[tg_heartbeat] fetch_ticker fallback failed for {t['symbol']}: {e}")
                         tk = {}
             except Exception as e:
                 print(
@@ -95,7 +98,7 @@ def heartbeat_once(router: ExchangeRouter, notif: TelegramNotifier):
     upnl = _open_pnl(router, rows)
     lines = [
         f"*Heartbeat* {dt.datetime.utcnow().strftime('%Y-%m-%d %H:%MZ')}",
-    f"Mode: `{os.getenv('EXCHANGE_MODE', 'spot')}`  Live: `{os.getenv('ENABLE_LIVE', 'false')}`  Paper: `{str(router.paper)}`",
+        f"Mode: `{os.getenv('EXCHANGE_MODE', 'spot')}`  Live: `{os.getenv('ENABLE_LIVE', 'false')}`  Paper: `{str(router.paper)}`",
         f"Equity: {_fmt_usd(eq)}   uPnL: {_fmt_usd(upnl)}",
         f"Open: {len(rows)}",
     ]

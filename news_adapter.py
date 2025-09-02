@@ -136,7 +136,7 @@ def fx_guard_for_symbol(
             ev.get("impact", "")
         ).lower().startswith("high"):
             avoid_until = max(avoid_until, ts + hard_block_min * 60)
-                reasons.append(f"HARD {ccy}:{ev.get('title', '')}")
+            reasons.append(f"HARD {ccy}:{ev.get('title', '')}")
         # a soft bias if we have actual vs forecast and event is within last soft_bias_min
         if 0 <= (now - ts) <= soft_bias_min * 60:
             try:

@@ -13,30 +13,11 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # move heavy runtime imports into main to avoid E402 at module top
-# charting and news_adapter are imported inside main()
-
-# --- Telegram (minimal) ---
-try:
-    from notifier import TelegramNotifier  # noqa: E402
-except Exception:
-
-    class TelegramNotifier:
-        def hello(self, label: str, pairs, tf):
-            print(f"[TG] Hello {label} {pairs} tf={tf}")
-
-        def signal(self, sym, side, price, lots, sl, reasons=None, quality=0.7):
-            print(f"[TG] {sym} {side} {price} lots={lots} sl={sl} reasons={reasons}")
-
-        def note(self, msg):
-            print("[TG]", msg)
-
-        def daily_pnl(self, msg):
-            print("[TG] PnL", msg)
-
+# notifier, charting and news_adapter are imported inside main()
 
 # --- MT5 setup ---
 try:
-    import MetaTrader5 as mt5  # noqa: E402
+    import MetaTrader5 as mt5
 except Exception:
     mt5 = None
 

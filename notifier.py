@@ -35,16 +35,17 @@ class TelegramNotifier:
         if not (self.enabled and self.token and self.chat_id):
             return
         try:
-            r = requests.post(
-                self.base_send,
-                data={
-                    "chat_id": self.chat_id,
-                    "text": textwrap.dedent(text),
-                    "parse_mode": "Markdown",
-                    "disable_web_page_preview": (not preview),
-                },
-                timeout=10,
-            )
+            data = {
+                "chat_id": self.chat_id,
+                "text": textwrap.dedent(text),
+                "disable_web_page_preview": (not preview),
+            }
+            # Only set parse_mode if explicitly requested via env var to avoid
+            # Telegram entity parsing errors for unescaped content.
+            pm = os.getenv("TELEGRAM_PARSE_MODE", "").strip()
+            if pm:
+                data["parse_mode"] = pm
+            r = requests.post(self.base_send, data=data, timeout=10)
             # Optionally expose debug output when TELEGRAM_DEBUG=true
             if os.getenv("TELEGRAM_DEBUG", "false").lower() == "true":
                 try:
