@@ -6,9 +6,10 @@ only runs if scikit-learn is present.
 """
 from __future__ import annotations
 
+import json
 import pickle
 from pathlib import Path
-from typing import List
+from typing import Dict, List, Optional
 
 try:
     from sklearn.ensemble import RandomForestClassifier  # type: ignore
@@ -24,6 +25,10 @@ def _model_dir() -> Path:
     return p
 
 
+def _model_meta_path(model_path: Path) -> Path:
+    return model_path.with_suffix(model_path.suffix + ".meta.json")
+
+
 def featurize_rows(rows: List[List[float]]) -> List[List[float]]:
     # rows: [ts, o, h, l, c, v]
     out = []
@@ -35,12 +40,26 @@ def featurize_rows(rows: List[List[float]]) -> List[List[float]]:
     return out
 
 
-def train_dummy_classifier(candles_csv_path: str) -> dict:
+def _save_model_and_meta(clf, meta: Dict[str, object]) -> Dict[str, object]:
+    p = _model_dir() / f"rf_model_{int(__import__('time').time())}.pkl"
+    with p.open("wb") as f:
+        pickle.dump(clf, f)
+    meta_path = _model_meta_path(p)
+    try:
+        with meta_path.open("w", encoding="utf-8") as f:
+            json.dump(meta, f, ensure_ascii=False, indent=2)
+    except Exception:
+        # non-fatal if metadata can't be written
+        pass
+    return {"model_path": str(p), "meta_path": str(meta_path)}
+
+
+def train_dummy_classifier(candles_csv_path: str) -> Dict[str, object]:
     if RandomForestClassifier is None:
         raise RuntimeError("scikit-learn is required for training")
     import csv
 
-    rows = []
+    rows: List[List[float]] = []
     with open(candles_csv_path, "r", encoding="utf-8") as f:
         reader = csv.reader(f)
         next(reader, None)
@@ -59,7 +78,18 @@ def train_dummy_classifier(candles_csv_path: str) -> dict:
     clf.fit(X_train, y_train)
     preds = clf.predict(X_test)
     acc = float(accuracy_score(y_test, preds))
-    p = _model_dir() / f"rf_model_{int(__import__('time').time())}.pkl"
-    with p.open("wb") as f:
-        pickle.dump(clf, f)
-    return {"model_path": str(p), "accuracy": acc}
+    meta = {
+        "created_at": int(__import__("time").time()),
+        "accuracy": acc,
+        "n_samples": len(rows),
+        "features": ["ret", "range", "volume"],
+    }
+    saved = _save_model_and_meta(clf, meta)
+    return {"model_path": saved.get("model_path"), "meta_path": saved.get("meta_path"), "accuracy": acc}
+
+
+def load_model(path: str):
+    """Load a pickled model from disk and return it. Raises on failure."""
+    p = Path(path)
+    with p.open("rb") as f:
+        return pickle.load(f)

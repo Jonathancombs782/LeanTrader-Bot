@@ -496,71 +496,71 @@ class ExchangeRouter:
         except Exception as e:
             return {"ok": False, "error": str(e)}
 
-        def apply_runtime_order_block(self, logger: Optional[logging.Logger] = None) -> None:
-            """
-            Apply a runtime overlay that stubs order-sending methods when ENABLE_LIVE
-            is not explicitly enabled. This is non-destructive: original callables
-            are saved as `_orig_<name>` on the instance where possible.
+    def apply_runtime_order_block(self, logger: Optional[logging.Logger] = None) -> None:
+        """
+        Apply a runtime overlay that stubs order-sending methods when ENABLE_LIVE
+        is not explicitly enabled. This is non-destructive: original callables
+        are saved as `_orig_<name>` on the instance where possible.
 
-            This method is safe to call multiple times; it will attempt to preserve
-            existing originals when present.
-            """
-            lg = logger or _log
-            try:
-                enable_live_env = _env("ENABLE_LIVE", "").strip().lower() == "true"
-                # Do not override behavior for paper broker
-                if getattr(self, "id", "").lower() == "paper":
-                    lg.debug("[router] paper broker detected: skipping runtime order overlay")
-                    return
+        This method is safe to call multiple times; it will attempt to preserve
+        existing originals when present.
+        """
+        lg = logger or _log
+        try:
+            enable_live_env = _env("ENABLE_LIVE", "").strip().lower() == "true"
+            # Do not override behavior for paper broker
+            if getattr(self, "id", "").lower() == "paper":
+                lg.debug("[router] paper broker detected: skipping runtime order overlay")
+                return
 
-                if enable_live_env:
-                    lg.debug("[router] ENABLE_LIVE=true: no runtime order overlay applied")
-                    return
+            if enable_live_env:
+                lg.debug("[router] ENABLE_LIVE=true: no runtime order overlay applied")
+                return
 
-                lg.warning("[router] ENABLE_LIVE not true: applying runtime order-block overlay")
+            lg.warning("[router] ENABLE_LIVE not true: applying runtime order-block overlay")
 
-                def _stub_order(*args, **kwargs):
-                    lg.warning("[router] blocked live order call (ENABLE_LIVE != 'true')")
-                    return {"ok": False, "dry_run": True, "error": "live disabled"}
+            def _stub_order(*args, **kwargs):
+                lg.warning("[router] blocked live order call (ENABLE_LIVE != 'true')")
+                return {"ok": False, "dry_run": True, "error": "live disabled"}
 
-                # Instance-level shims (high-level router methods)
-                for name in (
-                    "safe_place_order",
-                    "create_order",
-                    "create_market_order",
-                    "create_limit_order",
-                    "create_stop_order",
-                ):
-                    try:
-                        if hasattr(self, name):
-                            if not hasattr(self, f"_orig_{name}"):
-                                setattr(self, f"_orig_{name}", getattr(self, name))
-                            setattr(self, name, _stub_order)
-                    except Exception:
-                        lg.exception("[router] failed to stub router.%s", name)
-
-                # Try to stub underlying exchange methods if present (best-effort)
+            # Instance-level shims (high-level router methods)
+            for name in (
+                "safe_place_order",
+                "create_order",
+                "create_market_order",
+                "create_limit_order",
+                "create_stop_order",
+            ):
                 try:
-                    ex = getattr(self, "ex", None)
-                    if ex is not None:
-                        def make_ex_stub():
-                            def _ex_stub(*a, **k):
-                                lg.warning("[router] blocked underlying exchange order (ENABLE_LIVE != 'true')")
-                                return {"ok": False, "dry_run": True, "error": "live disabled"}
-
-                            return _ex_stub
-
-                        for cname in ("create_order", "create_market_order", "create_limit_order"):
-                            try:
-                                if hasattr(ex, cname) and not hasattr(ex, f"_orig_{cname}"):
-                                    setattr(ex, f"_orig_{cname}", getattr(ex, cname))
-                                    setattr(ex, cname, make_ex_stub())
-                            except Exception:
-                                lg.exception("[router] failed to stub ex.%s", cname)
+                    if hasattr(self, name):
+                        if not hasattr(self, f"_orig_{name}"):
+                            setattr(self, f"_orig_{name}", getattr(self, name))
+                        setattr(self, name, _stub_order)
                 except Exception:
-                    lg.exception("[router] underlying exchange overlay failed")
+                    lg.exception("[router] failed to stub router.%s", name)
+
+            # Try to stub underlying exchange methods if present (best-effort)
+            try:
+                ex = getattr(self, "ex", None)
+                if ex is not None:
+                    def make_ex_stub():
+                        def _ex_stub(*a, **k):
+                            lg.warning("[router] blocked underlying exchange order (ENABLE_LIVE != 'true')")
+                            return {"ok": False, "dry_run": True, "error": "live disabled"}
+
+                        return _ex_stub
+
+                    for cname in ("create_order", "create_market_order", "create_limit_order"):
+                        try:
+                            if hasattr(ex, cname) and not hasattr(ex, f"_orig_{cname}"):
+                                setattr(ex, f"_orig_{cname}", getattr(ex, cname))
+                                setattr(ex, cname, make_ex_stub())
+                        except Exception:
+                            lg.exception("[router] failed to stub ex.%s", cname)
             except Exception:
-                lg.exception("[router] apply_runtime_order_block outer failure")
+                lg.exception("[router] underlying exchange overlay failed")
+        except Exception:
+            lg.exception("[router] apply_runtime_order_block outer failure")
 
     # ---------- safe convenience wrappers (used across the codebase) ----------
     def safe_fetch_ticker(self, symbol: str) -> Dict[str, Any]:

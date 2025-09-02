@@ -1,0 +1,10 @@
+{
+  "created_at": 1756828982,
+  "accuracy": 1.0,
+  "n_samples": 400,
+  "features": [
+    "ret",
+    "range",
+    "volume"
+  ]
+}
