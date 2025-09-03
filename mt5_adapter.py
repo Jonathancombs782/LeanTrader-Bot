@@ -161,3 +161,47 @@ def account_summary_lines():
         f"Balance: {float(info.balance):.2f}  Equity: {float(info.equity):.2f}",
         f"Margin: {float(info.margin):.2f}    Positions: {pos_n}  (uPnL {u_pnl:.2f})",
     ]
+
+
+# --- Compatibility wrappers -------------------------------------------------
+def symbol_trade_specs(symbol: str) -> Dict[str, Any]:
+    """Compatibility shim: delegate to the traders_core adapter implementation.
+
+    Some modules import symbol_trade_specs from the top-level mt5_adapter; modern
+    implementation lives under traders_core.mt5_adapter. Keep a thin shim here
+    so both import styles work.
+    """
+    try:
+        from traders_core import mt5_adapter as core_mt5  # local import
+
+        return core_mt5.symbol_trade_specs(symbol)
+    except Exception:
+        # fallback: try to read symbol info directly
+        info = mt5.symbol_info(symbol)
+        if info is None:
+            raise RuntimeError(f"symbol_info({symbol}) is None")
+        return {
+            "digits": int(getattr(info, "digits", 0)),
+            "point": float(getattr(info, "point", 0.0)),
+            "volume_min": float(getattr(info, "volume_min", 0.0)),
+            "volume_step": float(getattr(info, "volume_step", 0.0)),
+            "volume_max": float(getattr(info, "volume_max", 0.0)),
+            "trade_stops_level": int(getattr(info, "trade_stops_level", 0)),
+            "freeze_level": int(getattr(info, "freeze_level", 0)),
+            "trade_contract_size": float(getattr(info, "trade_contract_size", 0.0)),
+            "trade_tick_value": float(getattr(info, "trade_tick_value", 0.0)),
+        }
+
+
+def order_send_market(mt5mod, symbol: str, side: str, lots: float, sl: Optional[float] = None, tp: Optional[float] = None, deviation: int = 20) -> Dict[str, Any]:
+    """Compatibility shim: accept (mt5mod, ...) signature and delegate to
+    traders_core.mt5_adapter.order_send_market which uses global mt5 instance.
+    """
+    try:
+        from traders_core import mt5_adapter as core_mt5  # local import
+
+        # core order_send_market signature: (symbol, side, lots, sl=None, tp=None, deviation=20)
+        return core_mt5.order_send_market(symbol, side, lots, sl=sl, tp=tp, deviation=deviation)
+    except Exception:
+        # If delegation fails, provide a safe failure payload
+        return {"ok": False, "retcode": -1, "comment": "order_send_market shim failed", "deal": 0}

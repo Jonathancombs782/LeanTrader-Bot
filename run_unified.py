@@ -8,12 +8,14 @@ from trader_core import TraderCore
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--fx", default="XAUUSD,EURUSD,USDJPY")
-    ap.add_argument("--fx_tfs", default="M5,M15")
-    ap.add_argument("--spot", default="BTC/USDT,DOGE/USDT")
-    ap.add_argument("--spot_tfs", default="1m,5m")
-    ap.add_argument("--fut", default="BTC/USDT,ETH/USDT")
-    ap.add_argument("--fut_tfs", default="1m,5m")
+    import os
+
+    ap.add_argument("--fx", default=os.getenv("FX_SYMBOLS", "XAUUSD,EURUSD,USDJPY"))
+    ap.add_argument("--fx_tfs", default=os.getenv("FX_TFS", "M5,M15"))
+    ap.add_argument("--spot", default=os.getenv("CRYPTO_SYMBOLS", "BTC/USDT,DOGE/USDT"))
+    ap.add_argument("--spot_tfs", default=os.getenv("CRYPTO_SPOT_TFS", "1m,5m"))
+    ap.add_argument("--fut", default=os.getenv("CRYPTO_FUTURES", "BTC/USDT,ETH/USDT"))
+    ap.add_argument("--fut_tfs", default=os.getenv("CRYPTO_FUT_TFS", "1m,5m"))
     ap.add_argument("--loop", type=int, default=20)
     ap.add_argument("--atr_th", type=float, default=0.003)
     ap.add_argument("--bbw_th", type=float, default=0.02)

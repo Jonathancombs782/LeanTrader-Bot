@@ -7,8 +7,8 @@ from pathlib import Path
 from typing import List
 
 try:
-    from trainer import featurize_rows, load_model
-    from model_registry import read_meta
+    from .trainer import featurize_rows, load_model
+    from .model_registry import read_meta
 except Exception as e:
     raise SystemExit(f"dependencies missing: {e}")
 

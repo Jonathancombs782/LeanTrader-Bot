@@ -11,14 +11,20 @@ import time
 from pathlib import Path
 from typing import List
 
-# local helpers
+# ensure project root is on sys.path so 'tools' package imports work when
+# the script is executed directly (python tools/pipeline.py)
+proj_root = Path(__file__).resolve().parents[1]
+if str(proj_root) not in sys.path:
+    sys.path.insert(0, str(proj_root))
+
 try:
-    from news_ingest import fetch_feeds
-    from market_data import fetch_ohlcv
-    from trainer import train_dummy_classifier
-    from evaluate_model import evaluate
+    # prefer absolute imports from the local package
+    from tools.news_ingest import fetch_feeds
+    from tools.market_data import fetch_ohlcv
+    from tools.trainer import train_dummy_classifier
+    from tools.evaluate_model import evaluate
     try:
-        from web_crawler import crawl_urls
+        from tools.web_crawler import crawl_urls
     except Exception:
         crawl_urls = None
 except Exception as e:
@@ -47,12 +53,19 @@ def run_pipeline():
         print('failed to acquire pipeline lock:', e)
         return 1
 
-    # 1) News ingestion (opt-in feeds)
-    feeds: List[str] = [
-        'https://news.ycombinator.com/rss',
-        'https://www.coindesk.com/arc/outboundfeeds/rss/',
-        'https://www.reuters.com/technology/feed/',
-    ]
+    # 1) News ingestion (opt-in feeds). Use curated defaults unless overridden.
+    try:
+        from .learning_sources import NEWS_FEEDS, DEFAULT_CRAWL_SEEDS  # type: ignore
+    except Exception:
+        NEWS_FEEDS = [
+            'https://news.ycombinator.com/rss',
+            'https://www.coindesk.com/arc/outboundfeeds/rss/',
+            'https://www.reuters.com/technology/feed/',
+        ]
+        DEFAULT_CRAWL_SEEDS = []
+
+    feeds_env = os.getenv('LEARNING_FEEDS')
+    feeds: List[str] = [s.strip() for s in feeds_env.split(',') if s.strip()] if feeds_env else NEWS_FEEDS
     try:
         print('fetching news feeds...')
         ncount = fetch_feeds(feeds, max_items=10)
@@ -64,8 +77,11 @@ def run_pipeline():
     if _env_true('ENABLE_CRAWL') and crawl_urls is not None:
         try:
             print('running web crawler (ENABLE_CRAWL=true)')
-            seeds = os.getenv('CRAWL_SEEDS', '').split(',') if os.getenv('CRAWL_SEEDS') else []
-            seeds = [s.strip() for s in seeds if s.strip()]
+            seeds_env = os.getenv('CRAWL_SEEDS')
+            if seeds_env:
+                seeds = [s.strip() for s in seeds_env.split(',') if s.strip()]
+            else:
+                seeds = DEFAULT_CRAWL_SEEDS
             if seeds:
                 ccount = crawl_urls(seeds, max_pages=20)
                 print('crawler saved snippets:', ccount)

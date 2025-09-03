@@ -7,6 +7,14 @@ from typing import List, Optional  # noqa: F401  # intentionally kept
 
 import requests
 
+# Ensure local .env is loaded for CLI runs that don't import trader_core
+try:
+    from dotenv import load_dotenv
+
+    load_dotenv()
+except Exception:
+    pass
+
 # --- ENV ---
 ENABLED = os.getenv("TELEGRAM_ENABLED", "true").strip().lower() in (
     "1",

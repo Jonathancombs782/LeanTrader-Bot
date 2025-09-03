@@ -51,6 +51,29 @@ def _save_model_and_meta(clf, meta: Dict[str, object]) -> Dict[str, object]:
     except Exception:
         # non-fatal if metadata can't be written
         pass
+    # retention: keep only latest N models to avoid unbounded disk use
+    try:
+        import os
+        keep = int(os.getenv('MODEL_RETENTION', '5'))
+        models = sorted(_model_dir().glob('rf_model_*.pkl'), key=lambda p: p.stat().st_mtime, reverse=True)
+        for old in models[keep:]:
+            try:
+                old_meta = _model_meta_path(old)
+                # record deletion in a small audit log
+                try:
+                    logp = Path('runtime') / 'logs' / 'model_retention.log'
+                    logp.parent.mkdir(parents=True, exist_ok=True)
+                    with logp.open('a', encoding='utf-8') as lf:
+                        lf.write(f"DELETE\t{int(__import__('time').time())}\t{old}\n")
+                except Exception:
+                    pass
+                old.unlink()
+                if old_meta.exists():
+                    old_meta.unlink()
+            except Exception:
+                continue
+    except Exception:
+        pass
     return {"model_path": str(p), "meta_path": str(meta_path)}
 
 

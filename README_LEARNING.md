@@ -59,3 +59,29 @@ If you'd like, I will:
 - register the scheduled task for you,
 - add model retention and monitoring, or
 - extend the crawler to respect robots.txt and more advanced scraping controls.
+
+Installation & professional crawler notes
+----------------------------------------
+The crawler uses `requests` + `beautifulsoup4` and respects `robots.txt` and
+per-domain `Crawl-delay` (when provided by the site's robots policy). To install
+the crawler requirements into the project's virtualenv:
+
+```powershell
+& .\.venv\Scripts\Activate.ps1
+pip install -r tools\requirements_crawler.txt
+```
+
+Smoke test the crawler before enabling broad runs:
+
+```powershell
+& .\.venv\Scripts\Activate.ps1
+python tools\test_crawler.py
+```
+
+If the smoke test creates snippets, you'll find them at `runtime/strategies/` and
+logs under `runtime/logs/crawler.log`.
+
+If you want me to proceed now, I can:
+- install the crawler deps in the venv and run `tools/test_crawler.py`, then
+- run the full pipeline with `ENABLE_CRAWL=true` and a curated seed list.
+

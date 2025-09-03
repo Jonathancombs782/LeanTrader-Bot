@@ -147,6 +147,10 @@ class ExchangeRouter:
             else:
                 # last-resort: use shared helper; it has internal fallbacks
                 order = place_market(self.ex, symbol, side, qty)
+
+            # Normalize result: if the underlying adapter returned an error dict
+            if isinstance(order, dict) and (order.get("ok") is False or order.get("error")):
+                return {"ok": False, "error": order.get("error") or order}
             return {"ok": True, "result": order}
         except Exception as e:
             return {"ok": False, "error": str(e)}
@@ -192,6 +196,8 @@ class ExchangeRouter:
                     order = place_market(self.ex, symbol, side, qty)
             else:
                 order = place_market(self.ex, symbol, side, qty)
+            if isinstance(order, dict) and (order.get("ok") is False or order.get("error")):
+                return {"ok": False, "error": order.get("error") or order}
             return {"ok": True, "result": order}
         except Exception as e:
             return {"ok": False, "error": str(e)}
