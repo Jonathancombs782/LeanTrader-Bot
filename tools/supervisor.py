@@ -34,11 +34,12 @@ CHILDREN = [
     {
         "name": "continuous_demo",
         # run a long loop (minutes)
-        "cmd": [sys.executable, "-u", "-c", "from tools.continuous_demo import main; main(1440)"],
+        # use -m to run as a module so top-level imports resolve correctly from project root
+        "cmd": [sys.executable, "-u", "-m", "tools.continuous_demo", "1440"],
     },
     {
         "name": "web_crawler",
-        "cmd": [sys.executable, "-u", "-c", "from tools.web_crawler import main; main()"],
+        "cmd": [sys.executable, "-u", "-m", "tools.web_crawler"],
     },
 ]
 
