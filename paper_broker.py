@@ -2,6 +2,8 @@
 import random
 import time
 from typing import Any, Dict, List, Optional, Tuple
+import json
+import pathlib
 
 
 class PaperBroker:
@@ -10,31 +12,72 @@ class PaperBroker:
       • Spot: USDT-quoted pairs (e.g., BTC/USDT)
       • Futures: Linear USDT-perps (qty in base coin), cross margin, leverage
       • PnL: mark-to-market, realized on reduce; margin reserved on opens
+
+    Persisted state (runtime/paper_state.json) allows processes to share holdings.
     """
 
     # ------------------ lifecycle / account / markets ------------------
     def __init__(self, start_cash: float = 5000.0):
+        # path for persisted state
+        self._state_path = pathlib.Path("runtime") / "paper_state.json"
+
+        # attempt to load persisted state
+        state = None
+        try:
+            if self._state_path.exists():
+                state = json.loads(self._state_path.read_text(encoding="utf-8"))
+        except Exception:
+            state = None
+
         # account
-        self.cash: float = float(start_cash)  # free USDT
-        self.history: List[Dict[str, Any]] = []
+        if state:
+            self.cash: float = float(state.get("cash", float(start_cash)))
+            self.history: List[Dict[str, Any]] = state.get("history", [])
+            self.holdings: Dict[str, float] = state.get("holdings", {})
+            self.fut_pos: Dict[str, Dict[str, float]] = state.get("fut_pos", {})
+            self._px = state.get("_px", {
+                "BTC/USDT": 100000.0,
+                "ETH/USDT": 3500.0,
+                "SOL/USDT": 150.0,
+                "XRP/USDT": 0.6,
+                "DOGE/USDT": 0.12,
+            })
+        else:
+            self.cash: float = float(start_cash)  # free USDT
+            self.history: List[Dict[str, Any]] = []
 
-        # spot holdings: base -> qty
-        self.holdings: Dict[str, float] = {}
+            # spot holdings: base -> qty
+            self.holdings: Dict[str, float] = {}
 
-        # futures positions: sym -> {qty, entry, lev, mode}
-        self.fut_pos: Dict[str, Dict[str, float]] = (
-            {}
-        )  # qty (base), entry (USDT), lev (int)
+            # futures positions: sym -> {qty, entry, lev, mode}
+            self.fut_pos: Dict[str, Dict[str, float]] = (
+                {}
+            )  # qty (base), entry (USDT), lev (int)
 
-        # simple universe + synthetic prices
-        self._symbols = ["BTC/USDT", "ETH/USDT", "SOL/USDT", "XRP/USDT", "DOGE/USDT"]
-        self._px: Dict[str, float] = {
-            "BTC/USDT": 100000.0,
-            "ETH/USDT": 3500.0,
-            "SOL/USDT": 150.0,
-            "XRP/USDT": 0.6,
-            "DOGE/USDT": 0.12,
-        }
+            # simple universe + synthetic prices
+            self._symbols = ["BTC/USDT", "ETH/USDT", "SOL/USDT", "XRP/USDT", "DOGE/USDT"]
+            self._px: Dict[str, float] = {
+                "BTC/USDT": 100000.0,
+                "ETH/USDT": 3500.0,
+                "SOL/USDT": 150.0,
+                "XRP/USDT": 0.6,
+                "DOGE/USDT": 0.12,
+            }
+
+    def _persist(self):
+        try:
+            self._state_path.parent.mkdir(parents=True, exist_ok=True)
+            state = {
+                "cash": self.cash,
+                "history": self.history,
+                "holdings": self.holdings,
+                "fut_pos": self.fut_pos,
+                "_px": self._px,
+            }
+            self._state_path.write_text(json.dumps(state, indent=2), encoding="utf-8")
+        except Exception:
+            # best-effort persistence, ignore failures
+            pass
 
     def load_markets(self) -> Dict[str, Any]:
         return {s: {"symbol": s, "quote": "USDT"} for s in self._symbols}
@@ -45,6 +88,11 @@ class PaperBroker:
         p *= 1.0 + random.uniform(-0.0015, 0.0015)  # ±0.15% drift
         p = max(1e-8, p)
         self._px[symbol] = p
+        # persist evolving price so other processes see recent prices
+        try:
+            self._persist()
+        except Exception:
+            pass
         return p
 
     def fetch_ticker(self, symbol: str) -> Dict[str, Any]:
@@ -76,6 +124,11 @@ class PaperBroker:
             )
             p = close
         self._px[symbol] = p
+        # persist price update as minimal shared state
+        try:
+            self._persist()
+        except Exception:
+            pass
         return out
 
     # ------------------ helpers ------------------
@@ -200,6 +253,11 @@ class PaperBroker:
             ord_obj = self._exec_spot(symbol, base, side, amount, px)
 
         self.history.append(ord_obj)
+        # persist state after order
+        try:
+            self._persist()
+        except Exception:
+            pass
         return ord_obj
 
     def _exec_spot(
@@ -217,6 +275,12 @@ class PaperBroker:
                 raise ValueError("insufficient base qty")
             self.holdings[base] = qty - amount
             self.cash += amount * px
+
+        # persist state
+        try:
+            self._persist()
+        except Exception:
+            pass
 
         return {
             "id": f"paper-{int(time.time()*1000)}",
@@ -291,6 +355,12 @@ class PaperBroker:
         # free cash cannot be negative; realized PnL credited immediately
         self.cash += realized
         # (cross margin recalculates on next balance call; we keep it simple)
+
+        # persist state
+        try:
+            self._persist()
+        except Exception:
+            pass
 
         return {
             "id": f"paper-{int(time.time()*1000)}",
