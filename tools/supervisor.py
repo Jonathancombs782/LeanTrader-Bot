@@ -41,6 +41,14 @@ CHILDREN = [
         "name": "web_crawler",
         "cmd": [sys.executable, "-u", "-m", "tools.web_crawler"],
     },
+    {
+        "name": "heartbeat",
+        "cmd": [sys.executable, "-u", "-m", "tools.heartbeat"],
+    },
+    {
+        "name": "online_trainer",
+        "cmd": [sys.executable, "-u", "-m", "tools.online_trainer"],
+    },
 ]
 
 PROCS = {}
