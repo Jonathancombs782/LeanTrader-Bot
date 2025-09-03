@@ -54,6 +54,26 @@ def ensure_symbol(symbol: str) -> None:
             raise RuntimeError(f"symbol_select({symbol}) failed")
 
 
+def min_stop_distance_points(symbol: str) -> int:
+    """Return minimum stop distance in points for a symbol (trade_stops_level or freeze_level).
+
+    Some callers (mt5_signals) expect this helper to exist.
+    """
+    info = mt5.symbol_info(symbol)
+    if info is None:
+        return 0
+    # some brokers expose 'freeze_level'
+    try:
+        stops = int(getattr(info, "trade_stops_level", 0) or 0)
+    except Exception:
+        stops = 0
+    try:
+        freeze = int(getattr(info, "freeze_level", 0) or 0)
+    except Exception:
+        freeze = 0
+    return max(stops, freeze)
+
+
 def _normalize_rates_df(df):
     import pandas as pd  # noqa: E402
 
