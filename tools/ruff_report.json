@@ -1,0 +1,4607 @@
+{
+  "root": "C:\\Users\\User\\Downloads\\LeanTrader_ForexPack",
+  "files": {
+    ".github\\scripts\\import_smoke.py": {
+      "path": ".\\.github\\scripts\\import_smoke.py",
+      "rel": ".github\\scripts\\import_smoke.py",
+      "imports": [
+        "importlib",
+        "sys"
+      ],
+      "missing_imports": []
+    },
+    ".tmp_brain_import_check.py": {
+      "path": ".\\.tmp_brain_import_check.py",
+      "rel": ".tmp_brain_import_check.py",
+      "imports": [],
+      "missing_imports": []
+    },
+    ".tmp_import_check.py": {
+      "path": ".\\.tmp_import_check.py",
+      "rel": ".tmp_import_check.py",
+      "imports": [],
+      "missing_imports": []
+    },
+    ".tmp_import_smoke.py": {
+      "path": ".\\.tmp_import_smoke.py",
+      "rel": ".tmp_import_smoke.py",
+      "imports": [
+        "importlib",
+        "sys"
+      ],
+      "missing_imports": []
+    },
+    "acct_portfolio.py": {
+      "path": ".\\acct_portfolio.py",
+      "rel": "acct_portfolio.py",
+      "imports": [
+        "MetaTrader5",
+        "__future__",
+        "ccxt",
+        "dotenv",
+        "os",
+        "router",
+        "typing"
+      ],
+      "missing_imports": []
+    },
+    "alpha_engines.py": {
+      "path": ".\\alpha_engines.py",
+      "rel": "alpha_engines.py",
+      "imports": [
+        "__future__",
+        "dataclasses",
+        "json",
+        "math",
+        "numpy",
+        "pandas",
+        "pathlib",
+        "random",
+        "typing"
+      ],
+      "missing_imports": []
+    },
+    "analyzer.py": {
+      "path": ".\\analyzer.py",
+      "rel": "analyzer.py",
+      "imports": [
+        "__future__",
+        "numpy",
+        "pandas"
+      ],
+      "missing_imports": []
+    },
+    "auto_dashboard.py": {
+      "path": ".\\auto_dashboard.py",
+      "rel": "auto_dashboard.py",
+      "imports": [
+        "collections",
+        "datetime",
+        "json",
+        "pathlib"
+      ],
+      "missing_imports": []
+    },
+    "auto_loop.py": {
+      "path": ".\\auto_loop.py",
+      "rel": "auto_loop.py",
+      "imports": [
+        "dotenv",
+        "importlib",
+        "json",
+        "os",
+        "pathlib",
+        "router",
+        "sys",
+        "time",
+        "typing"
+      ],
+      "missing_imports": []
+    },
+    "auto_pilot.py": {
+      "path": ".\\auto_pilot.py",
+      "rel": "auto_pilot.py",
+      "imports": [
+        "__future__",
+        "brain",
+        "dotenv",
+        "os",
+        "pandas",
+        "router",
+        "time",
+        "typing"
+      ],
+      "missing_imports": []
+    },
+    "awareness.py": {
+      "path": ".\\awareness.py",
+      "rel": "awareness.py",
+      "imports": [
+        "dataclasses",
+        "numpy",
+        "pandas",
+        "time",
+        "typing"
+      ],
+      "missing_imports": []
+    },
+    "backtest_fx.py": {
+      "path": ".\\backtest_fx.py",
+      "rel": "backtest_fx.py",
+      "imports": [
+        "argparse",
+        "datetime",
+        "forex_utils",
+        "matplotlib",
+        "numpy",
+        "os",
+        "pandas",
+        "risk",
+        "strategy",
+        "utils",
+        "yfinance"
+      ],
+      "missing_imports": []
+    },
+    "bandit_report.py": {
+      "path": ".\\bandit_report.py",
+      "rel": "bandit_report.py",
+      "imports": [],
+      "missing_imports": []
+    },
+    "brain.py": {
+      "path": ".\\brain.py",
+      "rel": "brain.py",
+      "imports": [
+        "__future__",
+        "dataclasses",
+        "datetime",
+        "json",
+        "numpy",
+        "os",
+        "pandas",
+        "time",
+        "typing"
+      ],
+      "missing_imports": []
+    },
+    "brain_loop.py": {
+      "path": ".\\brain_loop.py",
+      "rel": "brain_loop.py",
+      "imports": [
+        "__future__",
+        "dataclasses",
+        "datetime",
+        "json",
+        "news_bias",
+        "numpy",
+        "os",
+        "pattern_memory",
+        "random",
+        "risk_engine",
+        "router",
+        "signals_publisher",
+        "signals_scanner",
+        "tg_utils",
+        "threading",
+        "time",
+        "traceback",
+        "trade_planner",
+        "typing",
+        "xgboost"
+      ],
+      "missing_imports": [
+        "xgboost"
+      ]
+    },
+    "brokers\\broker_base.py": {
+      "path": ".\\brokers\\broker_base.py",
+      "rel": "brokers\\broker_base.py",
+      "imports": [],
+      "missing_imports": []
+    },
+    "brokers\\broker_ibkr.py": {
+      "path": ".\\brokers\\broker_ibkr.py",
+      "rel": "brokers\\broker_ibkr.py",
+      "imports": [
+        "dotenv",
+        "ib_insync",
+        "os"
+      ],
+      "missing_imports": []
+    },
+    "brokers\\broker_mt5.py": {
+      "path": ".\\brokers\\broker_mt5.py",
+      "rel": "brokers\\broker_mt5.py",
+      "imports": [
+        "MetaTrader5",
+        "dotenv",
+        "os"
+      ],
+      "missing_imports": []
+    },
+    "brokers\\broker_oanda.py": {
+      "path": ".\\brokers\\broker_oanda.py",
+      "rel": "brokers\\broker_oanda.py",
+      "imports": [
+        "dotenv",
+        "math",
+        "oandapyV20",
+        "os",
+        "time"
+      ],
+      "missing_imports": []
+    },
+    "build_history.py": {
+      "path": ".\\build_history.py",
+      "rel": "build_history.py",
+      "imports": [
+        "os",
+        "research_optuna"
+      ],
+      "missing_imports": []
+    },
+    "build_universe.py": {
+      "path": ".\\build_universe.py",
+      "rel": "build_universe.py",
+      "imports": [
+        "__future__",
+        "ccxt",
+        "json",
+        "pathlib",
+        "re",
+        "router"
+      ],
+      "missing_imports": []
+    },
+    "bybit_adapter.py": {
+      "path": ".\\bybit_adapter.py",
+      "rel": "bybit_adapter.py",
+      "imports": [
+        "__future__",
+        "ccxt",
+        "dotenv",
+        "math",
+        "os",
+        "router",
+        "typing"
+      ],
+      "missing_imports": []
+    },
+    "bybit_smoke.py": {
+      "path": ".\\bybit_smoke.py",
+      "rel": "bybit_smoke.py",
+      "imports": [
+        "__future__",
+        "argparse",
+        "bybit_adapter"
+      ],
+      "missing_imports": []
+    },
+    "calendar_ingest.py": {
+      "path": ".\\calendar_ingest.py",
+      "rel": "calendar_ingest.py",
+      "imports": [
+        "csv",
+        "pandas",
+        "pathlib",
+        "requests"
+      ],
+      "missing_imports": []
+    },
+    "calendar_utils.py": {
+      "path": ".\\calendar_utils.py",
+      "rel": "calendar_utils.py",
+      "imports": [
+        "__future__",
+        "csv",
+        "datetime",
+        "pathlib",
+        "typing"
+      ],
+      "missing_imports": []
+    },
+    "charting.py": {
+      "path": ".\\charting.py",
+      "rel": "charting.py",
+      "imports": [
+        "PIL",
+        "__future__",
+        "datetime",
+        "matplotlib",
+        "mplfinance",
+        "numpy",
+        "os",
+        "pandas",
+        "typing"
+      ],
+      "missing_imports": []
+    },
+    "cmd_reader.py": {
+      "path": ".\\cmd_reader.py",
+      "rel": "cmd_reader.py",
+      "imports": [
+        "__future__",
+        "json",
+        "pathlib",
+        "typing"
+      ],
+      "missing_imports": []
+    },
+    "config.py": {
+      "path": ".\\config.py",
+      "rel": "config.py",
+      "imports": [
+        "settings"
+      ],
+      "missing_imports": []
+    },
+    "cross_examiner.py": {
+      "path": ".\\cross_examiner.py",
+      "rel": "cross_examiner.py",
+      "imports": [
+        "__future__",
+        "dataclasses",
+        "statistics",
+        "typing"
+      ],
+      "missing_imports": []
+    },
+    "crypto_cctx.py": {
+      "path": ".\\crypto_cctx.py",
+      "rel": "crypto_cctx.py",
+      "imports": [
+        "__future__",
+        "ccxt",
+        "dotenv",
+        "pandas",
+        "router",
+        "time",
+        "typing"
+      ],
+      "missing_imports": []
+    },
+    "crypto_diag.py": {
+      "path": ".\\crypto_diag.py",
+      "rel": "crypto_diag.py",
+      "imports": [
+        "__future__",
+        "json",
+        "router"
+      ],
+      "missing_imports": []
+    },
+    "crypto_trader.py": {
+      "path": ".\\crypto_trader.py",
+      "rel": "crypto_trader.py",
+      "imports": [
+        "__future__",
+        "argparse",
+        "numpy",
+        "os",
+        "router",
+        "time",
+        "typing"
+      ],
+      "missing_imports": []
+    },
+    "dashboard_reporter.py": {
+      "path": ".\\dashboard_reporter.py",
+      "rel": "dashboard_reporter.py",
+      "imports": [
+        "__future__",
+        "cross_examiner",
+        "dataclasses",
+        "json",
+        "notifier",
+        "pathlib",
+        "time",
+        "typing"
+      ],
+      "missing_imports": []
+    },
+    "data_sources.py": {
+      "path": ".\\data_sources.py",
+      "rel": "data_sources.py",
+      "imports": [
+        "__future__",
+        "ccxt",
+        "os",
+        "random",
+        "router",
+        "typing"
+      ],
+      "missing_imports": []
+    },
+    "debug_imports.py": {
+      "path": ".\\debug_imports.py",
+      "rel": "debug_imports.py",
+      "imports": [
+        "importlib",
+        "inspect",
+        "os",
+        "traceback"
+      ],
+      "missing_imports": []
+    },
+    "debug_imports_run.py": {
+      "path": ".\\debug_imports_run.py",
+      "rel": "debug_imports_run.py",
+      "imports": [
+        "importlib",
+        "inspect",
+        "mt5_adapter",
+        "traceback"
+      ],
+      "missing_imports": []
+    },
+    "execution_adv.py": {
+      "path": ".\\execution_adv.py",
+      "rel": "execution_adv.py",
+      "imports": [
+        "order_utils",
+        "typing"
+      ],
+      "missing_imports": []
+    },
+    "filters.py": {
+      "path": ".\\filters.py",
+      "rel": "filters.py",
+      "imports": [
+        "__future__",
+        "dataclasses",
+        "pandas",
+        "typing"
+      ],
+      "missing_imports": []
+    },
+    "forex_utils.py": {
+      "path": ".\\forex_utils.py",
+      "rel": "forex_utils.py",
+      "imports": [],
+      "missing_imports": []
+    },
+    "futures_signals.py": {
+      "path": ".\\futures_signals.py",
+      "rel": "futures_signals.py",
+      "imports": [
+        "__future__",
+        "pandas",
+        "typing"
+      ],
+      "missing_imports": []
+    },
+    "futures_smoke.py": {
+      "path": ".\\futures_smoke.py",
+      "rel": "futures_smoke.py",
+      "imports": [
+        "__future__",
+        "dotenv",
+        "router"
+      ],
+      "missing_imports": []
+    },
+    "fx_partial_tp_sanity.py": {
+      "path": ".\\fx_partial_tp_sanity.py",
+      "rel": "fx_partial_tp_sanity.py",
+      "imports": [
+        "MetaTrader5",
+        "__future__",
+        "argparse",
+        "dotenv",
+        "os",
+        "pandas",
+        "time",
+        "typing"
+      ],
+      "missing_imports": []
+    },
+    "geo.py": {
+      "path": ".\\geo.py",
+      "rel": "geo.py",
+      "imports": [
+        "__future__",
+        "os",
+        "requests",
+        "socket",
+        "typing"
+      ],
+      "missing_imports": []
+    },
+    "gloaware.py": {
+      "path": ".\\gloaware.py",
+      "rel": "gloaware.py",
+      "imports": [
+        "__future__",
+        "dataclasses",
+        "math",
+        "numpy",
+        "pandas",
+        "typing"
+      ],
+      "missing_imports": []
+    },
+    "guardrails.py": {
+      "path": ".\\guardrails.py",
+      "rel": "guardrails.py",
+      "imports": [
+        "dataclasses"
+      ],
+      "missing_imports": []
+    },
+    "hivemind.py": {
+      "path": ".\\hivemind.py",
+      "rel": "hivemind.py",
+      "imports": [
+        "__future__",
+        "alpha_engines",
+        "dataclasses",
+        "news_service",
+        "pandas",
+        "statistics",
+        "typing"
+      ],
+      "missing_imports": []
+    },
+    "import_check.py": {
+      "path": ".\\import_check.py",
+      "rel": "import_check.py",
+      "imports": [
+        "importlib",
+        "sys",
+        "traceback"
+      ],
+      "missing_imports": []
+    },
+    "indicators.py": {
+      "path": ".\\indicators.py",
+      "rel": "indicators.py",
+      "imports": [
+        "__future__",
+        "numpy",
+        "pandas"
+      ],
+      "missing_imports": []
+    },
+    "ingest_calender.py": {
+      "path": ".\\ingest_calender.py",
+      "rel": "ingest_calender.py",
+      "imports": [
+        "__future__",
+        "datetime",
+        "dotenv",
+        "os",
+        "pandas",
+        "pathlib",
+        "requests"
+      ],
+      "missing_imports": []
+    },
+    "leantrader\\src\\leantrader\\__init__.py": {
+      "path": ".\\leantrader\\src\\leantrader\\__init__.py",
+      "rel": "leantrader\\src\\leantrader\\__init__.py",
+      "imports": [],
+      "missing_imports": []
+    },
+    "leantrader\\src\\leantrader\\agents\\orchestrator.py": {
+      "path": ".\\leantrader\\src\\leantrader\\agents\\orchestrator.py",
+      "rel": "leantrader\\src\\leantrader\\agents\\orchestrator.py",
+      "imports": [
+        "multiprocessing",
+        "os",
+        "time",
+        "typing"
+      ],
+      "missing_imports": []
+    },
+    "leantrader\\src\\leantrader\\alpha\\__init__.py": {
+      "path": ".\\leantrader\\src\\leantrader\\alpha\\__init__.py",
+      "rel": "leantrader\\src\\leantrader\\alpha\\__init__.py",
+      "imports": [],
+      "missing_imports": []
+    },
+    "leantrader\\src\\leantrader\\analytics\\attribution.py": {
+      "path": ".\\leantrader\\src\\leantrader\\analytics\\attribution.py",
+      "rel": "leantrader\\src\\leantrader\\analytics\\attribution.py",
+      "imports": [],
+      "missing_imports": []
+    },
+    "leantrader\\src\\leantrader\\api\\admin_ui.py": {
+      "path": ".\\leantrader\\src\\leantrader\\api\\admin_ui.py",
+      "rel": "leantrader\\src\\leantrader\\api\\admin_ui.py",
+      "imports": [
+        "fastapi",
+        "json",
+        "os"
+      ],
+      "missing_imports": []
+    },
+    "leantrader\\src\\leantrader\\api\\app.py": {
+      "path": ".\\leantrader\\src\\leantrader\\api\\app.py",
+      "rel": "leantrader\\src\\leantrader\\api\\app.py",
+      "imports": [
+        "fastapi",
+        "json",
+        "os",
+        "pandas"
+      ],
+      "missing_imports": []
+    },
+    "leantrader\\src\\leantrader\\api\\trade_ui.py": {
+      "path": ".\\leantrader\\src\\leantrader\\api\\trade_ui.py",
+      "rel": "leantrader\\src\\leantrader\\api\\trade_ui.py",
+      "imports": [
+        "fastapi",
+        "html",
+        "os"
+      ],
+      "missing_imports": []
+    },
+    "leantrader\\src\\leantrader\\backtest\\__init__.py": {
+      "path": ".\\leantrader\\src\\leantrader\\backtest\\__init__.py",
+      "rel": "leantrader\\src\\leantrader\\backtest\\__init__.py",
+      "imports": [],
+      "missing_imports": []
+    },
+    "leantrader\\src\\leantrader\\backtest\\engine.py": {
+      "path": ".\\leantrader\\src\\leantrader\\backtest\\engine.py",
+      "rel": "leantrader\\src\\leantrader\\backtest\\engine.py",
+      "imports": [
+        "pandas"
+      ],
+      "missing_imports": []
+    },
+    "leantrader\\src\\leantrader\\backtest\\metrics.py": {
+      "path": ".\\leantrader\\src\\leantrader\\backtest\\metrics.py",
+      "rel": "leantrader\\src\\leantrader\\backtest\\metrics.py",
+      "imports": [
+        "numpy",
+        "pandas"
+      ],
+      "missing_imports": []
+    },
+    "leantrader\\src\\leantrader\\cli.py": {
+      "path": ".\\leantrader\\src\\leantrader\\cli.py",
+      "rel": "leantrader\\src\\leantrader\\cli.py",
+      "imports": [
+        "argparse",
+        "os",
+        "pandas",
+        "time"
+      ],
+      "missing_imports": []
+    },
+    "leantrader\\src\\leantrader\\config.py": {
+      "path": ".\\leantrader\\src\\leantrader\\config.py",
+      "rel": "leantrader\\src\\leantrader\\config.py",
+      "imports": [
+        "os",
+        "pydantic"
+      ],
+      "missing_imports": []
+    },
+    "leantrader\\src\\leantrader\\data\\__init__.py": {
+      "path": ".\\leantrader\\src\\leantrader\\data\\__init__.py",
+      "rel": "leantrader\\src\\leantrader\\data\\__init__.py",
+      "imports": [],
+      "missing_imports": []
+    },
+    "leantrader\\src\\leantrader\\data\\feeds.py": {
+      "path": ".\\leantrader\\src\\leantrader\\data\\feeds.py",
+      "rel": "leantrader\\src\\leantrader\\data\\feeds.py",
+      "imports": [
+        "ccxt",
+        "pandas"
+      ],
+      "missing_imports": []
+    },
+    "leantrader\\src\\leantrader\\dsl\\__init__.py": {
+      "path": ".\\leantrader\\src\\leantrader\\dsl\\__init__.py",
+      "rel": "leantrader\\src\\leantrader\\dsl\\__init__.py",
+      "imports": [],
+      "missing_imports": []
+    },
+    "leantrader\\src\\leantrader\\dsl\\compiler.py": {
+      "path": ".\\leantrader\\src\\leantrader\\dsl\\compiler.py",
+      "rel": "leantrader\\src\\leantrader\\dsl\\compiler.py",
+      "imports": [
+        "pandas",
+        "re",
+        "typing",
+        "yaml"
+      ],
+      "missing_imports": []
+    },
+    "leantrader\\src\\leantrader\\dsl\\schema.py": {
+      "path": ".\\leantrader\\src\\leantrader\\dsl\\schema.py",
+      "rel": "leantrader\\src\\leantrader\\dsl\\schema.py",
+      "imports": [
+        "pydantic",
+        "typing"
+      ],
+      "missing_imports": []
+    },
+    "leantrader\\src\\leantrader\\execution\\__init__.py": {
+      "path": ".\\leantrader\\src\\leantrader\\execution\\__init__.py",
+      "rel": "leantrader\\src\\leantrader\\execution\\__init__.py",
+      "imports": [],
+      "missing_imports": []
+    },
+    "leantrader\\src\\leantrader\\execution\\broker.py": {
+      "path": ".\\leantrader\\src\\leantrader\\execution\\broker.py",
+      "rel": "leantrader\\src\\leantrader\\execution\\broker.py",
+      "imports": [
+        "ccxt",
+        "dataclasses",
+        "time"
+      ],
+      "missing_imports": []
+    },
+    "leantrader\\src\\leantrader\\execution\\broker_emulator.py": {
+      "path": ".\\leantrader\\src\\leantrader\\execution\\broker_emulator.py",
+      "rel": "leantrader\\src\\leantrader\\execution\\broker_emulator.py",
+      "imports": [
+        "dataclasses",
+        "random",
+        "time",
+        "typing"
+      ],
+      "missing_imports": []
+    },
+    "leantrader\\src\\leantrader\\execution\\broker_fx.py": {
+      "path": ".\\leantrader\\src\\leantrader\\execution\\broker_fx.py",
+      "rel": "leantrader\\src\\leantrader\\execution\\broker_fx.py",
+      "imports": [
+        "os"
+      ],
+      "missing_imports": []
+    },
+    "leantrader\\src\\leantrader\\execution\\broker_fx_mt5.py": {
+      "path": ".\\leantrader\\src\\leantrader\\execution\\broker_fx_mt5.py",
+      "rel": "leantrader\\src\\leantrader\\execution\\broker_fx_mt5.py",
+      "imports": [
+        "MetaTrader5"
+      ],
+      "missing_imports": []
+    },
+    "leantrader\\src\\leantrader\\execution\\broker_fx_oanda.py": {
+      "path": ".\\leantrader\\src\\leantrader\\execution\\broker_fx_oanda.py",
+      "rel": "leantrader\\src\\leantrader\\execution\\broker_fx_oanda.py",
+      "imports": [
+        "os",
+        "requests"
+      ],
+      "missing_imports": []
+    },
+    "leantrader\\src\\leantrader\\execution\\tcost.py": {
+      "path": ".\\leantrader\\src\\leantrader\\execution\\tcost.py",
+      "rel": "leantrader\\src\\leantrader\\execution\\tcost.py",
+      "imports": [],
+      "missing_imports": []
+    },
+    "leantrader\\src\\leantrader\\features\\__init__.py": {
+      "path": ".\\leantrader\\src\\leantrader\\features\\__init__.py",
+      "rel": "leantrader\\src\\leantrader\\features\\__init__.py",
+      "imports": [],
+      "missing_imports": []
+    },
+    "leantrader\\src\\leantrader\\features\\microstructure.py": {
+      "path": ".\\leantrader\\src\\leantrader\\features\\microstructure.py",
+      "rel": "leantrader\\src\\leantrader\\features\\microstructure.py",
+      "imports": [
+        "pandas"
+      ],
+      "missing_imports": []
+    },
+    "leantrader\\src\\leantrader\\features\\ta.py": {
+      "path": ".\\leantrader\\src\\leantrader\\features\\ta.py",
+      "rel": "leantrader\\src\\leantrader\\features\\ta.py",
+      "imports": [
+        "numpy",
+        "pandas"
+      ],
+      "missing_imports": []
+    },
+    "leantrader\\src\\leantrader\\learners\\bandit.py": {
+      "path": ".\\leantrader\\src\\leantrader\\learners\\bandit.py",
+      "rel": "leantrader\\src\\leantrader\\learners\\bandit.py",
+      "imports": [
+        "collections",
+        "dataclasses",
+        "random",
+        "typing"
+      ],
+      "missing_imports": []
+    },
+    "leantrader\\src\\leantrader\\learners\\curriculum.py": {
+      "path": ".\\leantrader\\src\\leantrader\\learners\\curriculum.py",
+      "rel": "leantrader\\src\\leantrader\\learners\\curriculum.py",
+      "imports": [
+        "dataclasses",
+        "typing"
+      ],
+      "missing_imports": []
+    },
+    "leantrader\\src\\leantrader\\learners\\replay.py": {
+      "path": ".\\leantrader\\src\\leantrader\\learners\\replay.py",
+      "rel": "leantrader\\src\\leantrader\\learners\\replay.py",
+      "imports": [
+        "dataclasses",
+        "typing"
+      ],
+      "missing_imports": []
+    },
+    "leantrader\\src\\leantrader\\live\\__init__.py": {
+      "path": ".\\leantrader\\src\\leantrader\\live\\__init__.py",
+      "rel": "leantrader\\src\\leantrader\\live\\__init__.py",
+      "imports": [],
+      "missing_imports": []
+    },
+    "leantrader\\src\\leantrader\\live\\autotrade.py": {
+      "path": ".\\leantrader\\src\\leantrader\\live\\autotrade.py",
+      "rel": "leantrader\\src\\leantrader\\live\\autotrade.py",
+      "imports": [
+        "os",
+        "time"
+      ],
+      "missing_imports": []
+    },
+    "leantrader\\src\\leantrader\\live\\charts.py": {
+      "path": ".\\leantrader\\src\\leantrader\\live\\charts.py",
+      "rel": "leantrader\\src\\leantrader\\live\\charts.py",
+      "imports": [
+        "matplotlib",
+        "pandas"
+      ],
+      "missing_imports": []
+    },
+    "leantrader\\src\\leantrader\\live\\micromanager.py": {
+      "path": ".\\leantrader\\src\\leantrader\\live\\micromanager.py",
+      "rel": "leantrader\\src\\leantrader\\live\\micromanager.py",
+      "imports": [
+        "pandas",
+        "typing"
+      ],
+      "missing_imports": []
+    },
+    "leantrader\\src\\leantrader\\live\\notifier.py": {
+      "path": ".\\leantrader\\src\\leantrader\\live\\notifier.py",
+      "rel": "leantrader\\src\\leantrader\\live\\notifier.py",
+      "imports": [
+        "json",
+        "os",
+        "requests"
+      ],
+      "missing_imports": []
+    },
+    "leantrader\\src\\leantrader\\live\\runner.py": {
+      "path": ".\\leantrader\\src\\leantrader\\live\\runner.py",
+      "rel": "leantrader\\src\\leantrader\\live\\runner.py",
+      "imports": [],
+      "missing_imports": []
+    },
+    "leantrader\\src\\leantrader\\live\\signal_service.py": {
+      "path": ".\\leantrader\\src\\leantrader\\live\\signal_service.py",
+      "rel": "leantrader\\src\\leantrader\\live\\signal_service.py",
+      "imports": [
+        "json",
+        "os",
+        "pandas",
+        "typing"
+      ],
+      "missing_imports": []
+    },
+    "leantrader\\src\\leantrader\\policy\\__init__.py": {
+      "path": ".\\leantrader\\src\\leantrader\\policy\\__init__.py",
+      "rel": "leantrader\\src\\leantrader\\policy\\__init__.py",
+      "imports": [],
+      "missing_imports": []
+    },
+    "leantrader\\src\\leantrader\\policy\\house_smc.py": {
+      "path": ".\\leantrader\\src\\leantrader\\policy\\house_smc.py",
+      "rel": "leantrader\\src\\leantrader\\policy\\house_smc.py",
+      "imports": [
+        "pandas",
+        "typing"
+      ],
+      "missing_imports": []
+    },
+    "leantrader\\src\\leantrader\\policy\\meta_router.py": {
+      "path": ".\\leantrader\\src\\leantrader\\policy\\meta_router.py",
+      "rel": "leantrader\\src\\leantrader\\policy\\meta_router.py",
+      "imports": [
+        "dataclasses",
+        "typing"
+      ],
+      "missing_imports": []
+    },
+    "leantrader\\src\\leantrader\\research\\__init__.py": {
+      "path": ".\\leantrader\\src\\leantrader\\research\\__init__.py",
+      "rel": "leantrader\\src\\leantrader\\research\\__init__.py",
+      "imports": [],
+      "missing_imports": []
+    },
+    "leantrader\\src\\leantrader\\risk\\__init__.py": {
+      "path": ".\\leantrader\\src\\leantrader\\risk\\__init__.py",
+      "rel": "leantrader\\src\\leantrader\\risk\\__init__.py",
+      "imports": [],
+      "missing_imports": []
+    },
+    "leantrader\\src\\leantrader\\risk\\global_lock.py": {
+      "path": ".\\leantrader\\src\\leantrader\\risk\\global_lock.py",
+      "rel": "leantrader\\src\\leantrader\\risk\\global_lock.py",
+      "imports": [
+        "os",
+        "redis"
+      ],
+      "missing_imports": []
+    },
+    "leantrader\\src\\leantrader\\risk\\guardrails.py": {
+      "path": ".\\leantrader\\src\\leantrader\\risk\\guardrails.py",
+      "rel": "leantrader\\src\\leantrader\\risk\\guardrails.py",
+      "imports": [],
+      "missing_imports": []
+    },
+    "leantrader\\src\\leantrader\\risk\\news_filter.py": {
+      "path": ".\\leantrader\\src\\leantrader\\risk\\news_filter.py",
+      "rel": "leantrader\\src\\leantrader\\risk\\news_filter.py",
+      "imports": [
+        "datetime"
+      ],
+      "missing_imports": []
+    },
+    "leantrader\\src\\leantrader\\sessions\\manager.py": {
+      "path": ".\\leantrader\\src\\leantrader\\sessions\\manager.py",
+      "rel": "leantrader\\src\\leantrader\\sessions\\manager.py",
+      "imports": [
+        "dataclasses",
+        "pandas",
+        "typing"
+      ],
+      "missing_imports": []
+    },
+    "leantrader\\src\\leantrader\\users\\store.py": {
+      "path": ".\\leantrader\\src\\leantrader\\users\\store.py",
+      "rel": "leantrader\\src\\leantrader\\users\\store.py",
+      "imports": [
+        "dataclasses",
+        "json",
+        "os",
+        "pathlib",
+        "threading",
+        "typing"
+      ],
+      "missing_imports": []
+    },
+    "leantrader\\src\\leantrader\\utils\\__init__.py": {
+      "path": ".\\leantrader\\src\\leantrader\\utils\\__init__.py",
+      "rel": "leantrader\\src\\leantrader\\utils\\__init__.py",
+      "imports": [],
+      "missing_imports": []
+    },
+    "leantrader\\src\\leantrader\\utils\\crypto.py": {
+      "path": ".\\leantrader\\src\\leantrader\\utils\\crypto.py",
+      "rel": "leantrader\\src\\leantrader\\utils\\crypto.py",
+      "imports": [
+        "cryptography",
+        "os"
+      ],
+      "missing_imports": []
+    },
+    "leantrader\\src\\leantrader\\utils\\symbols.py": {
+      "path": ".\\leantrader\\src\\leantrader\\utils\\symbols.py",
+      "rel": "leantrader\\src\\leantrader\\utils\\symbols.py",
+      "imports": [
+        "dataclasses"
+      ],
+      "missing_imports": []
+    },
+    "leantrader\\src\\leantrader\\utils\\timeframes.py": {
+      "path": ".\\leantrader\\src\\leantrader\\utils\\timeframes.py",
+      "rel": "leantrader\\src\\leantrader\\utils\\timeframes.py",
+      "imports": [
+        "dataclasses"
+      ],
+      "missing_imports": []
+    },
+    "leantrader\\tests\\test_backtest_engine.py": {
+      "path": ".\\leantrader\\tests\\test_backtest_engine.py",
+      "rel": "leantrader\\tests\\test_backtest_engine.py",
+      "imports": [
+        "leantrader",
+        "pandas"
+      ],
+      "missing_imports": []
+    },
+    "leantrader\\tests\\test_dsl_compiler.py": {
+      "path": ".\\leantrader\\tests\\test_dsl_compiler.py",
+      "rel": "leantrader\\tests\\test_dsl_compiler.py",
+      "imports": [
+        "leantrader",
+        "pandas"
+      ],
+      "missing_imports": []
+    },
+    "ledger.py": {
+      "path": ".\\ledger.py",
+      "rel": "ledger.py",
+      "imports": [
+        "__future__",
+        "csv",
+        "datetime",
+        "json",
+        "pandas",
+        "pathlib",
+        "time",
+        "typing"
+      ],
+      "missing_imports": []
+    },
+    "loop_helpers.py": {
+      "path": ".\\loop_helpers.py",
+      "rel": "loop_helpers.py",
+      "imports": [
+        "__future__",
+        "acct_portfolio",
+        "notifier",
+        "os",
+        "time",
+        "typing"
+      ],
+      "missing_imports": []
+    },
+    "market_router.py": {
+      "path": ".\\market_router.py",
+      "rel": "market_router.py",
+      "imports": [
+        "__future__",
+        "numpy",
+        "pandas"
+      ],
+      "missing_imports": []
+    },
+    "metrics\\perf_tracker.py": {
+      "path": ".\\metrics\\perf_tracker.py",
+      "rel": "metrics\\perf_tracker.py",
+      "imports": [
+        "__future__",
+        "collections",
+        "json",
+        "os",
+        "pathlib",
+        "time",
+        "typing"
+      ],
+      "missing_imports": []
+    },
+    "ml_strategy_engine.py": {
+      "path": ".\\ml_strategy_engine.py",
+      "rel": "ml_strategy_engine.py",
+      "imports": [
+        "gym",
+        "numpy",
+        "os",
+        "pandas",
+        "random",
+        "sklearn",
+        "stable_baselines3",
+        "tensorflow",
+        "typing"
+      ],
+      "missing_imports": [
+        "gym",
+        "stable_baselines3",
+        "tensorflow"
+      ]
+    },
+    "mobile_app.py": {
+      "path": ".\\mobile_app.py",
+      "rel": "mobile_app.py",
+      "imports": [
+        "kivy",
+        "requests"
+      ],
+      "missing_imports": [
+        "kivy"
+      ]
+    },
+    "mobile_trading_api.py": {
+      "path": ".\\mobile_trading_api.py",
+      "rel": "mobile_trading_api.py",
+      "imports": [
+        "flask",
+        "router",
+        "ultra_core"
+      ],
+      "missing_imports": []
+    },
+    "monitor_uptime.py": {
+      "path": ".\\monitor_uptime.py",
+      "rel": "monitor_uptime.py",
+      "imports": [
+        "os",
+        "psutil",
+        "time"
+      ],
+      "missing_imports": []
+    },
+    "mt5_adapter.py": {
+      "path": ".\\mt5_adapter.py",
+      "rel": "mt5_adapter.py",
+      "imports": [
+        "MetaTrader5",
+        "__future__",
+        "dotenv",
+        "importlib",
+        "os",
+        "pandas",
+        "sys",
+        "traders_core",
+        "typing"
+      ],
+      "missing_imports": []
+    },
+    "mt5_adapter_old.py": {
+      "path": ".\\mt5_adapter_old.py",
+      "rel": "mt5_adapter_old.py",
+      "imports": [
+        "MetaTrader5",
+        "__future__",
+        "dotenv",
+        "os",
+        "pandas",
+        "typing"
+      ],
+      "missing_imports": []
+    },
+    "mt5_autotrade_diag.py": {
+      "path": ".\\mt5_autotrade_diag.py",
+      "rel": "mt5_autotrade_diag.py",
+      "imports": [
+        "mt5_adapter_old"
+      ],
+      "missing_imports": []
+    },
+    "mt5_list_symbols.py": {
+      "path": ".\\mt5_list_symbols.py",
+      "rel": "mt5_list_symbols.py",
+      "imports": [
+        "MetaTrader5",
+        "__future__",
+        "argparse",
+        "mt5_adapter_old",
+        "typing"
+      ],
+      "missing_imports": []
+    },
+    "mt5_signals.py": {
+      "path": ".\\mt5_signals.py",
+      "rel": "mt5_signals.py",
+      "imports": [
+        "__future__",
+        "importlib",
+        "os",
+        "pandas",
+        "pathlib",
+        "sys",
+        "typing"
+      ],
+      "missing_imports": []
+    },
+    "mt5_single_shot.py": {
+      "path": ".\\mt5_single_shot.py",
+      "rel": "mt5_single_shot.py",
+      "imports": [
+        "__future__",
+        "argparse",
+        "importlib",
+        "pandas",
+        "pathlib",
+        "sys",
+        "typing"
+      ],
+      "missing_imports": []
+    },
+    "mt5_single_shot_old.py": {
+      "path": ".\\mt5_single_shot_old.py",
+      "rel": "mt5_single_shot_old.py",
+      "imports": [
+        "__future__",
+        "argparse",
+        "mt5_adapter_old",
+        "numpy",
+        "typing"
+      ],
+      "missing_imports": []
+    },
+    "mt5_smoke.py": {
+      "path": ".\\mt5_smoke.py",
+      "rel": "mt5_smoke.py",
+      "imports": [
+        "__future__",
+        "mt5_adapter_old",
+        "pandas",
+        "sys"
+      ],
+      "missing_imports": []
+    },
+    "multi_runner.py": {
+      "path": ".\\multi_runner.py",
+      "rel": "multi_runner.py",
+      "imports": [
+        "__future__",
+        "geo",
+        "json",
+        "os",
+        "pathlib",
+        "subprocess",
+        "sys",
+        "time",
+        "typing",
+        "yaml"
+      ],
+      "missing_imports": []
+    },
+    "news\\blackout.py": {
+      "path": ".\\news\\blackout.py",
+      "rel": "news\\blackout.py",
+      "imports": [
+        "__future__",
+        "csv",
+        "datetime",
+        "os",
+        "pathlib",
+        "time",
+        "typing"
+      ],
+      "missing_imports": []
+    },
+    "news_adapter.py": {
+      "path": ".\\news_adapter.py",
+      "rel": "news_adapter.py",
+      "imports": [
+        "__future__",
+        "feedparser",
+        "json",
+        "os",
+        "pathlib",
+        "re",
+        "requests",
+        "time",
+        "typing"
+      ],
+      "missing_imports": []
+    },
+    "news_bias.py": {
+      "path": ".\\news_bias.py",
+      "rel": "news_bias.py",
+      "imports": [
+        "json",
+        "os",
+        "typing"
+      ],
+      "missing_imports": []
+    },
+    "news_bias_writer.py": {
+      "path": ".\\news_bias_writer.py",
+      "rel": "news_bias_writer.py",
+      "imports": [
+        "json",
+        "news_service",
+        "pathlib",
+        "time"
+      ],
+      "missing_imports": []
+    },
+    "news_harvest.py": {
+      "path": ".\\news_harvest.py",
+      "rel": "news_harvest.py",
+      "imports": [
+        "__future__",
+        "csv",
+        "datetime",
+        "feedparser",
+        "hashlib",
+        "json",
+        "logging",
+        "math",
+        "nltk",
+        "os",
+        "pathlib",
+        "re",
+        "requests",
+        "time",
+        "typing"
+      ],
+      "missing_imports": []
+    },
+    "news_service.py": {
+      "path": ".\\news_service.py",
+      "rel": "news_service.py",
+      "imports": [
+        "__future__",
+        "csv",
+        "feedparser",
+        "html",
+        "pandas",
+        "pathlib",
+        "re",
+        "regional_utils",
+        "time",
+        "typing",
+        "vaderSentiment"
+      ],
+      "missing_imports": []
+    },
+    "notifier.py": {
+      "path": ".\\notifier.py",
+      "rel": "notifier.py",
+      "imports": [
+        "__future__",
+        "json",
+        "os",
+        "pathlib",
+        "requests",
+        "textwrap",
+        "time",
+        "traceback",
+        "typing"
+      ],
+      "missing_imports": []
+    },
+    "online_learner.py": {
+      "path": ".\\online_learner.py",
+      "rel": "online_learner.py",
+      "imports": [
+        "__future__",
+        "alpha_engines",
+        "joblib",
+        "json",
+        "numpy",
+        "pathlib",
+        "sklearn",
+        "typing"
+      ],
+      "missing_imports": []
+    },
+    "order_utils.py": {
+      "path": ".\\order_utils.py",
+      "rel": "order_utils.py",
+      "imports": [
+        "__future__",
+        "typing"
+      ],
+      "missing_imports": []
+    },
+    "outcome_logger.py": {
+      "path": ".\\outcome_logger.py",
+      "rel": "outcome_logger.py",
+      "imports": [
+        "__future__",
+        "csv",
+        "datetime",
+        "hashlib",
+        "json",
+        "math",
+        "os",
+        "pandas",
+        "pathlib",
+        "time",
+        "typing"
+      ],
+      "missing_imports": []
+    },
+    "paper_broker.py": {
+      "path": ".\\paper_broker.py",
+      "rel": "paper_broker.py",
+      "imports": [
+        "json",
+        "pathlib",
+        "random",
+        "time",
+        "typing"
+      ],
+      "missing_imports": []
+    },
+    "paper_fx_oanda.py": {
+      "path": ".\\paper_fx_oanda.py",
+      "rel": "paper_fx_oanda.py",
+      "imports": [
+        "argparse",
+        "brokers",
+        "dotenv",
+        "forex_utils",
+        "guardrails",
+        "math",
+        "pandas",
+        "strategy",
+        "time",
+        "utils"
+      ],
+      "missing_imports": []
+    },
+    "pattern_memory.py": {
+      "path": ".\\pattern_memory.py",
+      "rel": "pattern_memory.py",
+      "imports": [
+        "__future__",
+        "collections",
+        "csv",
+        "json",
+        "math",
+        "numpy",
+        "pandas",
+        "pathlib",
+        "time",
+        "typing"
+      ],
+      "missing_imports": []
+    },
+    "quick_doge_test.py": {
+      "path": ".\\quick_doge_test.py",
+      "rel": "quick_doge_test.py",
+      "imports": [
+        "pandas",
+        "router",
+        "time"
+      ],
+      "missing_imports": []
+    },
+    "regime.py": {
+      "path": ".\\regime.py",
+      "rel": "regime.py",
+      "imports": [
+        "__future__",
+        "numpy",
+        "pandas"
+      ],
+      "missing_imports": []
+    },
+    "regional_utils.py": {
+      "path": ".\\regional_utils.py",
+      "rel": "regional_utils.py",
+      "imports": [
+        "__future__",
+        "os"
+      ],
+      "missing_imports": []
+    },
+    "research.py": {
+      "path": ".\\research.py",
+      "rel": "research.py",
+      "imports": [
+        "__future__",
+        "argparse",
+        "ccxt",
+        "data_sources",
+        "json",
+        "math",
+        "numpy",
+        "optuna",
+        "os",
+        "pandas",
+        "pathlib",
+        "router",
+        "strategy_zoo",
+        "time",
+        "typing"
+      ],
+      "missing_imports": [
+        "optuna"
+      ]
+    },
+    "research_optuna.py": {
+      "path": ".\\research_optuna.py",
+      "rel": "research_optuna.py",
+      "imports": [
+        "__future__",
+        "json",
+        "optuna",
+        "os",
+        "pandas",
+        "pathlib",
+        "router",
+        "strategy",
+        "time"
+      ],
+      "missing_imports": [
+        "optuna"
+      ]
+    },
+    "research_optuna_walk.py": {
+      "path": ".\\research_optuna_walk.py",
+      "rel": "research_optuna_walk.py",
+      "imports": [
+        "__future__",
+        "argparse",
+        "datetime",
+        "json",
+        "math",
+        "news_service",
+        "numpy",
+        "optuna",
+        "os",
+        "pandas",
+        "pathlib",
+        "router",
+        "strategy",
+        "time",
+        "typing",
+        "utils"
+      ],
+      "missing_imports": [
+        "optuna"
+      ]
+    },
+    "risk.py": {
+      "path": ".\\risk.py",
+      "rel": "risk.py",
+      "imports": [
+        "dataclasses"
+      ],
+      "missing_imports": []
+    },
+    "risk_engine.py": {
+      "path": ".\\risk_engine.py",
+      "rel": "risk_engine.py",
+      "imports": [
+        "__future__",
+        "dataclasses",
+        "os",
+        "time",
+        "typing"
+      ],
+      "missing_imports": []
+    },
+    "risk_guard.py": {
+      "path": ".\\risk_guard.py",
+      "rel": "risk_guard.py",
+      "imports": [
+        "__future__",
+        "dataclasses",
+        "json",
+        "os",
+        "pathlib",
+        "time",
+        "typing"
+      ],
+      "missing_imports": []
+    },
+    "router.py": {
+      "path": ".\\router.py",
+      "rel": "router.py",
+      "imports": [
+        "__future__",
+        "ast",
+        "awareness",
+        "ccxt",
+        "json",
+        "logging",
+        "metrics",
+        "news",
+        "order_utils",
+        "os",
+        "pandas",
+        "paper_broker",
+        "re",
+        "sys",
+        "time",
+        "typing",
+        "utils"
+      ],
+      "missing_imports": []
+    },
+    "run_live.py": {
+      "path": ".\\run_live.py",
+      "rel": "run_live.py",
+      "imports": [
+        "__future__",
+        "acct_portfolio",
+        "argparse",
+        "ccxt",
+        "cmd_reader",
+        "dotenv",
+        "guardrails",
+        "ledger",
+        "notifier",
+        "order_utils",
+        "os",
+        "pandas",
+        "pathlib",
+        "risk",
+        "router",
+        "strategy",
+        "sys",
+        "time",
+        "typing",
+        "ultra_core",
+        "universe",
+        "utils"
+      ],
+      "missing_imports": []
+    },
+    "run_live_fx.py": {
+      "path": ".\\run_live_fx.py",
+      "rel": "run_live_fx.py",
+      "imports": [
+        "MetaTrader5",
+        "__future__",
+        "argparse",
+        "charting",
+        "datetime",
+        "dotenv",
+        "loop_helpers",
+        "notifier",
+        "os",
+        "pandas",
+        "time",
+        "typing"
+      ],
+      "missing_imports": []
+    },
+    "run_live_fx_full.py": {
+      "path": ".\\run_live_fx_full.py",
+      "rel": "run_live_fx_full.py",
+      "imports": [
+        "MetaTrader5",
+        "__future__",
+        "argparse",
+        "charting",
+        "datetime",
+        "dotenv",
+        "news_adapter",
+        "notifier",
+        "os",
+        "pandas",
+        "time",
+        "typing"
+      ],
+      "missing_imports": []
+    },
+    "run_live_meme.py": {
+      "path": ".\\run_live_meme.py",
+      "rel": "run_live_meme.py",
+      "imports": [
+        "__future__",
+        "acct_portfolio",
+        "argparse",
+        "ccxt",
+        "datetime",
+        "dotenv",
+        "guardrails",
+        "json",
+        "ledger",
+        "notifier",
+        "os",
+        "pandas",
+        "pathlib",
+        "pprint",
+        "risk",
+        "router",
+        "strategy",
+        "sys",
+        "time",
+        "ultra_core",
+        "utils"
+      ],
+      "missing_imports": []
+    },
+    "run_unified.py": {
+      "path": ".\\run_unified.py",
+      "rel": "run_unified.py",
+      "imports": [
+        "__future__",
+        "argparse",
+        "os",
+        "trader_core"
+      ],
+      "missing_imports": []
+    },
+    "runtime\\check_signals.py": {
+      "path": ".\\runtime\\check_signals.py",
+      "rel": "runtime\\check_signals.py",
+      "imports": [
+        "__future__",
+        "json",
+        "pathlib",
+        "sys"
+      ],
+      "missing_imports": []
+    },
+    "runtime\\debug_tg_send.py": {
+      "path": ".\\runtime\\debug_tg_send.py",
+      "rel": "runtime\\debug_tg_send.py",
+      "imports": [
+        "glob",
+        "json",
+        "os",
+        "pathlib",
+        "sys",
+        "tg_utils"
+      ],
+      "missing_imports": []
+    },
+    "runtime\\publish_demo.py": {
+      "path": ".\\runtime\\publish_demo.py",
+      "rel": "runtime\\publish_demo.py",
+      "imports": [
+        "datetime",
+        "json",
+        "pathlib",
+        "signals_publisher",
+        "sys"
+      ],
+      "missing_imports": []
+    },
+    "runtime\\publish_demo_once.py": {
+      "path": ".\\runtime\\publish_demo_once.py",
+      "rel": "runtime\\publish_demo_once.py",
+      "imports": [
+        "datetime",
+        "json",
+        "os",
+        "random",
+        "signals_publisher",
+        "sys"
+      ],
+      "missing_imports": []
+    },
+    "runtime\\quick_news_run.py": {
+      "path": ".\\runtime\\quick_news_run.py",
+      "rel": "runtime\\quick_news_run.py",
+      "imports": [
+        "__future__",
+        "news_service",
+        "pathlib",
+        "sys"
+      ],
+      "missing_imports": []
+    },
+    "runtime\\recompute_scores_run.py": {
+      "path": ".\\runtime\\recompute_scores_run.py",
+      "rel": "runtime\\recompute_scores_run.py",
+      "imports": [
+        "__future__",
+        "pathlib",
+        "pattern_memory",
+        "sys"
+      ],
+      "missing_imports": []
+    },
+    "runtime\\scheduler_alerts.py": {
+      "path": ".\\runtime\\scheduler_alerts.py",
+      "rel": "runtime\\scheduler_alerts.py",
+      "imports": [
+        "__future__",
+        "json",
+        "logging",
+        "pathlib",
+        "sys",
+        "tg_utils"
+      ],
+      "missing_imports": []
+    },
+    "runtime\\serve_charts.py": {
+      "path": ".\\runtime\\serve_charts.py",
+      "rel": "runtime\\serve_charts.py",
+      "imports": [
+        "http",
+        "os",
+        "socketserver",
+        "sys"
+      ],
+      "missing_imports": []
+    },
+    "runtime\\tg_diag.py": {
+      "path": ".\\runtime\\tg_diag.py",
+      "rel": "runtime\\tg_diag.py",
+      "imports": [
+        "__future__",
+        "os",
+        "pathlib",
+        "requests",
+        "sys",
+        "tg_utils"
+      ],
+      "missing_imports": []
+    },
+    "runtime\\tg_signals_summary.py": {
+      "path": ".\\runtime\\tg_signals_summary.py",
+      "rel": "runtime\\tg_signals_summary.py",
+      "imports": [
+        "__future__",
+        "datetime",
+        "json",
+        "pathlib",
+        "sys",
+        "tg_utils"
+      ],
+      "missing_imports": []
+    },
+    "runtime\\tg_test_send.py": {
+      "path": ".\\runtime\\tg_test_send.py",
+      "rel": "runtime\\tg_test_send.py",
+      "imports": [
+        "__future__",
+        "datetime",
+        "pathlib",
+        "sys",
+        "tg_utils"
+      ],
+      "missing_imports": []
+    },
+    "runtime\\tmp_aw_try.py": {
+      "path": ".\\runtime\\tmp_aw_try.py",
+      "rel": "runtime\\tmp_aw_try.py",
+      "parse_error": "invalid non-printable character U+FEFF (tmp_aw_try.py, line 1)"
+    },
+    "runtime\\tmp_imp_aw.py": {
+      "path": ".\\runtime\\tmp_imp_aw.py",
+      "rel": "runtime\\tmp_imp_aw.py",
+      "parse_error": "invalid non-printable character U+FEFF (tmp_imp_aw.py, line 1)"
+    },
+    "runtime\\webhook_server.py": {
+      "path": ".\\runtime\\webhook_server.py",
+      "rel": "runtime\\webhook_server.py",
+      "imports": [
+        "__future__",
+        "fastapi",
+        "json",
+        "logging",
+        "os",
+        "pathlib",
+        "tg_utils",
+        "threading",
+        "tools",
+        "typing"
+      ],
+      "missing_imports": []
+    },
+    "scan_runner.py": {
+      "path": ".\\scan_runner.py",
+      "rel": "scan_runner.py",
+      "imports": [
+        "argparse",
+        "datetime",
+        "json",
+        "os",
+        "router",
+        "strategy",
+        "sys"
+      ],
+      "missing_imports": []
+    },
+    "session_clock.py": {
+      "path": ".\\session_clock.py",
+      "rel": "session_clock.py",
+      "imports": [
+        "__future__",
+        "dataclasses",
+        "datetime",
+        "typing",
+        "zoneinfo"
+      ],
+      "missing_imports": []
+    },
+    "session_filter.py": {
+      "path": ".\\session_filter.py",
+      "rel": "session_filter.py",
+      "imports": [
+        "__future__",
+        "datetime",
+        "typing"
+      ],
+      "missing_imports": []
+    },
+    "settings.py": {
+      "path": ".\\settings.py",
+      "rel": "settings.py",
+      "imports": [
+        "dataclasses",
+        "dotenv",
+        "os"
+      ],
+      "missing_imports": []
+    },
+    "signals_hub.py": {
+      "path": ".\\signals_hub.py",
+      "rel": "signals_hub.py",
+      "imports": [
+        "__future__",
+        "math",
+        "numpy",
+        "os",
+        "pandas",
+        "typing"
+      ],
+      "missing_imports": []
+    },
+    "signals_publisher.py": {
+      "path": ".\\signals_publisher.py",
+      "rel": "signals_publisher.py",
+      "imports": [
+        "__future__",
+        "charting",
+        "datetime",
+        "hashlib",
+        "hmac",
+        "json",
+        "os",
+        "pathlib",
+        "pattern_memory",
+        "requests",
+        "tg_utils",
+        "time",
+        "tools",
+        "typing",
+        "urllib"
+      ],
+      "missing_imports": []
+    },
+    "signals_scanner.py": {
+      "path": ".\\signals_scanner.py",
+      "rel": "signals_scanner.py",
+      "imports": [
+        "__future__",
+        "argparse",
+        "charting",
+        "concurrent",
+        "importlib",
+        "news_adapter",
+        "notifier",
+        "os",
+        "pandas",
+        "pathlib",
+        "pattern_memory",
+        "router",
+        "signals_hub",
+        "signals_publisher",
+        "sys",
+        "time",
+        "typing",
+        "ultra_core",
+        "universe"
+      ],
+      "missing_imports": []
+    },
+    "signals_scanner_debug.py": {
+      "path": ".\\signals_scanner_debug.py",
+      "rel": "signals_scanner_debug.py",
+      "imports": [
+        "__future__",
+        "argparse",
+        "concurrent",
+        "importlib",
+        "json",
+        "os",
+        "pandas",
+        "pathlib",
+        "router",
+        "signals_hub",
+        "signals_publisher",
+        "sys",
+        "time",
+        "typing",
+        "ultra_core",
+        "universe"
+      ],
+      "missing_imports": []
+    },
+    "sizer.py": {
+      "path": ".\\sizer.py",
+      "rel": "sizer.py",
+      "imports": [
+        "__future__",
+        "datetime",
+        "os",
+        "typing"
+      ],
+      "missing_imports": []
+    },
+    "skillbook.py": {
+      "path": ".\\skillbook.py",
+      "rel": "skillbook.py",
+      "imports": [
+        "__future__",
+        "json",
+        "os",
+        "typing"
+      ],
+      "missing_imports": []
+    },
+    "smoke_ultra.py": {
+      "path": ".\\smoke_ultra.py",
+      "rel": "smoke_ultra.py",
+      "imports": [
+        "dotenv",
+        "router",
+        "ultra_core"
+      ],
+      "missing_imports": []
+    },
+    "src\\leantrader\\__init__.py": {
+      "path": ".\\src\\leantrader\\__init__.py",
+      "rel": "src\\leantrader\\__init__.py",
+      "imports": [],
+      "missing_imports": []
+    },
+    "src\\leantrader\\agents\\orchestrator.py": {
+      "path": ".\\src\\leantrader\\agents\\orchestrator.py",
+      "rel": "src\\leantrader\\agents\\orchestrator.py",
+      "imports": [
+        "multiprocessing",
+        "os",
+        "time",
+        "typing"
+      ],
+      "missing_imports": []
+    },
+    "src\\leantrader\\alpha\\__init__.py": {
+      "path": ".\\src\\leantrader\\alpha\\__init__.py",
+      "rel": "src\\leantrader\\alpha\\__init__.py",
+      "imports": [],
+      "missing_imports": []
+    },
+    "src\\leantrader\\analytics\\attribution.py": {
+      "path": ".\\src\\leantrader\\analytics\\attribution.py",
+      "rel": "src\\leantrader\\analytics\\attribution.py",
+      "imports": [],
+      "missing_imports": []
+    },
+    "src\\leantrader\\api\\admin_ui.py": {
+      "path": ".\\src\\leantrader\\api\\admin_ui.py",
+      "rel": "src\\leantrader\\api\\admin_ui.py",
+      "imports": [
+        "fastapi",
+        "json",
+        "os"
+      ],
+      "missing_imports": []
+    },
+    "src\\leantrader\\api\\app.py": {
+      "path": ".\\src\\leantrader\\api\\app.py",
+      "rel": "src\\leantrader\\api\\app.py",
+      "imports": [
+        "csv",
+        "dotenv",
+        "fastapi",
+        "hashlib",
+        "json",
+        "os",
+        "pandas",
+        "pathlib",
+        "prometheus_client",
+        "redis",
+        "threading",
+        "time",
+        "typing"
+      ],
+      "missing_imports": []
+    },
+    "src\\leantrader\\api\\trade_ui.py": {
+      "path": ".\\src\\leantrader\\api\\trade_ui.py",
+      "rel": "src\\leantrader\\api\\trade_ui.py",
+      "imports": [
+        "fastapi",
+        "html",
+        "os"
+      ],
+      "missing_imports": []
+    },
+    "src\\leantrader\\backtest\\__init__.py": {
+      "path": ".\\src\\leantrader\\backtest\\__init__.py",
+      "rel": "src\\leantrader\\backtest\\__init__.py",
+      "imports": [],
+      "missing_imports": []
+    },
+    "src\\leantrader\\backtest\\engine.py": {
+      "path": ".\\src\\leantrader\\backtest\\engine.py",
+      "rel": "src\\leantrader\\backtest\\engine.py",
+      "imports": [
+        "pandas"
+      ],
+      "missing_imports": []
+    },
+    "src\\leantrader\\backtest\\metrics.py": {
+      "path": ".\\src\\leantrader\\backtest\\metrics.py",
+      "rel": "src\\leantrader\\backtest\\metrics.py",
+      "imports": [
+        "numpy",
+        "pandas"
+      ],
+      "missing_imports": []
+    },
+    "src\\leantrader\\cli.py": {
+      "path": ".\\src\\leantrader\\cli.py",
+      "rel": "src\\leantrader\\cli.py",
+      "imports": [
+        "argparse",
+        "os",
+        "pandas",
+        "time"
+      ],
+      "missing_imports": []
+    },
+    "src\\leantrader\\config.py": {
+      "path": ".\\src\\leantrader\\config.py",
+      "rel": "src\\leantrader\\config.py",
+      "imports": [
+        "os",
+        "pydantic"
+      ],
+      "missing_imports": []
+    },
+    "src\\leantrader\\data\\__init__.py": {
+      "path": ".\\src\\leantrader\\data\\__init__.py",
+      "rel": "src\\leantrader\\data\\__init__.py",
+      "imports": [],
+      "missing_imports": []
+    },
+    "src\\leantrader\\data\\feeds.py": {
+      "path": ".\\src\\leantrader\\data\\feeds.py",
+      "rel": "src\\leantrader\\data\\feeds.py",
+      "imports": [
+        "ccxt",
+        "pandas"
+      ],
+      "missing_imports": []
+    },
+    "src\\leantrader\\dsl\\__init__.py": {
+      "path": ".\\src\\leantrader\\dsl\\__init__.py",
+      "rel": "src\\leantrader\\dsl\\__init__.py",
+      "imports": [],
+      "missing_imports": []
+    },
+    "src\\leantrader\\dsl\\compiler.py": {
+      "path": ".\\src\\leantrader\\dsl\\compiler.py",
+      "rel": "src\\leantrader\\dsl\\compiler.py",
+      "imports": [
+        "pandas",
+        "re",
+        "typing",
+        "yaml"
+      ],
+      "missing_imports": []
+    },
+    "src\\leantrader\\dsl\\schema.py": {
+      "path": ".\\src\\leantrader\\dsl\\schema.py",
+      "rel": "src\\leantrader\\dsl\\schema.py",
+      "imports": [
+        "pydantic",
+        "typing"
+      ],
+      "missing_imports": []
+    },
+    "src\\leantrader\\execution\\__init__.py": {
+      "path": ".\\src\\leantrader\\execution\\__init__.py",
+      "rel": "src\\leantrader\\execution\\__init__.py",
+      "imports": [],
+      "missing_imports": []
+    },
+    "src\\leantrader\\execution\\broker.py": {
+      "path": ".\\src\\leantrader\\execution\\broker.py",
+      "rel": "src\\leantrader\\execution\\broker.py",
+      "imports": [
+        "ccxt",
+        "dataclasses",
+        "time"
+      ],
+      "missing_imports": []
+    },
+    "src\\leantrader\\execution\\broker_ccxt.py": {
+      "path": ".\\src\\leantrader\\execution\\broker_ccxt.py",
+      "rel": "src\\leantrader\\execution\\broker_ccxt.py",
+      "imports": [
+        "__future__",
+        "ccxt",
+        "os",
+        "typing"
+      ],
+      "missing_imports": []
+    },
+    "src\\leantrader\\execution\\broker_emulator.py": {
+      "path": ".\\src\\leantrader\\execution\\broker_emulator.py",
+      "rel": "src\\leantrader\\execution\\broker_emulator.py",
+      "imports": [
+        "dataclasses",
+        "random",
+        "time",
+        "typing"
+      ],
+      "missing_imports": []
+    },
+    "src\\leantrader\\execution\\broker_fx.py": {
+      "path": ".\\src\\leantrader\\execution\\broker_fx.py",
+      "rel": "src\\leantrader\\execution\\broker_fx.py",
+      "imports": [
+        "MetaTrader5",
+        "__future__",
+        "oandapyV20",
+        "os",
+        "typing"
+      ],
+      "missing_imports": []
+    },
+    "src\\leantrader\\execution\\broker_fx_mt5.py": {
+      "path": ".\\src\\leantrader\\execution\\broker_fx_mt5.py",
+      "rel": "src\\leantrader\\execution\\broker_fx_mt5.py",
+      "imports": [
+        "MetaTrader5"
+      ],
+      "missing_imports": []
+    },
+    "src\\leantrader\\execution\\broker_fx_oanda.py": {
+      "path": ".\\src\\leantrader\\execution\\broker_fx_oanda.py",
+      "rel": "src\\leantrader\\execution\\broker_fx_oanda.py",
+      "imports": [
+        "os",
+        "requests"
+      ],
+      "missing_imports": []
+    },
+    "src\\leantrader\\execution\\router.py": {
+      "path": ".\\src\\leantrader\\execution\\router.py",
+      "rel": "src\\leantrader\\execution\\router.py",
+      "imports": [
+        "__future__",
+        "os",
+        "typing"
+      ],
+      "missing_imports": []
+    },
+    "src\\leantrader\\execution\\tcost.py": {
+      "path": ".\\src\\leantrader\\execution\\tcost.py",
+      "rel": "src\\leantrader\\execution\\tcost.py",
+      "imports": [],
+      "missing_imports": []
+    },
+    "src\\leantrader\\features\\__init__.py": {
+      "path": ".\\src\\leantrader\\features\\__init__.py",
+      "rel": "src\\leantrader\\features\\__init__.py",
+      "imports": [],
+      "missing_imports": []
+    },
+    "src\\leantrader\\features\\microstructure.py": {
+      "path": ".\\src\\leantrader\\features\\microstructure.py",
+      "rel": "src\\leantrader\\features\\microstructure.py",
+      "imports": [
+        "pandas"
+      ],
+      "missing_imports": []
+    },
+    "src\\leantrader\\features\\ta.py": {
+      "path": ".\\src\\leantrader\\features\\ta.py",
+      "rel": "src\\leantrader\\features\\ta.py",
+      "imports": [
+        "numpy",
+        "pandas"
+      ],
+      "missing_imports": []
+    },
+    "src\\leantrader\\learn\\metrics.py": {
+      "path": ".\\src\\leantrader\\learn\\metrics.py",
+      "rel": "src\\leantrader\\learn\\metrics.py",
+      "imports": [
+        "__future__",
+        "csv",
+        "dataclasses",
+        "os",
+        "pathlib",
+        "typing"
+      ],
+      "missing_imports": []
+    },
+    "src\\leantrader\\learn\\online_learner.py": {
+      "path": ".\\src\\leantrader\\learn\\online_learner.py",
+      "rel": "src\\leantrader\\learn\\online_learner.py",
+      "imports": [
+        "__future__",
+        "json",
+        "os",
+        "pathlib",
+        "time",
+        "typing"
+      ],
+      "missing_imports": []
+    },
+    "src\\leantrader\\learners\\bandit.py": {
+      "path": ".\\src\\leantrader\\learners\\bandit.py",
+      "rel": "src\\leantrader\\learners\\bandit.py",
+      "imports": [
+        "collections",
+        "dataclasses",
+        "random",
+        "typing"
+      ],
+      "missing_imports": []
+    },
+    "src\\leantrader\\learners\\curriculum.py": {
+      "path": ".\\src\\leantrader\\learners\\curriculum.py",
+      "rel": "src\\leantrader\\learners\\curriculum.py",
+      "imports": [
+        "dataclasses",
+        "typing"
+      ],
+      "missing_imports": []
+    },
+    "src\\leantrader\\learners\\replay.py": {
+      "path": ".\\src\\leantrader\\learners\\replay.py",
+      "rel": "src\\leantrader\\learners\\replay.py",
+      "imports": [
+        "dataclasses",
+        "typing"
+      ],
+      "missing_imports": []
+    },
+    "src\\leantrader\\live\\__init__.py": {
+      "path": ".\\src\\leantrader\\live\\__init__.py",
+      "rel": "src\\leantrader\\live\\__init__.py",
+      "imports": [],
+      "missing_imports": []
+    },
+    "src\\leantrader\\live\\autotrade.py": {
+      "path": ".\\src\\leantrader\\live\\autotrade.py",
+      "rel": "src\\leantrader\\live\\autotrade.py",
+      "imports": [
+        "os",
+        "time"
+      ],
+      "missing_imports": []
+    },
+    "src\\leantrader\\live\\charts.py": {
+      "path": ".\\src\\leantrader\\live\\charts.py",
+      "rel": "src\\leantrader\\live\\charts.py",
+      "imports": [
+        "matplotlib",
+        "mplfinance",
+        "pandas"
+      ],
+      "missing_imports": []
+    },
+    "src\\leantrader\\live\\micromanager.py": {
+      "path": ".\\src\\leantrader\\live\\micromanager.py",
+      "rel": "src\\leantrader\\live\\micromanager.py",
+      "imports": [
+        "pandas",
+        "typing"
+      ],
+      "missing_imports": []
+    },
+    "src\\leantrader\\live\\notifier.py": {
+      "path": ".\\src\\leantrader\\live\\notifier.py",
+      "rel": "src\\leantrader\\live\\notifier.py",
+      "imports": [
+        "json",
+        "os",
+        "requests",
+        "tg_utils"
+      ],
+      "missing_imports": []
+    },
+    "src\\leantrader\\live\\runner.py": {
+      "path": ".\\src\\leantrader\\live\\runner.py",
+      "rel": "src\\leantrader\\live\\runner.py",
+      "imports": [],
+      "missing_imports": []
+    },
+    "src\\leantrader\\live\\signal_service.py": {
+      "path": ".\\src\\leantrader\\live\\signal_service.py",
+      "rel": "src\\leantrader\\live\\signal_service.py",
+      "imports": [
+        "__future__",
+        "os",
+        "pandas",
+        "pathlib",
+        "typing"
+      ],
+      "missing_imports": []
+    },
+    "src\\leantrader\\news\\feeds.py": {
+      "path": ".\\src\\leantrader\\news\\feeds.py",
+      "rel": "src\\leantrader\\news\\feeds.py",
+      "imports": [
+        "__future__",
+        "dataclasses",
+        "feedparser",
+        "json",
+        "os",
+        "time",
+        "typing"
+      ],
+      "missing_imports": []
+    },
+    "src\\leantrader\\news\\ner_sentiment.py": {
+      "path": ".\\src\\leantrader\\news\\ner_sentiment.py",
+      "rel": "src\\leantrader\\news\\ner_sentiment.py",
+      "imports": [
+        "__future__",
+        "typing",
+        "vaderSentiment"
+      ],
+      "missing_imports": []
+    },
+    "src\\leantrader\\news\\scorer.py": {
+      "path": ".\\src\\leantrader\\news\\scorer.py",
+      "rel": "src\\leantrader\\news\\scorer.py",
+      "imports": [
+        "__future__",
+        "math",
+        "typing"
+      ],
+      "missing_imports": []
+    },
+    "src\\leantrader\\optional_deps.py": {
+      "path": ".\\src\\leantrader\\optional_deps.py",
+      "rel": "src\\leantrader\\optional_deps.py",
+      "imports": [
+        "__future__",
+        "typing"
+      ],
+      "missing_imports": []
+    },
+    "src\\leantrader\\policy\\__init__.py": {
+      "path": ".\\src\\leantrader\\policy\\__init__.py",
+      "rel": "src\\leantrader\\policy\\__init__.py",
+      "imports": [],
+      "missing_imports": []
+    },
+    "src\\leantrader\\policy\\dispatcher.py": {
+      "path": ".\\src\\leantrader\\policy\\dispatcher.py",
+      "rel": "src\\leantrader\\policy\\dispatcher.py",
+      "imports": [
+        "datetime",
+        "os",
+        "pandas",
+        "time",
+        "typing"
+      ],
+      "missing_imports": []
+    },
+    "src\\leantrader\\policy\\house_smc.py": {
+      "path": ".\\src\\leantrader\\policy\\house_smc.py",
+      "rel": "src\\leantrader\\policy\\house_smc.py",
+      "imports": [
+        "pandas",
+        "typing"
+      ],
+      "missing_imports": []
+    },
+    "src\\leantrader\\policy\\meta_router.py": {
+      "path": ".\\src\\leantrader\\policy\\meta_router.py",
+      "rel": "src\\leantrader\\policy\\meta_router.py",
+      "imports": [
+        "dataclasses",
+        "typing"
+      ],
+      "missing_imports": []
+    },
+    "src\\leantrader\\research\\__init__.py": {
+      "path": ".\\src\\leantrader\\research\\__init__.py",
+      "rel": "src\\leantrader\\research\\__init__.py",
+      "imports": [],
+      "missing_imports": []
+    },
+    "src\\leantrader\\risk\\__init__.py": {
+      "path": ".\\src\\leantrader\\risk\\__init__.py",
+      "rel": "src\\leantrader\\risk\\__init__.py",
+      "imports": [],
+      "missing_imports": []
+    },
+    "src\\leantrader\\risk\\global_lock.py": {
+      "path": ".\\src\\leantrader\\risk\\global_lock.py",
+      "rel": "src\\leantrader\\risk\\global_lock.py",
+      "imports": [
+        "os",
+        "redis"
+      ],
+      "missing_imports": []
+    },
+    "src\\leantrader\\risk\\guardrails.py": {
+      "path": ".\\src\\leantrader\\risk\\guardrails.py",
+      "rel": "src\\leantrader\\risk\\guardrails.py",
+      "imports": [
+        "__future__",
+        "dataclasses",
+        "json",
+        "os",
+        "pathlib",
+        "time",
+        "typing"
+      ],
+      "missing_imports": []
+    },
+    "src\\leantrader\\risk\\news_filter.py": {
+      "path": ".\\src\\leantrader\\risk\\news_filter.py",
+      "rel": "src\\leantrader\\risk\\news_filter.py",
+      "imports": [
+        "datetime"
+      ],
+      "missing_imports": []
+    },
+    "src\\leantrader\\sessions\\manager.py": {
+      "path": ".\\src\\leantrader\\sessions\\manager.py",
+      "rel": "src\\leantrader\\sessions\\manager.py",
+      "imports": [
+        "dataclasses",
+        "pandas",
+        "typing"
+      ],
+      "missing_imports": []
+    },
+    "src\\leantrader\\ta\\pipeline.py": {
+      "path": ".\\src\\leantrader\\ta\\pipeline.py",
+      "rel": "src\\leantrader\\ta\\pipeline.py",
+      "imports": [
+        "__future__",
+        "numpy",
+        "os",
+        "pandas",
+        "typing"
+      ],
+      "missing_imports": []
+    },
+    "src\\leantrader\\tests\\test_backtest_engine.py": {
+      "path": ".\\src\\leantrader\\tests\\test_backtest_engine.py",
+      "rel": "src\\leantrader\\tests\\test_backtest_engine.py",
+      "imports": [
+        "leantrader",
+        "pandas"
+      ],
+      "missing_imports": []
+    },
+    "src\\leantrader\\tests\\test_dsl_compiler.py": {
+      "path": ".\\src\\leantrader\\tests\\test_dsl_compiler.py",
+      "rel": "src\\leantrader\\tests\\test_dsl_compiler.py",
+      "imports": [
+        "leantrader",
+        "pandas"
+      ],
+      "missing_imports": []
+    },
+    "src\\leantrader\\users\\store.py": {
+      "path": ".\\src\\leantrader\\users\\store.py",
+      "rel": "src\\leantrader\\users\\store.py",
+      "imports": [
+        "dataclasses",
+        "json",
+        "os",
+        "pathlib",
+        "threading",
+        "typing"
+      ],
+      "missing_imports": []
+    },
+    "src\\leantrader\\utils\\__init__.py": {
+      "path": ".\\src\\leantrader\\utils\\__init__.py",
+      "rel": "src\\leantrader\\utils\\__init__.py",
+      "imports": [],
+      "missing_imports": []
+    },
+    "src\\leantrader\\utils\\crypto.py": {
+      "path": ".\\src\\leantrader\\utils\\crypto.py",
+      "rel": "src\\leantrader\\utils\\crypto.py",
+      "imports": [
+        "cryptography",
+        "os"
+      ],
+      "missing_imports": []
+    },
+    "src\\leantrader\\utils\\symbols.py": {
+      "path": ".\\src\\leantrader\\utils\\symbols.py",
+      "rel": "src\\leantrader\\utils\\symbols.py",
+      "imports": [
+        "dataclasses"
+      ],
+      "missing_imports": []
+    },
+    "src\\leantrader\\utils\\timeframes.py": {
+      "path": ".\\src\\leantrader\\utils\\timeframes.py",
+      "rel": "src\\leantrader\\utils\\timeframes.py",
+      "imports": [
+        "dataclasses"
+      ],
+      "missing_imports": []
+    },
+    "status_ping.py": {
+      "path": ".\\status_ping.py",
+      "rel": "status_ping.py",
+      "imports": [
+        "notifier",
+        "pathlib"
+      ],
+      "missing_imports": []
+    },
+    "strategy.py": {
+      "path": ".\\strategy.py",
+      "rel": "strategy.py",
+      "imports": [
+        "__future__",
+        "dataclasses",
+        "inspect",
+        "json",
+        "math",
+        "numpy",
+        "os",
+        "pandas",
+        "router",
+        "sys"
+      ],
+      "missing_imports": []
+    },
+    "strategy_zoo.py": {
+      "path": ".\\strategy_zoo.py",
+      "rel": "strategy_zoo.py",
+      "imports": [
+        "__future__",
+        "math",
+        "numpy",
+        "pandas",
+        "typing"
+      ],
+      "missing_imports": []
+    },
+    "telegram_test.py": {
+      "path": ".\\telegram_test.py",
+      "rel": "telegram_test.py",
+      "imports": [
+        "dotenv",
+        "os",
+        "requests"
+      ],
+      "missing_imports": []
+    },
+    "test_all.py": {
+      "path": ".\\test_all.py",
+      "rel": "test_all.py",
+      "imports": [
+        "crypto_router",
+        "os",
+        "pprint",
+        "time"
+      ],
+      "missing_imports": [
+        "crypto_router"
+      ]
+    },
+    "test_import_mt5_from.py": {
+      "path": ".\\test_import_mt5_from.py",
+      "rel": "test_import_mt5_from.py",
+      "imports": [
+        "importlib",
+        "traceback"
+      ],
+      "missing_imports": []
+    },
+    "test_router.py": {
+      "path": ".\\test_router.py",
+      "rel": "test_router.py",
+      "imports": [
+        "json",
+        "os",
+        "router",
+        "time"
+      ],
+      "missing_imports": []
+    },
+    "tester.py": {
+      "path": ".\\tester.py",
+      "rel": "tester.py",
+      "imports": [
+        "__future__",
+        "alpha_engines",
+        "pandas",
+        "pathlib"
+      ],
+      "missing_imports": []
+    },
+    "tests\\__init__.py": {
+      "path": ".\\tests\\__init__.py",
+      "rel": "tests\\__init__.py",
+      "imports": [],
+      "missing_imports": []
+    },
+    "tests\\conftest.py": {
+      "path": ".\\tests\\conftest.py",
+      "rel": "tests\\conftest.py",
+      "imports": [
+        "os",
+        "pytest"
+      ],
+      "missing_imports": []
+    },
+    "tests\\smoke_test.py": {
+      "path": ".\\tests\\smoke_test.py",
+      "rel": "tests\\smoke_test.py",
+      "imports": [
+        "json",
+        "os",
+        "router",
+        "sys",
+        "traceback"
+      ],
+      "missing_imports": []
+    },
+    "tests\\test_awareness.py": {
+      "path": ".\\tests\\test_awareness.py",
+      "rel": "tests\\test_awareness.py",
+      "imports": [
+        "awareness",
+        "math",
+        "pandas",
+        "types"
+      ],
+      "missing_imports": []
+    },
+    "tests\\test_confirm_flow.py": {
+      "path": ".\\tests\\test_confirm_flow.py",
+      "rel": "tests\\test_confirm_flow.py",
+      "imports": [
+        "fastapi",
+        "json",
+        "os",
+        "pathlib",
+        "runtime",
+        "sys",
+        "time",
+        "tools"
+      ],
+      "missing_imports": []
+    },
+    "tests\\test_router_creds.py": {
+      "path": ".\\tests\\test_router_creds.py",
+      "rel": "tests\\test_router_creds.py",
+      "imports": [
+        "router"
+      ],
+      "missing_imports": []
+    },
+    "tests\\test_router_limits.py": {
+      "path": ".\\tests\\test_router_limits.py",
+      "rel": "tests\\test_router_limits.py",
+      "imports": [
+        "os",
+        "router"
+      ],
+      "missing_imports": []
+    },
+    "tests\\test_router_safety.py": {
+      "path": ".\\tests\\test_router_safety.py",
+      "rel": "tests\\test_router_safety.py",
+      "imports": [
+        "logging",
+        "router"
+      ],
+      "missing_imports": []
+    },
+    "tests\\test_safe_helpers.py": {
+      "path": ".\\tests\\test_safe_helpers.py",
+      "rel": "tests\\test_safe_helpers.py",
+      "imports": [
+        "notifier",
+        "order_utils",
+        "os",
+        "paper_broker",
+        "requests",
+        "router"
+      ],
+      "missing_imports": []
+    },
+    "tests\\test_ultra_mode.py": {
+      "path": ".\\tests\\test_ultra_mode.py",
+      "rel": "tests\\test_ultra_mode.py",
+      "imports": [
+        "os",
+        "signals_publisher",
+        "sys",
+        "tg_utils",
+        "types"
+      ],
+      "missing_imports": []
+    },
+    "tf_brains.py": {
+      "path": ".\\tf_brains.py",
+      "rel": "tf_brains.py",
+      "imports": [
+        "__future__",
+        "math",
+        "pandas",
+        "typing"
+      ],
+      "missing_imports": []
+    },
+    "tg_heartbeat.py": {
+      "path": ".\\tg_heartbeat.py",
+      "rel": "tg_heartbeat.py",
+      "imports": [
+        "__future__",
+        "argparse",
+        "datetime",
+        "dotenv",
+        "json",
+        "notifier",
+        "os",
+        "pathlib",
+        "router",
+        "time",
+        "typing"
+      ],
+      "missing_imports": []
+    },
+    "tg_test.py": {
+      "path": ".\\tg_test.py",
+      "rel": "tg_test.py",
+      "imports": [
+        "dotenv",
+        "notifier",
+        "os",
+        "time"
+      ],
+      "missing_imports": []
+    },
+    "tg_utils.py": {
+      "path": ".\\tg_utils.py",
+      "rel": "tg_utils.py",
+      "imports": [
+        "PIL",
+        "__future__",
+        "dotenv",
+        "json",
+        "os",
+        "pathlib",
+        "requests",
+        "time",
+        "typing",
+        "urllib"
+      ],
+      "missing_imports": []
+    },
+    "tools\\__init__.py": {
+      "path": ".\\tools\\__init__.py",
+      "rel": "tools\\__init__.py",
+      "imports": [],
+      "missing_imports": []
+    },
+    "tools\\_check_mt5_import.py": {
+      "path": ".\\tools\\_check_mt5_import.py",
+      "rel": "tools\\_check_mt5_import.py",
+      "imports": [
+        "mt5_adapter",
+        "traceback"
+      ],
+      "missing_imports": []
+    },
+    "tools\\_compile_check.py": {
+      "path": ".\\tools\\_compile_check.py",
+      "rel": "tools\\_compile_check.py",
+      "imports": [
+        "pathlib",
+        "traceback"
+      ],
+      "missing_imports": []
+    },
+    "tools\\_import_check2.py": {
+      "path": ".\\tools\\_import_check2.py",
+      "rel": "tools\\_import_check2.py",
+      "imports": [
+        "risk_guard",
+        "sys",
+        "traceback",
+        "trader_core"
+      ],
+      "missing_imports": []
+    },
+    "tools\\_import_test.py": {
+      "path": ".\\tools\\_import_test.py",
+      "rel": "tools\\_import_test.py",
+      "imports": [
+        "pathlib",
+        "risk_guard",
+        "sys",
+        "traceback",
+        "trader_core"
+      ],
+      "missing_imports": []
+    },
+    "tools\\_inspect_mt5_adapter.py": {
+      "path": ".\\tools\\_inspect_mt5_adapter.py",
+      "rel": "tools\\_inspect_mt5_adapter.py",
+      "imports": [
+        "importlib",
+        "sys"
+      ],
+      "missing_imports": []
+    },
+    "tools\\_make_synth_and_train.py": {
+      "path": ".\\tools\\_make_synth_and_train.py",
+      "rel": "tools\\_make_synth_and_train.py",
+      "imports": [
+        "__future__",
+        "csv",
+        "pathlib",
+        "random",
+        "time",
+        "trainer"
+      ],
+      "missing_imports": []
+    },
+    "tools\\_tmp_call_send.py": {
+      "path": ".\\tools\\_tmp_call_send.py",
+      "rel": "tools\\_tmp_call_send.py",
+      "imports": [
+        "tg_utils"
+      ],
+      "missing_imports": []
+    },
+    "tools\\apply_prioritized_fixes.py": {
+      "path": ".\\tools\\apply_prioritized_fixes.py",
+      "rel": "tools\\apply_prioritized_fixes.py",
+      "imports": [
+        "__future__",
+        "pathlib",
+        "re"
+      ],
+      "missing_imports": []
+    },
+    "tools\\assert_demo_state.py": {
+      "path": ".\\tools\\assert_demo_state.py",
+      "rel": "tools\\assert_demo_state.py",
+      "imports": [
+        "__future__",
+        "json",
+        "pathlib"
+      ],
+      "missing_imports": []
+    },
+    "tools\\auto_fix.py": {
+      "path": ".\\tools\\auto_fix.py",
+      "rel": "tools\\auto_fix.py",
+      "imports": [
+        "argparse",
+        "ast",
+        "json",
+        "os",
+        "re",
+        "typing"
+      ],
+      "missing_imports": []
+    },
+    "tools\\auto_mark_f401.py": {
+      "path": ".\\tools\\auto_mark_f401.py",
+      "rel": "tools\\auto_mark_f401.py",
+      "imports": [
+        "pathlib",
+        "re"
+      ],
+      "missing_imports": []
+    },
+    "tools\\auto_static_fix.py": {
+      "path": ".\\tools\\auto_static_fix.py",
+      "rel": "tools\\auto_static_fix.py",
+      "imports": [
+        "ast",
+        "importlib",
+        "json",
+        "pathlib",
+        "re",
+        "shutil",
+        "time",
+        "tools"
+      ],
+      "missing_imports": []
+    },
+    "tools\\auto_static_runner.py": {
+      "path": ".\\tools\\auto_static_runner.py",
+      "rel": "tools\\auto_static_runner.py",
+      "imports": [
+        "importlib",
+        "json",
+        "os",
+        "pathlib",
+        "time",
+        "tools"
+      ],
+      "missing_imports": []
+    },
+    "tools\\autofix.py": {
+      "path": ".\\tools\\autofix.py",
+      "rel": "tools\\autofix.py",
+      "imports": [
+        "argparse",
+        "ast",
+        "json",
+        "pathlib",
+        "py_compile",
+        "re",
+        "shutil",
+        "subprocess",
+        "sys"
+      ],
+      "missing_imports": []
+    },
+    "tools\\backtester.py": {
+      "path": ".\\tools\\backtester.py",
+      "rel": "tools\\backtester.py",
+      "imports": [
+        "__future__",
+        "numpy",
+        "pathlib",
+        "pickle",
+        "tools",
+        "typing"
+      ],
+      "missing_imports": []
+    },
+    "tools\\brand_chart.py": {
+      "path": ".\\tools\\brand_chart.py",
+      "rel": "tools\\brand_chart.py",
+      "imports": [
+        "PIL",
+        "__future__",
+        "pathlib"
+      ],
+      "missing_imports": []
+    },
+    "tools\\callback_executor.py": {
+      "path": ".\\tools\\callback_executor.py",
+      "rel": "tools\\callback_executor.py",
+      "imports": [
+        "__future__",
+        "json",
+        "os",
+        "paper_broker",
+        "pathlib",
+        "tools",
+        "typing"
+      ],
+      "missing_imports": []
+    },
+    "tools\\check_attach.py": {
+      "path": ".\\tools\\check_attach.py",
+      "rel": "tools\\check_attach.py",
+      "imports": [
+        "importlib",
+        "inspect",
+        "sys",
+        "traceback"
+      ],
+      "missing_imports": []
+    },
+    "tools\\check_compile.py": {
+      "path": ".\\tools\\check_compile.py",
+      "rel": "tools\\check_compile.py",
+      "imports": [
+        "os",
+        "py_compile",
+        "sys"
+      ],
+      "missing_imports": []
+    },
+    "tools\\check_exchanges.py": {
+      "path": ".\\tools\\check_exchanges.py",
+      "rel": "tools\\check_exchanges.py",
+      "imports": [
+        "__future__",
+        "ccxt",
+        "pathlib",
+        "time",
+        "traceback",
+        "typing"
+      ],
+      "missing_imports": []
+    },
+    "tools\\child_wrapper.py": {
+      "path": ".\\tools\\child_wrapper.py",
+      "rel": "tools\\child_wrapper.py",
+      "imports": [
+        "__future__",
+        "dotenv",
+        "importlib",
+        "os",
+        "runpy",
+        "sys"
+      ],
+      "missing_imports": []
+    },
+    "tools\\close_open_trades.py": {
+      "path": ".\\tools\\close_open_trades.py",
+      "rel": "tools\\close_open_trades.py",
+      "imports": [
+        "__future__",
+        "dotenv",
+        "json",
+        "pathlib",
+        "time",
+        "traders_core",
+        "typing"
+      ],
+      "missing_imports": []
+    },
+    "tools\\compile_all.py": {
+      "path": ".\\tools\\compile_all.py",
+      "rel": "tools\\compile_all.py",
+      "imports": [
+        "pathlib",
+        "py_compile"
+      ],
+      "missing_imports": []
+    },
+    "tools\\compile_excluding_backups.py": {
+      "path": ".\\tools\\compile_excluding_backups.py",
+      "rel": "tools\\compile_excluding_backups.py",
+      "imports": [
+        "compileall",
+        "pathlib",
+        "sys"
+      ],
+      "missing_imports": []
+    },
+    "tools\\continuous_demo.py": {
+      "path": ".\\tools\\continuous_demo.py",
+      "rel": "tools\\continuous_demo.py",
+      "imports": [
+        "__future__",
+        "dotenv",
+        "os",
+        "sys",
+        "time",
+        "tools"
+      ],
+      "missing_imports": []
+    },
+    "tools\\crawler.py": {
+      "path": ".\\tools\\crawler.py",
+      "rel": "tools\\crawler.py",
+      "imports": [
+        "__future__",
+        "bs4",
+        "feedparser",
+        "json",
+        "pathlib",
+        "requests",
+        "time",
+        "typing"
+      ],
+      "missing_imports": []
+    },
+    "tools\\ctf_manager.py": {
+      "path": ".\\tools\\ctf_manager.py",
+      "rel": "tools\\ctf_manager.py",
+      "imports": [
+        "__future__",
+        "dotenv",
+        "json",
+        "pandas",
+        "pathlib",
+        "time",
+        "traders_core",
+        "typing"
+      ],
+      "missing_imports": []
+    },
+    "tools\\debug_confirm.py": {
+      "path": ".\\tools\\debug_confirm.py",
+      "rel": "tools\\debug_confirm.py",
+      "imports": [
+        "fastapi",
+        "pathlib",
+        "runtime",
+        "sys"
+      ],
+      "missing_imports": []
+    },
+    "tools\\debug_confirm_runner.py": {
+      "path": ".\\tools\\debug_confirm_runner.py",
+      "rel": "tools\\debug_confirm_runner.py",
+      "imports": [
+        "fastapi",
+        "os",
+        "pathlib",
+        "runtime",
+        "sys",
+        "time"
+      ],
+      "missing_imports": []
+    },
+    "tools\\debug_confirm_sequence.py": {
+      "path": ".\\tools\\debug_confirm_sequence.py",
+      "rel": "tools\\debug_confirm_sequence.py",
+      "imports": [
+        "fastapi",
+        "os",
+        "pathlib",
+        "runtime",
+        "sys",
+        "time",
+        "tools"
+      ],
+      "missing_imports": []
+    },
+    "tools\\debug_persist_confirm.py": {
+      "path": ".\\tools\\debug_persist_confirm.py",
+      "rel": "tools\\debug_persist_confirm.py",
+      "imports": [
+        "__future__",
+        "pathlib",
+        "runtime",
+        "sys"
+      ],
+      "missing_imports": []
+    },
+    "tools\\debug_scan_run.py": {
+      "path": ".\\tools\\debug_scan_run.py",
+      "rel": "tools\\debug_scan_run.py",
+      "imports": [
+        "json",
+        "os",
+        "signals_scanner",
+        "types"
+      ],
+      "missing_imports": []
+    },
+    "tools\\debug_tg_upload.py": {
+      "path": ".\\tools\\debug_tg_upload.py",
+      "rel": "tools\\debug_tg_upload.py",
+      "imports": [
+        "pathlib",
+        "sys",
+        "tg_utils"
+      ],
+      "missing_imports": []
+    },
+    "tools\\debugging\\debug_tg_send.py": {
+      "path": ".\\tools\\debugging\\debug_tg_send.py",
+      "rel": "tools\\debugging\\debug_tg_send.py",
+      "imports": [
+        "glob",
+        "json",
+        "os",
+        "pathlib",
+        "sys",
+        "tg_utils"
+      ],
+      "missing_imports": []
+    },
+    "tools\\debugging\\debug_tg_upload.py": {
+      "path": ".\\tools\\debugging\\debug_tg_upload.py",
+      "rel": "tools\\debugging\\debug_tg_upload.py",
+      "imports": [
+        "os",
+        "pathlib",
+        "sys",
+        "tg_utils"
+      ],
+      "missing_imports": []
+    },
+    "tools\\demo_run.py": {
+      "path": ".\\tools\\demo_run.py",
+      "rel": "tools\\demo_run.py",
+      "imports": [
+        "__future__",
+        "futures_signals",
+        "importlib",
+        "mt5_signals",
+        "os",
+        "pandas",
+        "signals_publisher",
+        "time",
+        "trader_core",
+        "typing"
+      ],
+      "missing_imports": []
+    },
+    "tools\\diagnose_crawler.py": {
+      "path": ".\\tools\\diagnose_crawler.py",
+      "rel": "tools\\diagnose_crawler.py",
+      "imports": [
+        "__future__",
+        "importlib",
+        "os",
+        "sys",
+        "tools",
+        "traceback"
+      ],
+      "missing_imports": []
+    },
+    "tools\\diagnose_crawler_runner.py": {
+      "path": ".\\tools\\diagnose_crawler_runner.py",
+      "rel": "tools\\diagnose_crawler_runner.py",
+      "imports": [
+        "__future__",
+        "io",
+        "os",
+        "sys",
+        "tools",
+        "traceback"
+      ],
+      "missing_imports": []
+    },
+    "tools\\dryrun_monitor.py": {
+      "path": ".\\tools\\dryrun_monitor.py",
+      "rel": "tools\\dryrun_monitor.py",
+      "imports": [
+        "__future__",
+        "argparse",
+        "datetime",
+        "json",
+        "pathlib",
+        "time"
+      ],
+      "missing_imports": []
+    },
+    "tools\\emit_mtf_test.py": {
+      "path": ".\\tools\\emit_mtf_test.py",
+      "rel": "tools\\emit_mtf_test.py",
+      "imports": [
+        "datetime",
+        "json",
+        "pathlib",
+        "time"
+      ],
+      "missing_imports": []
+    },
+    "tools\\ensemble_trainer.py": {
+      "path": ".\\tools\\ensemble_trainer.py",
+      "rel": "tools\\ensemble_trainer.py",
+      "imports": [
+        "__future__",
+        "pathlib",
+        "pickle",
+        "sklearn",
+        "time",
+        "tools"
+      ],
+      "missing_imports": []
+    },
+    "tools\\evaluate_model.py": {
+      "path": ".\\tools\\evaluate_model.py",
+      "rel": "tools\\evaluate_model.py",
+      "imports": [
+        "__future__",
+        "csv",
+        "pathlib",
+        "sys",
+        "typing"
+      ],
+      "missing_imports": []
+    },
+    "tools\\featurizer.py": {
+      "path": ".\\tools\\featurizer.py",
+      "rel": "tools\\featurizer.py",
+      "imports": [
+        "__future__",
+        "pandas",
+        "pathlib",
+        "typing"
+      ],
+      "missing_imports": []
+    },
+    "tools\\find_unused_exc_vars.py": {
+      "path": ".\\tools\\find_unused_exc_vars.py",
+      "rel": "tools\\find_unused_exc_vars.py",
+      "imports": [
+        "__future__",
+        "ast",
+        "os",
+        "pathlib",
+        "sys"
+      ],
+      "missing_imports": []
+    },
+    "tools\\fx_fetcher_mt5.py": {
+      "path": ".\\tools\\fx_fetcher_mt5.py",
+      "rel": "tools\\fx_fetcher_mt5.py",
+      "imports": [
+        "MetaTrader5",
+        "__future__",
+        "csv",
+        "datetime",
+        "os",
+        "pathlib",
+        "sys",
+        "typing"
+      ],
+      "missing_imports": []
+    },
+    "tools\\fx_fetcher_oanda.py": {
+      "path": ".\\tools\\fx_fetcher_oanda.py",
+      "rel": "tools\\fx_fetcher_oanda.py",
+      "imports": [
+        "__future__",
+        "csv",
+        "datetime",
+        "oandapyV20",
+        "os",
+        "pathlib",
+        "sys",
+        "typing"
+      ],
+      "missing_imports": []
+    },
+    "tools\\heartbeat.py": {
+      "path": ".\\tools\\heartbeat.py",
+      "rel": "tools\\heartbeat.py",
+      "imports": [
+        "__future__",
+        "json",
+        "pathlib",
+        "time"
+      ],
+      "missing_imports": []
+    },
+    "tools\\import_check.py": {
+      "path": ".\\tools\\import_check.py",
+      "rel": "tools\\import_check.py",
+      "imports": [
+        "pathlib",
+        "sys"
+      ],
+      "missing_imports": []
+    },
+    "tools\\import_smoke.py": {
+      "path": ".\\tools\\import_smoke.py",
+      "rel": "tools\\import_smoke.py",
+      "imports": [
+        "importlib",
+        "pathlib",
+        "sys"
+      ],
+      "missing_imports": []
+    },
+    "tools\\inspect_and_test.py": {
+      "path": ".\\tools\\inspect_and_test.py",
+      "rel": "tools\\inspect_and_test.py",
+      "imports": [
+        "json",
+        "os",
+        "subprocess",
+        "sys"
+      ],
+      "missing_imports": []
+    },
+    "tools\\learner.py": {
+      "path": ".\\tools\\learner.py",
+      "rel": "tools\\learner.py",
+      "imports": [
+        "__future__",
+        "joblib",
+        "json",
+        "pathlib",
+        "sklearn",
+        "typing"
+      ],
+      "missing_imports": []
+    },
+    "tools\\learning_runner.py": {
+      "path": ".\\tools\\learning_runner.py",
+      "rel": "tools\\learning_runner.py",
+      "imports": [
+        "__future__",
+        "pathlib",
+        "time",
+        "tools",
+        "traceback"
+      ],
+      "missing_imports": []
+    },
+    "tools\\learning_sources.py": {
+      "path": ".\\tools\\learning_sources.py",
+      "rel": "tools\\learning_sources.py",
+      "imports": [
+        "__future__",
+        "typing"
+      ],
+      "missing_imports": []
+    },
+    "tools\\market_data.py": {
+      "path": ".\\tools\\market_data.py",
+      "rel": "tools\\market_data.py",
+      "imports": [
+        "__future__",
+        "ccxt",
+        "csv",
+        "pathlib",
+        "time",
+        "typing"
+      ],
+      "missing_imports": []
+    },
+    "tools\\market_diag.py": {
+      "path": ".\\tools\\market_diag.py",
+      "rel": "tools\\market_diag.py",
+      "imports": [
+        "__future__",
+        "pathlib",
+        "time",
+        "tools",
+        "typing"
+      ],
+      "missing_imports": []
+    },
+    "tools\\metrics_exporter.py": {
+      "path": ".\\tools\\metrics_exporter.py",
+      "rel": "tools\\metrics_exporter.py",
+      "imports": [
+        "argparse",
+        "json",
+        "pathlib",
+        "time"
+      ],
+      "missing_imports": []
+    },
+    "tools\\model_registry.py": {
+      "path": ".\\tools\\model_registry.py",
+      "rel": "tools\\model_registry.py",
+      "imports": [
+        "__future__",
+        "json",
+        "pathlib",
+        "typing"
+      ],
+      "missing_imports": []
+    },
+    "tools\\mtf_aggregator.py": {
+      "path": ".\\tools\\mtf_aggregator.py",
+      "rel": "tools\\mtf_aggregator.py",
+      "imports": [
+        "__future__",
+        "collections",
+        "datetime",
+        "dotenv",
+        "json",
+        "os",
+        "pathlib",
+        "sys",
+        "typing"
+      ],
+      "missing_imports": []
+    },
+    "tools\\news_ingest.py": {
+      "path": ".\\tools\\news_ingest.py",
+      "rel": "tools\\news_ingest.py",
+      "imports": [
+        "__future__",
+        "feedparser",
+        "pathlib",
+        "time",
+        "typing"
+      ],
+      "missing_imports": []
+    },
+    "tools\\online_trainer.py": {
+      "path": ".\\tools\\online_trainer.py",
+      "rel": "tools\\online_trainer.py",
+      "imports": [
+        "__future__",
+        "json",
+        "numpy",
+        "pathlib",
+        "time",
+        "typing"
+      ],
+      "missing_imports": []
+    },
+    "tools\\paper_demo_open.py": {
+      "path": ".\\tools\\paper_demo_open.py",
+      "rel": "tools\\paper_demo_open.py",
+      "imports": [
+        "__future__",
+        "dotenv",
+        "json",
+        "os",
+        "pathlib",
+        "time",
+        "traders_core",
+        "typing"
+      ],
+      "missing_imports": []
+    },
+    "tools\\paper_run.py": {
+      "path": ".\\tools\\paper_run.py",
+      "rel": "tools\\paper_run.py",
+      "imports": [
+        "argparse",
+        "logging",
+        "os",
+        "subprocess",
+        "sys",
+        "time"
+      ],
+      "missing_imports": []
+    },
+    "tools\\pipeline.py": {
+      "path": ".\\tools\\pipeline.py",
+      "rel": "tools\\pipeline.py",
+      "parse_error": "invalid syntax (pipeline.py, line 262)"
+    },
+    "tools\\publish_mtf_signals.py": {
+      "path": ".\\tools\\publish_mtf_signals.py",
+      "rel": "tools\\publish_mtf_signals.py",
+      "imports": [
+        "PIL",
+        "__future__",
+        "charting",
+        "json",
+        "os",
+        "pathlib",
+        "signals_publisher",
+        "sys",
+        "tg_utils",
+        "tools"
+      ],
+      "missing_imports": []
+    },
+    "tools\\reconcile_positions.py": {
+      "path": ".\\tools\\reconcile_positions.py",
+      "rel": "tools\\reconcile_positions.py",
+      "imports": [
+        "__future__",
+        "dotenv",
+        "json",
+        "pathlib",
+        "time",
+        "traders_core",
+        "typing"
+      ],
+      "missing_imports": []
+    },
+    "tools\\reddit_ingest.py": {
+      "path": ".\\tools\\reddit_ingest.py",
+      "rel": "tools\\reddit_ingest.py",
+      "imports": [
+        "__future__",
+        "feedparser",
+        "os",
+        "pathlib",
+        "time",
+        "typing"
+      ],
+      "missing_imports": []
+    },
+    "tools\\redis_publish.py": {
+      "path": ".\\tools\\redis_publish.py",
+      "rel": "tools\\redis_publish.py",
+      "imports": [
+        "__future__",
+        "argparse",
+        "json",
+        "os",
+        "redis",
+        "sys"
+      ],
+      "missing_imports": []
+    },
+    "tools\\report_unused_imports.py": {
+      "path": ".\\tools\\report_unused_imports.py",
+      "rel": "tools\\report_unused_imports.py",
+      "imports": [
+        "pathlib",
+        "subprocess"
+      ],
+      "missing_imports": []
+    },
+    "tools\\retry_failed_closes.py": {
+      "path": ".\\tools\\retry_failed_closes.py",
+      "rel": "tools\\retry_failed_closes.py",
+      "imports": [
+        "__future__",
+        "dotenv",
+        "json",
+        "pathlib",
+        "time",
+        "traders_core"
+      ],
+      "missing_imports": []
+    },
+    "tools\\run_bot_daemon.py": {
+      "path": ".\\tools\\run_bot_daemon.py",
+      "rel": "tools\\run_bot_daemon.py",
+      "imports": [
+        "datetime",
+        "json",
+        "os",
+        "router",
+        "subprocess",
+        "sys",
+        "time",
+        "typing"
+      ],
+      "missing_imports": []
+    },
+    "tools\\run_bot_live.py": {
+      "path": ".\\tools\\run_bot_live.py",
+      "rel": "tools\\run_bot_live.py",
+      "imports": [
+        "json",
+        "os",
+        "pandas",
+        "router",
+        "strategy",
+        "sys"
+      ],
+      "missing_imports": []
+    },
+    "tools\\run_bot_paper.py": {
+      "path": ".\\tools\\run_bot_paper.py",
+      "rel": "tools\\run_bot_paper.py",
+      "imports": [
+        "json",
+        "os",
+        "pandas",
+        "router",
+        "strategy",
+        "sys"
+      ],
+      "missing_imports": []
+    },
+    "tools\\run_checks.py": {
+      "path": ".\\tools\\run_checks.py",
+      "rel": "tools\\run_checks.py",
+      "imports": [
+        "json",
+        "pathlib",
+        "router",
+        "sys"
+      ],
+      "missing_imports": []
+    },
+    "tools\\run_confirm_execute_test.py": {
+      "path": ".\\tools\\run_confirm_execute_test.py",
+      "rel": "tools\\run_confirm_execute_test.py",
+      "imports": [
+        "__future__",
+        "fastapi",
+        "json",
+        "os",
+        "pathlib",
+        "runtime",
+        "sys",
+        "time",
+        "tools"
+      ],
+      "missing_imports": []
+    },
+    "tools\\run_continuous_demo_once.py": {
+      "path": ".\\tools\\run_continuous_demo_once.py",
+      "rel": "tools\\run_continuous_demo_once.py",
+      "imports": [
+        "sys",
+        "tools"
+      ],
+      "missing_imports": []
+    },
+    "tools\\run_crawler.py": {
+      "path": ".\\tools\\run_crawler.py",
+      "rel": "tools\\run_crawler.py",
+      "imports": [
+        "__future__",
+        "crawler",
+        "os",
+        "sys"
+      ],
+      "missing_imports": []
+    },
+    "tools\\run_demo_testnet.py": {
+      "path": ".\\tools\\run_demo_testnet.py",
+      "rel": "tools\\run_demo_testnet.py",
+      "imports": [
+        "dotenv",
+        "os",
+        "subprocess",
+        "sys",
+        "time"
+      ],
+      "missing_imports": []
+    },
+    "tools\\run_demo_train.py": {
+      "path": ".\\tools\\run_demo_train.py",
+      "rel": "tools\\run_demo_train.py",
+      "imports": [
+        "__future__",
+        "market_data",
+        "pathlib",
+        "sys",
+        "traceback",
+        "trainer"
+      ],
+      "missing_imports": []
+    },
+    "tools\\run_full_pipeline.py": {
+      "path": ".\\tools\\run_full_pipeline.py",
+      "rel": "tools\\run_full_pipeline.py",
+      "imports": [
+        "__future__",
+        "os",
+        "pathlib",
+        "sys",
+        "time",
+        "tools",
+        "traceback"
+      ],
+      "missing_imports": []
+    },
+    "tools\\run_market_diag_wrapper.py": {
+      "path": ".\\tools\\run_market_diag_wrapper.py",
+      "rel": "tools\\run_market_diag_wrapper.py",
+      "imports": [
+        "__future__",
+        "pathlib",
+        "time",
+        "tools",
+        "traceback"
+      ],
+      "missing_imports": []
+    },
+    "tools\\run_pipeline_capture.py": {
+      "path": ".\\tools\\run_pipeline_capture.py",
+      "rel": "tools\\run_pipeline_capture.py",
+      "imports": [
+        "__future__",
+        "os",
+        "pathlib",
+        "sys",
+        "tools",
+        "traceback"
+      ],
+      "missing_imports": []
+    },
+    "tools\\run_scanner.py": {
+      "path": ".\\tools\\run_scanner.py",
+      "rel": "tools\\run_scanner.py",
+      "imports": [
+        "os",
+        "signals_scanner",
+        "sys",
+        "types"
+      ],
+      "missing_imports": []
+    },
+    "tools\\run_scans.py": {
+      "path": ".\\tools\\run_scans.py",
+      "rel": "tools\\run_scans.py",
+      "imports": [
+        "argparse",
+        "json",
+        "os",
+        "router",
+        "strategy",
+        "sys"
+      ],
+      "missing_imports": []
+    },
+    "tools\\run_trader_once.py": {
+      "path": ".\\tools\\run_trader_once.py",
+      "rel": "tools\\run_trader_once.py",
+      "imports": [
+        "__future__",
+        "os",
+        "trader_core"
+      ],
+      "missing_imports": []
+    },
+    "tools\\run_webhook.py": {
+      "path": ".\\tools\\run_webhook.py",
+      "rel": "tools\\run_webhook.py",
+      "imports": [
+        "dotenv",
+        "pathlib",
+        "sys",
+        "uvicorn"
+      ],
+      "missing_imports": []
+    },
+    "tools\\scheduler.py": {
+      "path": ".\\tools\\scheduler.py",
+      "rel": "tools\\scheduler.py",
+      "imports": [
+        "__future__",
+        "apscheduler",
+        "argparse",
+        "datetime",
+        "json",
+        "logging",
+        "os",
+        "pathlib",
+        "subprocess",
+        "sys",
+        "time"
+      ],
+      "missing_imports": []
+    },
+    "tools\\seed_paper.py": {
+      "path": ".\\tools\\seed_paper.py",
+      "rel": "tools\\seed_paper.py",
+      "imports": [
+        "__future__",
+        "json",
+        "pathlib",
+        "traders_core"
+      ],
+      "missing_imports": []
+    },
+    "tools\\smoke_awareness.py": {
+      "path": ".\\tools\\smoke_awareness.py",
+      "rel": "tools\\smoke_awareness.py",
+      "parse_error": "invalid non-printable character U+FEFF (smoke_awareness.py, line 1)"
+    },
+    "tools\\smoke_import.py": {
+      "path": ".\\tools\\smoke_import.py",
+      "rel": "tools\\smoke_import.py",
+      "imports": [
+        "sys"
+      ],
+      "missing_imports": []
+    },
+    "tools\\smoke_run.py": {
+      "path": ".\\tools\\smoke_run.py",
+      "rel": "tools\\smoke_run.py",
+      "imports": [
+        "brain_loop",
+        "json",
+        "os"
+      ],
+      "missing_imports": []
+    },
+    "tools\\smoke_test.py": {
+      "path": ".\\tools\\smoke_test.py",
+      "rel": "tools\\smoke_test.py",
+      "imports": [
+        "__future__",
+        "dotenv",
+        "importlib"
+      ],
+      "missing_imports": []
+    },
+    "tools\\smoke_trade.py": {
+      "path": ".\\tools\\smoke_trade.py",
+      "rel": "tools\\smoke_trade.py",
+      "imports": [
+        "__future__",
+        "os",
+        "pathlib",
+        "router",
+        "time",
+        "traceback"
+      ],
+      "missing_imports": []
+    },
+    "tools\\smoke_tradercore.py": {
+      "path": ".\\tools\\smoke_tradercore.py",
+      "rel": "tools\\smoke_tradercore.py",
+      "imports": [
+        "sys",
+        "trader_core"
+      ],
+      "missing_imports": []
+    },
+    "tools\\static_check.py": {
+      "path": ".\\tools\\static_check.py",
+      "rel": "tools\\static_check.py",
+      "imports": [
+        "argparse",
+        "ast",
+        "importlib",
+        "json",
+        "os",
+        "sys",
+        "typing"
+      ],
+      "missing_imports": []
+    },
+    "tools\\strategy_collector.py": {
+      "path": ".\\tools\\strategy_collector.py",
+      "rel": "tools\\strategy_collector.py",
+      "imports": [
+        "__future__",
+        "pathlib",
+        "typing"
+      ],
+      "missing_imports": []
+    },
+    "tools\\supervisor.py": {
+      "path": ".\\tools\\supervisor.py",
+      "rel": "tools\\supervisor.py",
+      "imports": [
+        "__future__",
+        "dotenv",
+        "importlib",
+        "logging",
+        "os",
+        "pathlib",
+        "signal",
+        "subprocess",
+        "sys",
+        "time"
+      ],
+      "missing_imports": []
+    },
+    "tools\\telegram_ingest.py": {
+      "path": ".\\tools\\telegram_ingest.py",
+      "rel": "tools\\telegram_ingest.py",
+      "imports": [
+        "__future__",
+        "json",
+        "os",
+        "pathlib",
+        "requests",
+        "time",
+        "typing"
+      ],
+      "missing_imports": []
+    },
+    "tools\\test_crawler.py": {
+      "path": ".\\tools\\test_crawler.py",
+      "rel": "tools\\test_crawler.py",
+      "imports": [
+        "__future__",
+        "os",
+        "sys",
+        "tools"
+      ],
+      "missing_imports": []
+    },
+    "tools\\test_e2e_telegram.py": {
+      "path": ".\\tools\\test_e2e_telegram.py",
+      "rel": "tools\\test_e2e_telegram.py",
+      "imports": [
+        "__future__",
+        "importlib",
+        "os",
+        "sys",
+        "tg_utils"
+      ],
+      "missing_imports": []
+    },
+    "tools\\test_fs_write.py": {
+      "path": ".\\tools\\test_fs_write.py",
+      "rel": "tools\\test_fs_write.py",
+      "imports": [
+        "__future__",
+        "pathlib"
+      ],
+      "missing_imports": []
+    },
+    "tools\\trainer.py": {
+      "path": ".\\tools\\trainer.py",
+      "rel": "tools\\trainer.py",
+      "imports": [
+        "__future__",
+        "csv",
+        "json",
+        "os",
+        "pathlib",
+        "pickle",
+        "sklearn",
+        "typing"
+      ],
+      "missing_imports": []
+    },
+    "tools\\twitter_ingest.py": {
+      "path": ".\\tools\\twitter_ingest.py",
+      "rel": "tools\\twitter_ingest.py",
+      "imports": [
+        "__future__",
+        "os",
+        "pathlib",
+        "requests",
+        "time",
+        "typing",
+        "urllib"
+      ],
+      "missing_imports": []
+    },
+    "tools\\ultra_debug.py": {
+      "path": ".\\tools\\ultra_debug.py",
+      "rel": "tools\\ultra_debug.py",
+      "imports": [
+        "json",
+        "os",
+        "router",
+        "traceback",
+        "ultra_core",
+        "universe"
+      ],
+      "missing_imports": []
+    },
+    "tools\\user_pins.py": {
+      "path": ".\\tools\\user_pins.py",
+      "rel": "tools\\user_pins.py",
+      "imports": [
+        "__future__",
+        "hashlib",
+        "json",
+        "pathlib",
+        "secrets",
+        "sys",
+        "time",
+        "typing"
+      ],
+      "missing_imports": []
+    },
+    "tools\\web_crawler.py": {
+      "path": ".\\tools\\web_crawler.py",
+      "rel": "tools\\web_crawler.py",
+      "imports": [
+        "__future__",
+        "bs4",
+        "os",
+        "pathlib",
+        "requests",
+        "time",
+        "traceback",
+        "typing",
+        "urllib"
+      ],
+      "missing_imports": []
+    },
+    "trade_planner.py": {
+      "path": ".\\trade_planner.py",
+      "rel": "trade_planner.py",
+      "imports": [
+        "__future__",
+        "order_utils",
+        "os",
+        "risk_engine",
+        "router",
+        "session_filter",
+        "typing"
+      ],
+      "missing_imports": []
+    },
+    "trader_core.py": {
+      "path": ".\\trader_core.py",
+      "rel": "trader_core.py",
+      "imports": [
+        "__future__",
+        "dotenv",
+        "futures_signals",
+        "importlib",
+        "os",
+        "pandas",
+        "pathlib",
+        "risk_guard",
+        "router",
+        "session_clock",
+        "skillbook",
+        "sys",
+        "time",
+        "typing",
+        "volatility"
+      ],
+      "missing_imports": []
+    },
+    "traders_core\\api\\app.py": {
+      "path": ".\\traders_core\\api\\app.py",
+      "rel": "traders_core\\api\\app.py",
+      "imports": [
+        "__future__",
+        "fastapi",
+        "prometheus_client",
+        "pydantic",
+        "traders_core"
+      ],
+      "missing_imports": []
+    },
+    "traders_core\\auto_loop.py": {
+      "path": ".\\traders_core\\auto_loop.py",
+      "rel": "traders_core\\auto_loop.py",
+      "imports": [
+        "memory",
+        "os",
+        "pprint",
+        "router",
+        "strategist",
+        "time",
+        "typing"
+      ],
+      "missing_imports": [
+        "memory",
+        "strategist"
+      ]
+    },
+    "traders_core\\connectors\\crypto_ccxt.py": {
+      "path": ".\\traders_core\\connectors\\crypto_ccxt.py",
+      "rel": "traders_core\\connectors\\crypto_ccxt.py",
+      "imports": [
+        "__future__",
+        "ccxt",
+        "dotenv",
+        "order_utils",
+        "os",
+        "pandas",
+        "router",
+        "typing"
+      ],
+      "missing_imports": []
+    },
+    "traders_core\\execution\\crypto_router.py": {
+      "path": ".\\traders_core\\execution\\crypto_router.py",
+      "rel": "traders_core\\execution\\crypto_router.py",
+      "imports": [
+        "__future__",
+        "dotenv",
+        "os",
+        "pandas",
+        "time",
+        "traders_core"
+      ],
+      "missing_imports": []
+    },
+    "traders_core\\execution\\router.py": {
+      "path": ".\\traders_core\\execution\\router.py",
+      "rel": "traders_core\\execution\\router.py",
+      "imports": [
+        "__future__",
+        "dotenv",
+        "os",
+        "traders_core"
+      ],
+      "missing_imports": []
+    },
+    "traders_core\\features\\pipeline.py": {
+      "path": ".\\traders_core\\features\\pipeline.py",
+      "rel": "traders_core\\features\\pipeline.py",
+      "imports": [
+        "__future__",
+        "pandas",
+        "traders_core"
+      ],
+      "missing_imports": []
+    },
+    "traders_core\\knowledge\\note.py": {
+      "path": ".\\traders_core\\knowledge\\note.py",
+      "rel": "traders_core\\knowledge\\note.py",
+      "imports": [
+        "__future__",
+        "datetime",
+        "pathlib"
+      ],
+      "missing_imports": []
+    },
+    "traders_core\\main.py": {
+      "path": ".\\traders_core\\main.py",
+      "rel": "traders_core\\main.py",
+      "imports": [
+        "__future__",
+        "dotenv",
+        "os",
+        "traders_core",
+        "uvicorn"
+      ],
+      "missing_imports": []
+    },
+    "traders_core\\memory.py": {
+      "path": ".\\traders_core\\memory.py",
+      "rel": "traders_core\\memory.py",
+      "imports": [
+        "json",
+        "os",
+        "time",
+        "typing"
+      ],
+      "missing_imports": []
+    },
+    "traders_core\\mt5_adapter.py": {
+      "path": ".\\traders_core\\mt5_adapter.py",
+      "rel": "traders_core\\mt5_adapter.py",
+      "imports": [
+        "MetaTrader5",
+        "__future__",
+        "dotenv",
+        "numpy",
+        "os",
+        "pandas",
+        "typing"
+      ],
+      "missing_imports": []
+    },
+    "traders_core\\observability\\metrics.py": {
+      "path": ".\\traders_core\\observability\\metrics.py",
+      "rel": "traders_core\\observability\\metrics.py",
+      "imports": [
+        "__future__",
+        "prometheus_client"
+      ],
+      "missing_imports": []
+    },
+    "traders_core\\orchestration\\jobs.py": {
+      "path": ".\\traders_core\\orchestration\\jobs.py",
+      "rel": "traders_core\\orchestration\\jobs.py",
+      "imports": [
+        "__future__",
+        "dotenv",
+        "os",
+        "pandas",
+        "pathlib",
+        "time",
+        "traders_core",
+        "yaml"
+      ],
+      "missing_imports": []
+    },
+    "traders_core\\portfolio\\market_selector.py": {
+      "path": ".\\traders_core\\portfolio\\market_selector.py",
+      "rel": "traders_core\\portfolio\\market_selector.py",
+      "imports": [
+        "__future__",
+        "math",
+        "pandas",
+        "traders_core",
+        "typing"
+      ],
+      "missing_imports": []
+    },
+    "traders_core\\portfolio\\wallets.py": {
+      "path": ".\\traders_core\\portfolio\\wallets.py",
+      "rel": "traders_core\\portfolio\\wallets.py",
+      "imports": [
+        "__future__",
+        "dotenv",
+        "os",
+        "traders_core",
+        "typing"
+      ],
+      "missing_imports": []
+    },
+    "traders_core\\research\\cv.py": {
+      "path": ".\\traders_core\\research\\cv.py",
+      "rel": "traders_core\\research\\cv.py",
+      "imports": [
+        "__future__",
+        "numpy",
+        "typing"
+      ],
+      "missing_imports": []
+    },
+    "traders_core\\research\\regime.py": {
+      "path": ".\\traders_core\\research\\regime.py",
+      "rel": "traders_core\\research\\regime.py",
+      "imports": [
+        "__future__",
+        "numpy",
+        "pandas"
+      ],
+      "missing_imports": []
+    },
+    "traders_core\\research\\walk_forward.py": {
+      "path": ".\\traders_core\\research\\walk_forward.py",
+      "rel": "traders_core\\research\\walk_forward.py",
+      "imports": [
+        "__future__",
+        "numpy",
+        "os",
+        "pandas",
+        "sklearn",
+        "traders_core"
+      ],
+      "missing_imports": []
+    },
+    "traders_core\\risk\\gates.py": {
+      "path": ".\\traders_core\\risk\\gates.py",
+      "rel": "traders_core\\risk\\gates.py",
+      "imports": [
+        "__future__",
+        "numpy",
+        "pandas"
+      ],
+      "missing_imports": []
+    },
+    "traders_core\\router.py": {
+      "path": ".\\traders_core\\router.py",
+      "rel": "traders_core\\router.py",
+      "imports": [
+        "ccxt",
+        "order_utils",
+        "os",
+        "paper_broker",
+        "pprint",
+        "typing"
+      ],
+      "missing_imports": []
+    },
+    "traders_core\\sim\\paper_broker.py": {
+      "path": ".\\traders_core\\sim\\paper_broker.py",
+      "rel": "traders_core\\sim\\paper_broker.py",
+      "imports": [
+        "__future__",
+        "datetime",
+        "dotenv",
+        "json",
+        "os",
+        "pathlib",
+        "traders_core",
+        "typing"
+      ],
+      "missing_imports": []
+    },
+    "traders_core\\storage\\registry.py": {
+      "path": ".\\traders_core\\storage\\registry.py",
+      "rel": "traders_core\\storage\\registry.py",
+      "imports": [
+        "__future__",
+        "joblib",
+        "json",
+        "os",
+        "pathlib",
+        "time",
+        "typing"
+      ],
+      "missing_imports": []
+    },
+    "traders_core\\strategist.py": {
+      "path": ".\\traders_core\\strategist.py",
+      "rel": "traders_core\\strategist.py",
+      "imports": [
+        "typing"
+      ],
+      "missing_imports": []
+    },
+    "traders_core\\utils\\ta.py": {
+      "path": ".\\traders_core\\utils\\ta.py",
+      "rel": "traders_core\\utils\\ta.py",
+      "imports": [
+        "numpy",
+        "pandas"
+      ],
+      "missing_imports": []
+    },
+    "trades_reports.py": {
+      "path": ".\\trades_reports.py",
+      "rel": "trades_reports.py",
+      "imports": [
+        "__future__",
+        "argparse",
+        "datetime",
+        "ledger",
+        "pandas"
+      ],
+      "missing_imports": []
+    },
+    "ultra_core.py": {
+      "path": ".\\ultra_core.py",
+      "rel": "ultra_core.py",
+      "imports": [
+        "json",
+        "ledger",
+        "logging",
+        "numpy",
+        "os",
+        "pandas",
+        "pathlib",
+        "qiskit",
+        "random",
+        "tensorflow",
+        "threading",
+        "time",
+        "torch",
+        "torch_geometric",
+        "typing",
+        "ultra_scout"
+      ],
+      "missing_imports": [
+        "qiskit",
+        "tensorflow",
+        "torch",
+        "torch_geometric"
+      ]
+    },
+    "ultra_scout.py": {
+      "path": ".\\ultra_scout.py",
+      "rel": "ultra_scout.py",
+      "imports": [
+        "bs4",
+        "ccxt",
+        "concurrent",
+        "datetime",
+        "json",
+        "numpy",
+        "openai",
+        "optuna",
+        "os",
+        "random",
+        "re",
+        "requests",
+        "sklearn",
+        "stable_baselines3",
+        "threading",
+        "time",
+        "transformers",
+        "typing"
+      ],
+      "missing_imports": [
+        "optuna",
+        "stable_baselines3",
+        "transformers"
+      ]
+    },
+    "universe.py": {
+      "path": ".\\universe.py",
+      "rel": "universe.py",
+      "imports": [
+        "__future__",
+        "argparse",
+        "ccxt",
+        "datetime",
+        "json",
+        "ledger",
+        "math",
+        "numpy",
+        "os",
+        "pandas",
+        "pathlib",
+        "re",
+        "router",
+        "time",
+        "typing",
+        "utils"
+      ],
+      "missing_imports": []
+    },
+    "utils.py": {
+      "path": ".\\utils.py",
+      "rel": "utils.py",
+      "imports": [
+        "logging",
+        "math",
+        "os",
+        "pathlib",
+        "sys",
+        "typing",
+        "yaml"
+      ],
+      "missing_imports": []
+    },
+    "utils\\jsonlog.py": {
+      "path": ".\\utils\\jsonlog.py",
+      "rel": "utils\\jsonlog.py",
+      "imports": [
+        "__future__",
+        "json",
+        "os",
+        "sys",
+        "time",
+        "typing"
+      ],
+      "missing_imports": []
+    },
+    "utils\\tele.py": {
+      "path": ".\\utils\\tele.py",
+      "rel": "utils\\tele.py",
+      "imports": [
+        "__future__",
+        "os",
+        "requests",
+        "time",
+        "typing"
+      ],
+      "missing_imports": []
+    },
+    "utils_runtime.py": {
+      "path": ".\\utils_runtime.py",
+      "rel": "utils_runtime.py",
+      "imports": [
+        "datetime",
+        "json",
+        "pathlib",
+        "platform",
+        "time"
+      ],
+      "missing_imports": []
+    },
+    "volatility.py": {
+      "path": ".\\volatility.py",
+      "rel": "volatility.py",
+      "imports": [
+        "__future__",
+        "numpy",
+        "pandas",
+        "typing"
+      ],
+      "missing_imports": []
+    }
+  },
+  "summary": {
+    "files": 397,
+    "parse_errors": 4,
+    "missing_imports_total": 18
+  }
+}

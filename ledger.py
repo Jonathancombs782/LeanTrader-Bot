@@ -116,11 +116,7 @@ def log_exit(trade_id: str, *, exit_px: float, status: str = "closed") -> None:
 
     # R-multiple: distance to SL (if present); fallback to |entry|*0.003 (0.3%) to avoid /0
     risk_per_unit = abs(entry - sl) if sl and sl > 0 else max(1e-9, abs(entry) * 0.003)
-    pnl_r = (
-        ((exit_px - entry) / risk_per_unit)
-        if side == "buy"
-        else ((entry - exit_px) / risk_per_unit)
-    )
+    pnl_r = ((exit_px - entry) / risk_per_unit) if side == "buy" else ((entry - exit_px) / risk_per_unit)
 
     hold_min = max(0.0, (ts_now - ts_entry) / 60.0)
 

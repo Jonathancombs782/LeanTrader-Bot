@@ -2,8 +2,7 @@
 from __future__ import annotations
 
 import math
-from typing import (Any, Dict, List,  # noqa: F401  # intentionally kept
-                    Optional, Tuple)
+from typing import Any, Dict, List, Optional, Tuple  # noqa: F401  # intentionally kept
 
 import pandas as pd
 
@@ -28,9 +27,7 @@ class TFBrain:
         vol_norm = min(2.0, bb * 5.0)
         return trend + vol_norm + news
 
-    def evaluate(
-        self, symbol: str, df: pd.DataFrame, is_fx: bool
-    ) -> Optional[Dict[str, Any]]:
+    def evaluate(self, symbol: str, df: pd.DataFrame, is_fx: bool) -> Optional[Dict[str, Any]]:
         d, info = self.strat.entries_and_exits(
             df[["timestamp", "open", "high", "low", "close", "vol"]],
             self.risk.atr_stop_mult,

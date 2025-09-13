@@ -56,17 +56,8 @@ def _to_numpy_ohlcv(
             # fabricate sequential timestamps if absent
             ts = np.arange(len(bars))
 
-        vcol = (
-            cols.get("vol")
-            or cols.get("tick_volume")
-            or cols.get("volume")
-            or cols.get("real_volume")
-        )
-        vol = (
-            bars[vcol].astype(float).to_numpy()
-            if vcol
-            else np.zeros(len(bars), dtype=float)
-        )
+        vcol = cols.get("vol") or cols.get("tick_volume") or cols.get("volume") or cols.get("real_volume")
+        vol = bars[vcol].astype(float).to_numpy() if vcol else np.zeros(len(bars), dtype=float)
 
         o = bars[cols.get("open", "open")].astype(float).to_numpy()
         h = bars[cols.get("high", "high")].astype(float).to_numpy()
@@ -131,9 +122,7 @@ def _rsi(c: np.ndarray, n: int = 14) -> np.ndarray:
     return 100.0 - (100.0 / (1.0 + rs))
 
 
-def _bbands(
-    c: np.ndarray, n: int = 20, k: float = 2.0
-) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+def _bbands(c: np.ndarray, n: int = 20, k: float = 2.0) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
     if len(c) < n:
         m = np.full_like(c, np.nan)
         return m, m, m, m
@@ -141,21 +130,14 @@ def _bbands(
     ma = np.convolve(c, np.ones(n) / n, mode="same")
     # naive rolling std
     pad = n // 2
-    std = np.array(
-        [
-            np.nanstd(c[max(0, i - pad) : min(len(c), i + pad + 1)], ddof=0)
-            for i in range(len(c))
-        ]
-    )
+    std = np.array([np.nanstd(c[max(0, i - pad) : min(len(c), i + pad + 1)], ddof=0) for i in range(len(c))])
     upper = ma + k * std
     lower = ma - k * std
     bbw = np.divide(upper - lower, np.maximum(1e-12, ma))
     return ma, upper, lower, bbw
 
 
-def _macd(
-    c: np.ndarray, fast: int = 12, slow: int = 26, sig: int = 9
-) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
+def _macd(c: np.ndarray, fast: int = 12, slow: int = 26, sig: int = 9) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
     if len(c) == 0:
         z = np.array([])
         return z, z, z
@@ -248,18 +230,11 @@ def _build_signal_common(
     # components in [0,1]
     trend_align = (
         1.0
-        if (
-            (side == "buy" and ema_fast_last > ema_slow_last)
-            or (side == "sell" and ema_fast_last < ema_slow_last)
-        )
+        if ((side == "buy" and ema_fast_last > ema_slow_last) or (side == "sell" and ema_fast_last < ema_slow_last))
         else 0.0
     )
-    mom_align = _clip01(
-        0.5 + 0.5 * np.sign(macd_hist_last) * (1 if side == "buy" else -1)
-    )
-    vol_ok = _clip01(
-        (bbw_last - _envf("VOL_BBW_MIN", 0.01)) / max(1e-6, _envf("VOL_BBW_MAX", 0.08))
-    )
+    mom_align = _clip01(0.5 + 0.5 * np.sign(macd_hist_last) * (1 if side == "buy" else -1))
+    vol_ok = _clip01((bbw_last - _envf("VOL_BBW_MIN", 0.01)) / max(1e-6, _envf("VOL_BBW_MAX", 0.08)))
     # prefer RSI 45-65 for trend-follow longs; 35-55 for shorts
     if side == "buy":
         rsi_score = _clip01(1.0 - abs(rsi_last - 55.0) / 35.0)
@@ -320,9 +295,7 @@ def _analyze_core(symbol: str, tf: str, market: str, bars) -> Optional[Dict[str,
         reasons.append("HH structure")
     if ll:
         reasons.append("LL structure")
-    reasons.append(
-        f"ATR={last_atr:.6g}  BBw={last_bbw:.4f}  MACDhist={hist[-1]:.6g}  RSI={rsi14[-1]:.1f}"
-    )
+    reasons.append(f"ATR={last_atr:.6g}  BBw={last_bbw:.4f}  MACDhist={hist[-1]:.6g}  RSI={rsi14[-1]:.1f}")
 
     # pick side
     side = "buy" if trend_buy else ("sell" if trend_sell else None)
@@ -354,9 +327,7 @@ def _analyze_core(symbol: str, tf: str, market: str, bars) -> Optional[Dict[str,
 # ==================================
 
 
-def analyze_symbol_ccxt(
-    bars, tf: str, symbol: str, market: str = "spot"
-) -> Optional[Dict[str, Any]]:
+def analyze_symbol_ccxt(bars, tf: str, symbol: str, market: str = "spot") -> Optional[Dict[str, Any]]:
     """
     bars: CCXT OHLCV arrays (or pandas DataFrame)
     Returns a normalized signal dict or None.
@@ -392,9 +363,7 @@ def analyze_symbol_mt5(bars, tf: str, symbol: str) -> Optional[Dict[str, Any]]:
         if sig:
             _, o, h, low, c, v = _to_numpy_ohlcv(bars)
             tail = min(600, len(c))
-            sig["bars_tail"] = np.column_stack(
-                [o[-tail:], h[-tail:], low[-tail:], c[-tail:], v[-tail:]]
-            ).tolist()
+            sig["bars_tail"] = np.column_stack([o[-tail:], h[-tail:], low[-tail:], c[-tail:], v[-tail:]]).tolist()
         return sig
     except Exception as e:
         print(f"[analyze_symbol_mt5 error] {symbol}: {e}")
@@ -406,9 +375,7 @@ def analyze_symbol_mt5(bars, tf: str, symbol: str) -> Optional[Dict[str, Any]]:
 # ==================================
 
 
-def _confirm_side_from_bars(
-    tf_minutes: int, side: str, bars_tail: List[List[float]]
-) -> Tuple[bool, List[str]]:
+def _confirm_side_from_bars(tf_minutes: int, side: str, bars_tail: List[List[float]]) -> Tuple[bool, List[str]]:
     """
     Down-sample the provided tail to higher TFs and confirm trend alignment.
     bars_tail: list of [o,h,l,c,v] floats
@@ -418,7 +385,7 @@ def _confirm_side_from_bars(
         if arr.ndim != 2 or arr.shape[1] < 4 or len(arr) < 40:
             return True, ["MTF: skipped (insufficient bars)"]
 
-        o, h, l, c, v = (
+        o, h, low, c, v = (
             arr[:, 0],
             arr[:, 1],
             arr[:, 2],
@@ -439,11 +406,11 @@ def _confirm_side_from_bars(
             steps = (2, 4)
 
         for s in steps:
-            O, H, L, C, V = _aggregate_ohlc(o, h, l, c, v, step=s)
-            if len(C) < 30:
+            o_, h_, low_, c_, v_ = _aggregate_ohlc(o, h, low, c, v, step=s)
+            if len(c_) < 30:
                 continue
-            ema20 = _ema(C, 20)
-            ema50 = _ema(C, 50)
+            ema20 = _ema(c_, 20)
+            ema50 = _ema(c_, 50)
             slope = ema20[-1] - ema20[-5] if len(ema20) >= 5 else 0.0
             good = (side == "buy" and ema20[-1] > ema50[-1] and slope > 0) or (
                 side == "sell" and ema20[-1] < ema50[-1] and slope < 0

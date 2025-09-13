@@ -3,11 +3,13 @@
 Reads a CSV produced by market_data.fetch_ohlcv and produces a feature matrix X and
 labels y (next-bar direction) suitable for quick testing with scikit-learn.
 """
+
 from __future__ import annotations
 
-import pandas as pd
 from pathlib import Path
-from typing import Tuple, List
+from typing import List, Tuple
+
+import pandas as pd
 
 
 def load_csv(path: str) -> pd.DataFrame:

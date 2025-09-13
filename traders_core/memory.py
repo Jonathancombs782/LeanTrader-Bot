@@ -55,6 +55,4 @@ class Memory:
         self._write(self.state)
 
     def open_positions(self) -> List[Dict[str, Any]]:
-        return [
-            p for p in self.state["positions"].values() if p.get("status") == "open"
-        ]
+        return [p for p in self.state["positions"].values() if p.get("status") == "open"]

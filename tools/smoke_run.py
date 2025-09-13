@@ -2,11 +2,10 @@ import json
 import os
 
 os.environ["EXCHANGE_ID"] = os.environ.get("EXCHANGE_ID", "paper")
-from smoke_ultra import quick_smoke  # noqa: E402
 os.environ["LIVE_AUTOTRADE"] = "false"
 os.environ["THINK_FILL_MISSING_PRICE"] = "true"
 
-from brain_loop import think_once
+from brain_loop import think_once  # noqa: E402
 
 print("SMOKE: calling think_once()")
 try:

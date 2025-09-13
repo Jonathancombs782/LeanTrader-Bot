@@ -42,9 +42,7 @@ def map_symbol(ex_id: str, symbol: str) -> str:
     return f"{base}/{quote}"
 
 
-def fetch_ohlcv_df(
-    ex, symbol: str, timeframe: str = "1m", limit: int = 200
-) -> pd.DataFrame:
+def fetch_ohlcv_df(ex, symbol: str, timeframe: str = "1m", limit: int = 200) -> pd.DataFrame:
     sym = map_symbol(ex.id, symbol)
     rows = ex.safe_fetch_ohlcv(sym, timeframe=timeframe, limit=limit)
     df = pd.DataFrame(rows, columns=["time", "open", "high", "low", "close", "volume"])
@@ -84,7 +82,6 @@ def balance_lines(ex) -> List[str]:
     if not lines:
         lines = ["(no balances or all zero)"]
     return lines
-
 
 
 def market_order_spot(ex, symbol: str, side: str, qty: float) -> Dict[str, Any]:

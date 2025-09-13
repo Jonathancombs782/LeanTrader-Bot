@@ -1,9 +1,9 @@
 # paper_broker.py
+import json
+import pathlib
 import random
 import time
 from typing import Any, Dict, List, Optional, Tuple
-import json
-import pathlib
 
 
 class PaperBroker:
@@ -29,19 +29,35 @@ class PaperBroker:
         except Exception:
             state = None
 
+        # Ensure default universe and prices exist early so partially-constructed
+        # instances or other modules referencing these attributes won't crash.
+        self._symbols = [
+            "BTC/USDT",
+            "ETH/USDT",
+            "SOL/USDT",
+            "XRP/USDT",
+            "DOGE/USDT",
+        ]
+        self._px: Dict[str, float] = {
+            "BTC/USDT": 100000.0,
+            "ETH/USDT": 3500.0,
+            "SOL/USDT": 150.0,
+            "XRP/USDT": 0.6,
+            "DOGE/USDT": 0.12,
+        }
+
         # account
         if state:
             self.cash: float = float(state.get("cash", float(start_cash)))
             self.history: List[Dict[str, Any]] = state.get("history", [])
             self.holdings: Dict[str, float] = state.get("holdings", {})
             self.fut_pos: Dict[str, Dict[str, float]] = state.get("fut_pos", {})
-            self._px = state.get("_px", {
-                "BTC/USDT": 100000.0,
-                "ETH/USDT": 3500.0,
-                "SOL/USDT": 150.0,
-                "XRP/USDT": 0.6,
-                "DOGE/USDT": 0.12,
-            })
+            # Merge persisted prices/universe with defaults so keys exist
+            self._px = {**self._px, **state.get("_px", {})}
+            # ensure _symbols exists for older persisted state formats
+            persisted_syms = state.get("_symbols") or []
+            if isinstance(persisted_syms, list) and persisted_syms:
+                self._symbols = persisted_syms
         else:
             self.cash: float = float(start_cash)  # free USDT
             self.history: List[Dict[str, Any]] = []
@@ -50,9 +66,7 @@ class PaperBroker:
             self.holdings: Dict[str, float] = {}
 
             # futures positions: sym -> {qty, entry, lev, mode}
-            self.fut_pos: Dict[str, Dict[str, float]] = (
-                {}
-            )  # qty (base), entry (USDT), lev (int)
+            self.fut_pos: Dict[str, Dict[str, float]] = {}  # qty (base), entry (USDT), lev (int)
 
             # simple universe + synthetic prices
             self._symbols = ["BTC/USDT", "ETH/USDT", "SOL/USDT", "XRP/USDT", "DOGE/USDT"]
@@ -73,6 +87,7 @@ class PaperBroker:
                 "holdings": self.holdings,
                 "fut_pos": self.fut_pos,
                 "_px": self._px,
+                "_symbols": self._symbols,
             }
             self._state_path.write_text(json.dumps(state, indent=2), encoding="utf-8")
         except Exception:
@@ -99,9 +114,7 @@ class PaperBroker:
         last = self._price(symbol)
         return {"symbol": symbol, "last": last, "timestamp": int(time.time() * 1000)}
 
-    def fetch_ohlcv(
-        self, symbol: str, timeframe: str = "1m", limit: int = 120
-    ) -> List[List[float]]:
+    def fetch_ohlcv(self, symbol: str, timeframe: str = "1m", limit: int = 120) -> List[List[float]]:
         ms = 60_000
         now = int(time.time() // 60 * 60) * 1000
         out, p = [], self._px.get(symbol, 1.0)
@@ -180,9 +193,7 @@ class PaperBroker:
             unreal += self._fut_unrealized(sym, px)
 
         equity = self.cash + unreal
-        free_cash = max(
-            0.0, self.cash - used_margin
-        )  # cross: margin reserved from cash
+        free_cash = max(0.0, self.cash - used_margin)  # cross: margin reserved from cash
 
         return {
             "info": {},
@@ -231,17 +242,10 @@ class PaperBroker:
         # spot vs futures (by reduceOnly presence or active futures pos/lev)
         reduce_only = bool(params.get("reduceOnly"))
         is_futures = reduce_only or (
-            symbol in self.fut_pos
-            and self._fut(symbol)["lev"] >= 1
-            and self._fut(symbol)["qty"] != 0
+            symbol in self.fut_pos and self._fut(symbol)["lev"] >= 1 and self._fut(symbol)["qty"] != 0
         )
 
-        if (
-            not is_futures
-            and symbol in self.fut_pos
-            and self._fut(symbol)["lev"] >= 1
-            and params.get("futures", False)
-        ):
+        if not is_futures and symbol in self.fut_pos and self._fut(symbol)["lev"] >= 1 and params.get("futures", False):
             is_futures = True
 
         if not is_futures and "mode" in params and params["mode"] == "futures":
@@ -260,9 +264,7 @@ class PaperBroker:
             pass
         return ord_obj
 
-    def _exec_spot(
-        self, symbol: str, base: str, side: str, amount: float, px: float
-    ) -> Dict[str, Any]:
+    def _exec_spot(self, symbol: str, base: str, side: str, amount: float, px: float) -> Dict[str, Any]:
         if side == "buy":
             cost = amount * px
             if cost > self.cash + 1e-9:
@@ -293,9 +295,7 @@ class PaperBroker:
             "mode": "spot",
         }
 
-    def _exec_futures(
-        self, symbol: str, side: str, amount: float, px: float, reduce_only: bool
-    ) -> Dict[str, Any]:
+    def _exec_futures(self, symbol: str, side: str, amount: float, px: float, reduce_only: bool) -> Dict[str, Any]:
         pos = self._fut(symbol)
         q_old, e_old, lev = pos["qty"], pos["entry"], max(1, int(pos["lev"]))
         q_delta = amount if side == "buy" else -amount
@@ -319,16 +319,12 @@ class PaperBroker:
                 realized += (px - e_old) * (close_amt if q_old > 0 else -close_amt)
                 q_old += close_amt if q_old < 0 else -close_amt
                 q_delta = (amount if side == "buy" else -amount) - (
-                    close_amt
-                    if (side == "buy" and q_old < 0) or (side == "sell" and q_old > 0)
-                    else -close_amt
+                    close_amt if (side == "buy" and q_old < 0) or (side == "sell" and q_old > 0) else -close_amt
                 )
 
             # opening remainder
             q_new = q_old + q_delta
-            if q_new != 0 and (
-                q_new * q_old >= 0
-            ):  # same direction extend or fresh open
+            if q_new != 0 and (q_new * q_old >= 0):  # same direction extend or fresh open
                 add = abs(q_delta)
                 if add > 0:
                     # margin required for the incremental size
@@ -339,11 +335,7 @@ class PaperBroker:
                     # avg entry if same side extend; if fresh open from 0 => entry=px
                     if q_old == 0 or (q_new * q_old > 0):
                         w_old = abs(q_old)
-                        pos["entry"] = (
-                            (e_old * w_old + px * add) / (w_old + add)
-                            if w_old > 0
-                            else px
-                        )
+                        pos["entry"] = (e_old * w_old + px * add) / (w_old + add) if w_old > 0 else px
 
         # update position
         pos["qty"] = q_new

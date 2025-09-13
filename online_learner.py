@@ -12,9 +12,7 @@ from sklearn.linear_model import SGDClassifier
 from alpha_engines import AlphaRouter
 
 
-def reward_from_exit(
-    symbol: str, timeframe: str, decision_votes: Dict[str, float], pnl_usd: float
-):
+def reward_from_exit(symbol: str, timeframe: str, decision_votes: Dict[str, float], pnl_usd: float):
     """
     Call when a trade is closed; allocates reward to the strongest voter.
     """

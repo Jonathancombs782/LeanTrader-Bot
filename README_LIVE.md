@@ -56,3 +56,7 @@ Notes:
 - Both ENABLE_LIVE and ALLOW_LIVE must be set to put the bot into live mode.
 - MAX_ORDER_SIZE prevents oversized orders.
 - Run `python tools/run_scans.py` and `python -m tests.smoke_test` before enabling live to verify the codebase.
+
+Security notes and PQC roadmap:
+- Sensitive artifacts (trade logs, parts of explanations, and secrets snapshots) are persisted using the lightweight vault in `security/vault.py` (libsodium/NaCl SecretBox when available). See `tools/secrets_snapshot.py` to snapshot selected env vars securely at rest.
+- The vault includes a `pqc_encrypt` placeholder for future migration to post‑quantum encryption (Kyber/Dilithium). A simple key rotation helper stores the current key id in a small KV (Redis if configured via `REDIS_URL`, else a local JSON under `runtime/`).

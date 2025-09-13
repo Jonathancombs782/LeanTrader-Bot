@@ -1,15 +1,13 @@
 import json
 import os  # noqa: F401  # intentionally kept
+from types import SimpleNamespace
 
 os.environ["EXCHANGE_ID"] = os.environ.get("EXCHANGE_ID", "paper")
 os.environ["ENABLE_LIVE"] = "false"
 os.environ["LIVE_AUTOTRADE"] = "false"
-os.environ["THINK_FILL_MISSING_PRICE"] = os.environ.get(
-    "THINK_FILL_MISSING_PRICE", "true"
-)
+os.environ["THINK_FILL_MISSING_PRICE"] = os.environ.get("THINK_FILL_MISSING_PRICE", "true")
 
-from types import SimpleNamespace
-
+# signals_scanner imported after sys.path insert; keep noqa to acknowledge intentional placement
 import signals_scanner  # noqa: E402
 
 args = SimpleNamespace(

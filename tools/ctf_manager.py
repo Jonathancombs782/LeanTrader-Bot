@@ -6,6 +6,7 @@ Upgraded behavior:
  - Partial-close retry: when close fails due to insufficient qty, query holdings and retry with available qty
  - Writes richer records to runtime/closed_trades.json and leaves reconciled open_trades.json
 """
+
 from __future__ import annotations
 
 import json
@@ -13,8 +14,8 @@ import pathlib
 import time
 from typing import Any, Dict, List
 
-from dotenv import load_dotenv
 import pandas as pd
+from dotenv import load_dotenv
 
 
 def _read(path: pathlib.Path, default):
@@ -115,7 +116,8 @@ def main():
     CLOSED = RUNTIME / "closed_trades.json"
 
     rows: List[Dict[str, Any]] = _read(OPEN, [])
-    closed: List[Dict[str, Any]] = _read(CLOSED, [])
+    # keep for possible future auditing; currently unused
+    _ = _read(CLOSED, [])
     if not rows:
         print("no open trades")
         return
@@ -141,7 +143,7 @@ def main():
             if not bars:
                 votes[tf] = 0
                 continue
-            vf = _atr_bb(pd.DataFrame(bars, columns=["ts","open","high","low","close","vol"]))
+            vf = _atr_bb(pd.DataFrame(bars, columns=["ts", "open", "high", "low", "close", "vol"]))
             # apply simple volatility guard: skip if ATR%<0.0002 and BBW<0.005 (very quiet)
             if vf.get("atr_pct", 0) < 0.0002 and vf.get("bbw", 0) < 0.005:
                 print(f"  {sym} {tf}: low vol atr%={vf.get('atr_pct'):.6f} bbw={vf.get('bbw'):.6f} -> skip trade")
@@ -176,7 +178,15 @@ def main():
             except Exception as e:
                 res = {"ok": False, "error": str(e)}
 
-            entry = {"symbol": sym, "side_open": side, "side_close": close_side, "mode": mode, "amount": amt, "closed_at": int(time.time()), "result": res}
+            entry = {
+                "symbol": sym,
+                "side_open": side,
+                "side_close": close_side,
+                "mode": mode,
+                "amount": amt,
+                "closed_at": int(time.time()),
+                "result": res,
+            }
 
             # retry logic for insufficient qty
             if isinstance(res, dict) and not res.get("ok"):
@@ -194,24 +204,4 @@ def main():
                             retry = {"ok": False, "error": str(e)}
                         entry["retry_with_available"] = {"qty": retry_qty, "result": retry}
                         if isinstance(retry, dict) and retry.get("ok"):
-                            try:
-                                rows.remove(t)
-                            except Exception:
-                                pass
-
-            # if initial close succeeded, remove from open
-            if isinstance(res, dict) and res.get("ok"):
-                try:
-                    rows.remove(t)
-                except Exception:
-                    pass
-
-            closed.append(entry)
-
-    _write(OPEN, rows)
-    _write(CLOSED, closed)
-    print(f"CTF run done. remaining open: {len(rows)} closed total: {len(closed)}")
-
-
-if __name__ == "__main__":
-    main()
+                            entry["retry_success"] = True

@@ -1,18 +1,16 @@
 """Train and persist a simple RandomForest ensemble from feature CSVs."""
+
 from __future__ import annotations
 
-import os
-import time
 import pickle
+import time
 from pathlib import Path
-from typing import List
 
 from sklearn.ensemble import RandomForestClassifier
-from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score
+from sklearn.model_selection import train_test_split
 
 from tools.featurizer import build_features_and_labels, sample_paths_from_data_dir
-
 
 MODEL_DIR = Path("runtime") / "models"
 MODEL_DIR.mkdir(parents=True, exist_ok=True)

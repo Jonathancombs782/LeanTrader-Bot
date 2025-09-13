@@ -3,13 +3,13 @@
 Writes `runtime/logs/exchanges_status.txt` with per-exchange results. Use
 `python -m tools.check_exchanges` to run (ensures package imports resolve).
 """
+
 from __future__ import annotations
 
 import time
 import traceback
 from pathlib import Path
 from typing import List
-
 
 EXCHANGES = ["gateio", "binance", "kucoin", "bybit", "okx"]
 TIMEOUT_MS = 30_000
@@ -19,8 +19,8 @@ def _write(lines: List[str]) -> None:
     p = Path("runtime") / "logs" / "exchanges_status.txt"
     p.parent.mkdir(parents=True, exist_ok=True)
     with p.open("w", encoding="utf-8") as f:
-        for l in lines:
-            f.write(l + "\n")
+        for line in lines:
+            f.write(line + "\n")
 
 
 def probe_exchange(ex_id: str) -> str:
@@ -66,10 +66,10 @@ def main() -> int:
     ts2 = time.strftime("%Y-%m-%d %H:%M:%S")
     lines.append(f"done {ts2}")
     _write(lines)
-    for l in lines:
-        print(l)
+    for line in lines:
+        print(line)
     return 0
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     raise SystemExit(main())

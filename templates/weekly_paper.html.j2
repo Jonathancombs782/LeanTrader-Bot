@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Weekly Research Paper {{ week }}</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 16px; }
+    .kpi { display: flex; gap: 16px; }
+    .card { border: 1px solid #ddd; padding: 12px; border-radius: 8px; }
+    table { border-collapse: collapse; width: 100%; }
+    th, td { border: 1px solid #ddd; padding: 6px; }
+    h2 { margin-top: 24px; }
+  </style>
+  </head>
+<body>
+  <h1>Weekly Research Paper — {{ week }}</h1>
+  <div class="kpi">
+    <div class="card"><b>Total PnL</b><br/>{{ '%.6f' % pnl.total }}</div>
+    <div class="card"><b>Sharpe</b><br/>{{ '%.3f' % pnl.sharpe }}</div>
+    <div class="card"><b>Max Drawdown</b><br/>{{ '%.6f' % pnl.max_drawdown }}</div>
+    <div class="card"><b>Fallbacks</b><br/>{{ fallbacks }}</div>
+  </div>
+
+  <h2>Attribution (aggregated)</h2>
+  <table>
+    <tr><th>Component</th><th>Contribution</th></tr>
+    {% for k, v in attribution_agg.items() %}
+      <tr><td>{{ k }}</td><td>{{ '%.6f' % v }}</td></tr>
+    {% endfor %}
+  </table>
+
+  <h2>Regime Distribution</h2>
+  <table>
+    <tr><th>Regime</th><th>Count</th></tr>
+    {% for k, v in regimes.items() %}
+      <tr><td>{{ k }}</td><td>{{ v }}</td></tr>
+    {% endfor %}
+  </table>
+
+  <h2>Solve Times (ms)</h2>
+  {% if solve_ms %}
+    <p>n={{ solve_ms|length }}, avg={{ '%.1f' % (solve_ms|sum / (solve_ms|length)) }}</p>
+  {% else %}
+    <i>No solve time data.</i>
+  {% endif %}
+
+  <h2>Notable Sentiment</h2>
+  {% if sentiment %}
+    <table>
+      <tr><th>Asset</th><th>Bias</th></tr>
+      {% for k, v in sentiment.items() %}
+        <tr><td>{{ k }}</td><td>{{ v }}</td></tr>
+      {% endfor %}
+    </table>
+  {% else %}
+    <i>No sentiment data.</i>
+  {% endif %}
+
+  <h2>On-chain Events (tail)</h2>
+  {% if onchain_events %}
+    <pre>{{ (onchain_events[-10:]) | tojson(indent=2) }}</pre>
+  {% else %}
+    <i>No on-chain events.</i>
+  {% endif %}
+
+  <h2>Idea Generator (Top)</h2>
+  {% if ideas and ideas.cards %}
+    {% for card in ideas.cards[:3] %}
+      <div class="card" style="margin:8px 0; white-space:pre-wrap">{{ card }}</div>
+    {% endfor %}
+  {% else %}
+    <i>No ideas generated.</i>
+  {% endif %}
+
+</body>
+</html>

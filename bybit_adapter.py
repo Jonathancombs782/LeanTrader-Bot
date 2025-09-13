@@ -114,9 +114,7 @@ def floor_to_step(x: float, step: float, digits: int) -> float:
 # -------------------------------------------------
 # Data & balances
 # -------------------------------------------------
-def fetch_ohlcv(
-    ex, symbol: str, timeframe: str = "1m", limit: int = 200
-) -> List[List[float]]:
+def fetch_ohlcv(ex, symbol: str, timeframe: str = "1m", limit: int = 200) -> List[List[float]]:
     # Use router safe wrapper
     s = map_symbol(symbol)
     return ex.safe_fetch_ohlcv(s, timeframe=timeframe, limit=limit)
@@ -159,7 +157,6 @@ def account_summary_lines(ex, quote: str = "USDT") -> List[str]:
     return lines
 
 
-
 # -------------------------------------------------
 # Orders (SPOT, market)
 # -------------------------------------------------
@@ -181,15 +178,11 @@ def ensure_can_trade(ex, symbol: str, side: str, usd_stake: float) -> Tuple[str,
     qty = floor_to_step(qty_raw, step_amt, amt_digits)
 
     if qty <= 0:
-        raise RuntimeError(
-            f"Stake {usd_stake} too small for {ccxt_sym} (step={step_amt})"
-        )
+        raise RuntimeError(f"Stake {usd_stake} too small for {ccxt_sym} (step={step_amt})")
 
     if notional > 0 and qty * last < notional:
         need = notional / last
-        raise RuntimeError(
-            f"Stake too small: need ≥ {notional} notional (~{need:.6f} units)"
-        )
+        raise RuntimeError(f"Stake too small: need ≥ {notional} notional (~{need:.6f} units)")
 
     return ccxt_sym, qty
 

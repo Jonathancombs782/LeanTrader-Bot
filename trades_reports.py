@@ -56,9 +56,7 @@ def main():
     print(f"Gross PnL: {gross:.4f} (quote) | Sum R: {rsum:.2f}")
 
     # per-symbol
-    by_sym = (
-        closed.groupby("symbol")["pnl_raw"].sum().sort_values(ascending=False).head(10)
-    )
+    by_sym = closed.groupby("symbol")["pnl_raw"].sum().sort_values(ascending=False).head(10)
     if not by_sym.empty:
         print("\nTop symbols (PnL):")
         for sym, v in by_sym.items():

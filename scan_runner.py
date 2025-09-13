@@ -79,14 +79,10 @@ def run_scans(root: str, out_dir: str, pretty: bool = True):
 
 
 def main(argv=None):
-    p = argparse.ArgumentParser(
-        description="Run project scans (router + strategy) and save JSON outputs"
-    )
+    p = argparse.ArgumentParser(description="Run project scans (router + strategy) and save JSON outputs")
     p.add_argument("--root", "-r", default=".", help="Project root to scan")
     p.add_argument("--out", "-o", default=".", help="Output directory for JSON results")
-    p.add_argument(
-        "--no-pretty", dest="pretty", action="store_false", help="Disable pretty JSON"
-    )
+    p.add_argument("--no-pretty", dest="pretty", action="store_false", help="Disable pretty JSON")
     args = p.parse_args(argv)
     os.makedirs(args.out, exist_ok=True)
     run_scans(args.root, args.out, pretty=args.pretty)

@@ -14,6 +14,7 @@ from pathlib import Path
 from typing import Any, Dict, List
 
 import feedparser  # pip install feedparser
+
 # ---------- Optional Telegram notify ----------
 import requests
 
@@ -82,8 +83,8 @@ try:
         nltk.download("vader_lexicon", quiet=True)
         nltk.data.find("sentiment/vader_lexicon.zip")
         VADER_READY = True
-except Exception as e:
-    log.warning("NLTK/VADER unavailable (%s). Sentiment will be zero.", e)
+except Exception as _e:
+    log.warning("NLTK/VADER unavailable (%s). Sentiment will be zero.", _e)
 
 if VADER_READY:
     SIA = SentimentIntensityAnalyzer()
@@ -107,15 +108,11 @@ CRYPTO_HINTS = re.compile(
     r"\b(BTC|ETH|SOL|DOGE|XRP|ADA|crypto|bitcoin|ethereum|solana|defi|exchange|binance|coinbase|token|stablecoin)\b",
     re.I,
 )
-FX_HINTS = re.compile(
-    r"\b(USD|EUR|GBP|JPY|AUD|NZD|CHF|CAD|forex|FX|pair|pips|yield|treasury)\b", re.I
-)
+FX_HINTS = re.compile(r"\b(USD|EUR|GBP|JPY|AUD|NZD|CHF|CAD|forex|FX|pair|pips|yield|treasury)\b", re.I)
 
 
 def _hash_key(title: str, link: str) -> str:
-    return hashlib.sha256(
-        (title.strip() + "|" + link.strip()).encode("utf-8")
-    ).hexdigest()
+    return hashlib.sha256((title.strip() + "|" + link.strip()).encode("utf-8")).hexdigest()
 
 
 def _load_seen() -> set[str]:
@@ -146,11 +143,7 @@ def _parse_time(dt_str: str) -> float:
     except Exception:
         try:
             # last resort
-            return (
-                datetime.fromisoformat(dt_str.replace("Z", ""))
-                .replace(tzinfo=timezone.utc)
-                .timestamp()
-            )
+            return datetime.fromisoformat(dt_str.replace("Z", "")).replace(tzinfo=timezone.utc).timestamp()
         except Exception:
             return time.time()
 
@@ -223,14 +216,12 @@ def harvest_rss() -> int:
                         "source": src,
                         "title": title,
                         "link": link,
-                        "summary": (
-                            e.get("summary") or e.get("description") or ""
-                        ).strip(),
+                        "summary": (e.get("summary") or e.get("description") or "").strip(),
                     }
                 )
                 seen.add(key)
-        except Exception as ex:
-            log.warning("RSS parse failed %s: %s", url, ex)
+        except Exception as _ex:
+            log.warning("RSS parse failed %s: %s", url, _ex)
 
     if not new_rows:
         log.info("No new headlines.")
@@ -239,9 +230,7 @@ def harvest_rss() -> int:
     # Append to RAW_FILE (create if needed)
     file_exists = RAW_FILE.exists()
     with open(RAW_FILE, "a", newline="", encoding="utf-8") as f:
-        w = csv.DictWriter(
-            f, fieldnames=["time", "published", "source", "title", "link", "summary"]
-        )
+        w = csv.DictWriter(f, fieldnames=["time", "published", "source", "title", "link", "summary"])
         if not file_exists:
             w.writeheader()
         for r in sorted(new_rows, key=lambda x: x["time"], reverse=False):

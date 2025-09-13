@@ -1,5 +1,5 @@
-"""Write a heartbeat file every 30s to indicate supervisor health.
-"""
+"""Write a heartbeat file every 30s to indicate supervisor health."""
+
 from __future__ import annotations
 
 import json

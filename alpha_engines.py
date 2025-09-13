@@ -77,9 +77,7 @@ class BaseStrategy:
     def _atr(df: pd.DataFrame, n: int = 14) -> pd.Series:
         h, low, c = df["high"], df["low"], df["close"]
         pc = c.shift(1)
-        tr = pd.concat(
-            [(h - low), (h - pc).abs(), (low - pc).abs()], axis=1
-        ).max(axis=1)
+        tr = pd.concat([(h - low), (h - pc).abs(), (low - pc).abs()], axis=1).max(axis=1)
         return tr.rolling(n).mean()
 
     @staticmethod
@@ -138,11 +136,7 @@ class OscillatorConfluence(BaseStrategy):
         rsi_ok = (rsi > 50) | ((rsi >= 48) & (rsi.diff() > 0))
         macd_up = hist.diff() > 0
         raw = float((kx & stoch_low & rsi_ok & macd_up).astype(int).iloc[-1])
-        s = (
-            0.40 * raw
-            + 0.25 * _sigmoid((rsi.iloc[-1] - 50) / 5)
-            + 0.35 * _sigmoid(hist.iloc[-1] * 6)
-        )
+        s = 0.40 * raw + 0.25 * _sigmoid((rsi.iloc[-1] - 50) / 5) + 0.35 * _sigmoid(hist.iloc[-1] * 6)
         s = _clip(2 * s - 1, -1, 1)
         reasons = [f"Stoch K∧D, RSI={rsi.iloc[-1]:.1f}, MACDΔ={hist.iloc[-1]:.3f}"]
         feats = {
@@ -170,12 +164,7 @@ class NakedPriceAction(BaseStrategy):
         lower_wick = (o - low).iloc[-1] if c >= o.iloc[-1] else (c - low).iloc[-1]
         score = 0.0
         why = []
-        if (
-            c.iloc[-2] < o.iloc[-2]
-            and c.iloc[-1] > o.iloc[-1]
-            and c.iloc[-1] > o.iloc[-2]
-            and o.iloc[-1] < c.iloc[-2]
-        ):
+        if c.iloc[-2] < o.iloc[-2] and c.iloc[-1] > o.iloc[-1] and c.iloc[-1] > o.iloc[-2] and o.iloc[-1] < c.iloc[-2]:
             score += 0.6
             why.append("Bullish engulfing")
         if lower_wick > self.body_mult * body and lower_wick > 0.6 * rng:
@@ -255,9 +244,7 @@ class KeltnerBreakout(BaseStrategy):
         atr = self._atr(df, 20)
         upper = ema + self.atr_mult * atr
         raw = float((df["close"].iloc[-1] > upper.iloc[-1]).astype(int))
-        s = 0.7 * raw + 0.3 * _sigmoid(
-            (df["close"].iloc[-1] - ema.iloc[-1]) / (atr.iloc[-1] + 1e-12)
-        )
+        s = 0.7 * raw + 0.3 * _sigmoid((df["close"].iloc[-1] - ema.iloc[-1]) / (atr.iloc[-1] + 1e-12))
         s = _clip(2 * s - 1, -1, 1)
         return {
             "score": s,
@@ -293,7 +280,7 @@ class VolumeSpike(BaseStrategy):
     def compute(self, df: pd.DataFrame, **kw):
         vol = df["vol"]
         z = (vol - vol.rolling(50).mean()) / (vol.rolling(50).std(ddof=0) + 1e-9)
-        float((z.iloc[-1] > 2.0).astype(int))
+        # determine direction of last bar
         upbar = float((df["close"].iloc[-1] > df["open"].iloc[-1]).astype(int))
         s = _clip(2 * (_sigmoid(0.7 * z.iloc[-1]) * (0.6 * upbar + 0.4)) - 1, -1, 1)
         return {
@@ -310,9 +297,7 @@ class VolRegime(BaseStrategy):
     def compute(self, df: pd.DataFrame, **kw):
         atr = self._atr(df, 14)
         vol_norm = (atr / (df["close"] + 1e-12)).rolling(50).mean()
-        s = _clip(
-            _sigmoid(200 * float((vol_norm.iloc[-1] or 0))) - 0.5, -1, 1
-        )  # prefer higher vol
+        s = _clip(_sigmoid(200 * float((vol_norm.iloc[-1] or 0))) - 0.5, -1, 1)  # prefer higher vol
         return {
             "score": s,
             "reasons": [f"Vol regime {(vol_norm.iloc[-1] or 0):.4f}"],
@@ -424,9 +409,7 @@ class AlphaRouter:
             features=feats,
         )
 
-    def update_reliability(
-        self, symbol: str, timeframe: str, strat_name: str, reward: float
-    ):
+    def update_reliability(self, symbol: str, timeframe: str, strat_name: str, reward: float):
         r = self.memo.setdefault("reliability", {})
         key = self._key(symbol, timeframe)
         row = r.setdefault(key, {})

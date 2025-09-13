@@ -28,9 +28,7 @@ def pip_value_per_unit(pair: str, quote_to_usd: float = 1.0) -> float:
         return ps * quote_to_usd
 
 
-def units_for_risk(
-    fixed_risk_usd: float, atr_pips: float, pip_value_unit_usd: float
-) -> float:
+def units_for_risk(fixed_risk_usd: float, atr_pips: float, pip_value_unit_usd: float) -> float:
     # units = risk / (ATR_pips * pip_value_per_unit)
     den = max(1e-9, atr_pips * pip_value_unit_usd)
     return max(0.0, fixed_risk_usd / den)

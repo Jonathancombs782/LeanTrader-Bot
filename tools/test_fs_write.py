@@ -1,4 +1,5 @@
 """Write a small marker file to runtime/logs to confirm write access."""
+
 from __future__ import annotations
 
 from pathlib import Path
@@ -13,5 +14,5 @@ def main() -> int:
     return 0
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     raise SystemExit(main())

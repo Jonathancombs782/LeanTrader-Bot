@@ -1,0 +1,24 @@
+{
+  "type": "table",
+  "title": "Hype Score Top 10",
+  "fieldConfig": {
+    "defaults": {
+      "custom": {
+        "align": "auto"
+      }
+    },
+    "overrides": []
+  },
+  "options": {
+    "showHeader": true
+  },
+  "targets": [
+    {
+      "refId": "A",
+      "expr": "topk(10, hype_score)",
+      "legendFormat": "{{asset}}",
+      "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" }
+    }
+  ]
+}
+

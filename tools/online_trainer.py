@@ -2,10 +2,11 @@
 
 This is paper-only: it writes models to runtime/models and logs metrics. It's a lightweight building block for continuous learning.
 """
+
 from __future__ import annotations
 
-import time
 import json
+import time
 from pathlib import Path
 from typing import List
 

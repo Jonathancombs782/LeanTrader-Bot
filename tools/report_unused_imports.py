@@ -21,12 +21,8 @@ def run():
         ".",
     ]
     try:
-        proc = subprocess.run(
-            cmd, cwd=str(ROOT), capture_output=True, text=True, check=False
-        )
-        out = proc.stdout.strip() + (
-            "\n" + proc.stderr.strip() if proc.stderr.strip() else ""
-        )
+        proc = subprocess.run(cmd, cwd=str(ROOT), capture_output=True, text=True, check=False)
+        out = proc.stdout.strip() + ("\n" + proc.stderr.strip() if proc.stderr.strip() else "")
     except Exception as e:
         out = f"Error running flake8: {e}"
 

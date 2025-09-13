@@ -3,6 +3,7 @@
 This file lists safe, public RSS feeds and a conservative set of crawl seed URLs.
 The pipeline uses these defaults unless overridden via environment variables.
 """
+
 from __future__ import annotations
 
 from typing import List

@@ -9,8 +9,10 @@ Behavior:
  - logs stdout/stderr to runtime/logs/<name>.log
  - writes a PID file runtime/supervisor.pid
 """
+
 from __future__ import annotations
 
+import importlib.util
 import logging
 import os
 import signal
@@ -24,30 +26,51 @@ RUNTIME = ROOT / "runtime"
 LOGDIR = RUNTIME / "logs"
 LOGDIR.mkdir(parents=True, exist_ok=True)
 
+# Load local .env (if present) so children inherit TELEGRAM_* and other settings
+try:
+    from dotenv import load_dotenv
+
+    envfile = ROOT / ".env"
+    if envfile.exists():
+        load_dotenv(envfile)
+        # logging not yet configured; print to stdout and rely on logging later
+        print(f"[supervisor] loaded .env from {envfile}")
+except Exception:
+    # dotenv is optional; if missing we continue
+    pass
+
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s %(levelname)s %(message)s",
     handlers=[logging.FileHandler(LOGDIR / "supervisor.log"), logging.StreamHandler()],
 )
 
+# Prefer the virtualenv python in the repository if present so supervised
+# children run with the same interpreter used during development/testing.
+VENV_PY = ROOT / ".venv" / "Scripts" / "python.exe"
+PYTHON_EXE = str(VENV_PY) if VENV_PY.exists() else sys.executable
+if PYTHON_EXE != sys.executable:
+    logging.info(f"supervisor will use venv python: {PYTHON_EXE}")
+
 CHILDREN = [
     {
         "name": "continuous_demo",
         # run a long loop (minutes)
         # use -m to run as a module so top-level imports resolve correctly from project root
-        "cmd": [sys.executable, "-u", "-m", "tools.continuous_demo", "1440"],
+        # wrap module invocation with tools.child_wrapper for early diagnostics
+        "cmd": [PYTHON_EXE, "-u", "-m", "tools.child_wrapper", "tools.continuous_demo", "1440"],
     },
     {
         "name": "web_crawler",
-        "cmd": [sys.executable, "-u", "-m", "tools.web_crawler"],
+        "cmd": [PYTHON_EXE, "-u", "-m", "tools.child_wrapper", "tools.web_crawler"],
     },
     {
         "name": "heartbeat",
-        "cmd": [sys.executable, "-u", "-m", "tools.heartbeat"],
+        "cmd": [PYTHON_EXE, "-u", "-m", "tools.child_wrapper", "tools.heartbeat"],
     },
     {
         "name": "online_trainer",
-        "cmd": [sys.executable, "-u", "-m", "tools.online_trainer"],
+        "cmd": [PYTHON_EXE, "-u", "-m", "tools.child_wrapper", "tools.online_trainer"],
     },
 ]
 
@@ -57,6 +80,26 @@ STOP = False
 
 def _start(child):
     name = child["name"]
+    # If the child is invoked with -m <module>, check the module is importable first.
+    try:
+        cmd = child.get("cmd", [])
+        module = None
+        if isinstance(cmd, (list, tuple)) and "-m" in cmd:
+            mi = cmd.index("-m")
+            if mi + 1 < len(cmd):
+                module = cmd[mi + 1]
+        if module:
+            try:
+                if importlib.util.find_spec(module) is None:
+                    logging.warning(f"module {module!r} not importable; skipping start of {name}")
+                    return
+            except Exception:
+                logging.exception(f"error checking module {module!r}; skipping start of {name}")
+                return
+    except Exception:
+        # non-fatal guard; continue to attempt start
+        logging.exception("unexpected error while preparing to start child")
+
     logfile = LOGDIR / f"{name}.log"
     errfile = LOGDIR / f"{name}.err"
     logging.info(f"starting {name}, log={logfile}")
@@ -118,7 +161,8 @@ def main():
                 if ret is not None:
                     logging.warning(f"child {name} exited with {ret}, restarting")
                     try:
-                        out.close(); err.close()
+                        out.close()
+                        err.close()
                     except Exception:
                         pass
                     PROCS.pop(name, None)

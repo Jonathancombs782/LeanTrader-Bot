@@ -84,9 +84,7 @@ def test_place_oco_with_paper_broker():
     from paper_broker import PaperBroker
 
     ex = PaperBroker(10000.0)
-    res = place_oco_ccxt(
-        ex, "BTC/USDT", "buy", 0.001, entry_px=100.0, stop_px=90.0, take_px=110.0
-    )
+    res = place_oco_ccxt(ex, "BTC/USDT", "buy", 0.001, entry_px=100.0, stop_px=90.0, take_px=110.0)
     assert isinstance(res, dict)
     assert "entry" in res and "tp" in res and "sl" in res
     assert isinstance(res["entry"], dict)

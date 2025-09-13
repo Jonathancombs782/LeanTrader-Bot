@@ -3,6 +3,7 @@ import ast
 import importlib.util
 import json
 import os
+import sys
 from typing import Any, Dict, List, Tuple
 
 
@@ -16,6 +17,8 @@ def find_py_files(root: str, exclude_dirs=None) -> List[str]:
             ".venv",
             "node_modules",
             "reports",
+            "_incoming",
+            "backups",
         }
     out = []
     for dirpath, dirnames, filenames in os.walk(root):
@@ -46,6 +49,9 @@ def extract_imports(tree: ast.AST) -> List[str]:
                 if n.name:
                     mods.add(n.name.split(".")[0])
         elif isinstance(node, ast.ImportFrom):
+            # Ignore relative imports (handled by package context)
+            if getattr(node, "level", 0):
+                continue
             if node.module:
                 mods.add(node.module.split(".")[0])
     return sorted(mods)
@@ -59,6 +65,10 @@ def check_module_available(name: str) -> bool:
 
 
 def analyze_project(root: str) -> Dict[str, Any]:
+    # Ensure the provided root is on sys.path so top-level modules resolve
+    abs_root = os.path.abspath(root)
+    if abs_root not in sys.path:
+        sys.path.insert(0, abs_root)
     files = find_py_files(root)
     report: Dict[str, Any] = {
         "root": os.path.abspath(root),
@@ -107,9 +117,7 @@ def pretty_report(rep: Dict[str, Any]) -> None:
 
 
 def main():
-    ap = argparse.ArgumentParser(
-        description="Light static checker: parse + import availability (no execution)."
-    )
+    ap = argparse.ArgumentParser(description="Light static checker: parse + import availability (no execution).")
     ap.add_argument("--root", default=".", help="project root to scan")
     ap.add_argument("--json", help="write JSON report to file")
     args = ap.parse_args()

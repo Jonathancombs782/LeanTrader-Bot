@@ -1,4 +1,5 @@
 """Evaluate a saved model on a CSV of OHLCV or on synthetic data."""
+
 from __future__ import annotations
 
 import csv
@@ -7,8 +8,8 @@ from pathlib import Path
 from typing import List
 
 try:
-    from .trainer import featurize_rows, load_model
     from .model_registry import read_meta
+    from .trainer import featurize_rows, load_model
 except Exception as e:
     raise SystemExit(f"dependencies missing: {e}")
 

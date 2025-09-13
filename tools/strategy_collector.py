@@ -5,6 +5,7 @@ for offline review and potential featurization. It does NOT execute or
 directly apply scraped strategies. The collector respects robots.txt by
 requiring the caller to provide allowed URLs or raw text.
 """
+
 from __future__ import annotations
 
 from pathlib import Path

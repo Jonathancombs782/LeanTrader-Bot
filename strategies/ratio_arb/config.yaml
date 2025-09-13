@@ -1,0 +1,10 @@
+symbol_sol: SOLUSDT
+symbol_btc: BTCUSDT
+amount_sol: 0.001
+buy_trig: 0.0007      # base thresholds before bias
+sell_trig: 0.0008
+use_market: true
+cooldown_ms: 120000
+exchange: bybit_spot
+bias_narrow_pct: 15   # when bias>0, shrink band by this percent
+

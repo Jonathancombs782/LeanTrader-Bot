@@ -13,13 +13,11 @@ sys.path.insert(0, str(ROOT))
 
 try:
     from router import scan_full_project
-except Exception as e:
-    print(f"failed to import router.scan_full_project: {e}")
+except Exception as _e:
+    print(f"failed to import router.scan_full_project: {_e}")
     raise
 
-out = scan_full_project(
-    str(ROOT), py_ext=".py", include_exts=[".py", ".yml", ".md"], top_n=30
-)
+out = scan_full_project(str(ROOT), py_ext=".py", include_exts=[".py", ".yml", ".md"], top_n=30)
 with open(ROOT / "checks_output.json", "w", encoding="utf-8") as f:
     json.dump(out, f, indent=2)
 print(f"wrote: {ROOT / 'checks_output.json'}")

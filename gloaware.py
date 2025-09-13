@@ -53,11 +53,7 @@ def _market_heat(df: pd.DataFrame) -> float:
     px = c[-1] if len(c) else 0.0
     atr_ratio = float(atr / max(px, 1e-12))
     vol_z = (
-        ((vol - vol.rolling(100).mean()) / (vol.rolling(100).std(ddof=0) + 1e-9)).iloc[
-            -1
-        ]
-        if len(vol) >= 100
-        else 0.0
+        ((vol - vol.rolling(100).mean()) / (vol.rolling(100).std(ddof=0) + 1e-9)).iloc[-1] if len(vol) >= 100 else 0.0
     )
     heat = np.tanh(50 * atr_ratio) + 0.15 * float(vol_z)
     return float(np.clip(heat, -2.0, 2.0))
@@ -119,13 +115,9 @@ class GloAware:
     def update_day_pnl_bps(self, bps: float):
         self.day_pnl_bps = float(bps)
 
-    def assess(
-        self, df: pd.DataFrame, last_row: Dict, pick_score: float
-    ) -> AwarenessDecision:
+    def assess(self, df: pd.DataFrame, last_row: Dict, pick_score: float) -> AwarenessDecision:
         if df is None or df.empty:
-            return AwarenessDecision(
-                "NEUTRAL", 1.0, self.cfg.sleep_base, "no data", 0.4
-            )
+            return AwarenessDecision("NEUTRAL", 1.0, self.cfg.sleep_base, "no data", 0.4)
 
         heat = _market_heat(df)
         trend = _trend_strength(df)
@@ -134,12 +126,7 @@ class GloAware:
         cal_risk = int(last_row.get("risk_off_calendar", 0)) == 1
 
         # crude confidence blend
-        conf = (
-            0.55 * max(0.0, trend)
-            + 0.25 * max(0.0, heat)
-            + 0.10 * np.tanh(sent)
-            + 0.10 * max(0.0, pick_score)
-        )
+        conf = 0.55 * max(0.0, trend) + 0.25 * max(0.0, heat) + 0.10 * np.tanh(sent) + 0.10 * max(0.0, pick_score)
         conf = float(np.clip(conf, 0.0, 1.0))
 
         mode = "NEUTRAL"
@@ -176,6 +163,4 @@ class GloAware:
         if not notes:
             notes.append("balanced")
 
-        return AwarenessDecision(
-            mode, float(size_mult), float(sleep), "; ".join(notes), conf
-        )
+        return AwarenessDecision(mode, float(size_mult), float(sleep), "; ".join(notes), conf)

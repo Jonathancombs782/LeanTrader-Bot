@@ -3,6 +3,7 @@
 Creates entries in runtime/open_trades.json using the project's ExchangeRouter
 when `EXCHANGE_ID=paper` (safe). Quantities are computed from notional/last price.
 """
+
 from __future__ import annotations
 
 import json
@@ -48,7 +49,7 @@ def main():
         px = router.last_price(s) or 0.0
         if px <= 0:
             # attempt to fetch a bar
-            bars = router.fetch_ohlcv(s, tf:="1m", limit=5)
+            bars = router.fetch_ohlcv(s, "1m", limit=5)
             if bars:
                 px = float(bars[-1][4])
         if px <= 0:

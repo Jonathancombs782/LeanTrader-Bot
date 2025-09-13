@@ -1,0 +1,212 @@
+category,term
+pairs_examples,EUR/USD
+pairs_examples,GBP/USD
+pairs_examples,USD/JPY
+pairs_examples,USD/CHF
+pairs_examples,AUD/USD
+pairs_examples,USD/CAD
+pairs_examples,NZD/USD
+pairs_examples,EUR/JPY
+pairs_examples,GBP/JPY
+pairs_examples,USD/NGN
+sessions,Tokyo
+sessions,London
+sessions,New York
+sessions,Sydney
+sessions,Asia
+sessions,NY
+sessions,London fix
+orders,market
+orders,limit
+orders,stop
+orders,oco
+orders,trailing stop
+orders,iceberg
+orders,post-only
+orders,fill-or-kill
+orders,ioc
+broker_types,ecn
+broker_types,stp
+broker_types,market maker
+broker_types,prime broker
+broker_types,lp
+risk,stop loss
+risk,take profit
+risk,breakeven
+risk,risk reward
+risk,position sizing
+risk,kelly criterion
+risk,drawdown
+risk,max dd
+risk,hedging
+risk,correlation
+indicators_trend,sma
+indicators_trend,ema
+indicators_trend,wma
+indicators_trend,hull ma
+indicators_trend,macd
+indicators_trend,adx
+indicators_trend,parabolic sar
+indicators_trend,ichimoku
+indicators_trend,supertrend
+indicators_momentum,rsi
+indicators_momentum,stochastic
+indicators_momentum,cci
+indicators_momentum,roc
+indicators_momentum,momentum
+indicators_momentum,awesome oscillator
+indicators_volatility,atr
+indicators_volatility,bollinger bands
+indicators_volatility,keltner channels
+indicators_volatility,donchian
+indicators_volume,obv
+indicators_volume,chaikin money flow
+indicators_volume,money flow index
+indicators_volume,volume profile
+fibonacci,retracement
+fibonacci,extension
+fibonacci,expansion
+fibonacci,golden ratio
+fibonacci,fib confluence
+candles_single,doji
+candles_single,hammer
+candles_single,inverted hammer
+candles_single,shooting star
+candles_single,spinning top
+candles_single,marubozu
+candles_single,long-legged doji
+candles_single,dragonfly doji
+candles_single,gravestone doji
+candles_double,bullish engulfing
+candles_double,bearish engulfing
+candles_double,tweezer top
+candles_double,tweezer bottom
+candles_double,harami
+candles_double,piercing line
+candles_double,dark cloud cover
+candles_triple,morning star
+candles_triple,evening star
+candles_triple,three white soldiers
+candles_triple,three black crows
+candles_triple,three inside up
+candles_triple,three inside down
+patterns_continuation,flag
+patterns_continuation,pennant
+patterns_continuation,rectangle
+patterns_continuation,cup and handle
+patterns_continuation,ascending triangle
+patterns_continuation,descending triangle
+patterns_continuation,symmetrical triangle
+patterns_reversal,head and shoulders
+patterns_reversal,inverse head and shoulders
+patterns_reversal,double top
+patterns_reversal,double bottom
+patterns_reversal,triple top
+patterns_reversal,triple bottom
+patterns_reversal,rising wedge
+patterns_reversal,falling wedge
+patterns_reversal,broadening formation
+smc,order block
+smc,breaker
+smc,fair value gap
+smc,liquidity sweep
+smc,liquidity grab
+smc,market structure shift
+smc,premium discount
+smc,mitigation
+smc,imbalance
+smc,inefficiency
+smc,pd array
+smc,ote
+wyckoff,accumulation
+wyckoff,distribution
+wyckoff,spring
+wyckoff,upthrust
+wyckoff,sign of strength
+wyckoff,sign of weakness
+wyckoff,markup
+wyckoff,markdown
+wyckoff,test
+elliott,impulse wave
+elliott,corrective wave
+elliott,wave 1
+elliott,wave 2
+elliott,wave 3
+elliott,wave 4
+elliott,wave 5
+elliott,abc
+elliott,flat
+elliott,zigzag
+elliott,triangle
+macro_news,nfp
+macro_news,cpi
+macro_news,ppi
+macro_news,gdp
+macro_news,fomc
+macro_news,rate hike
+macro_news,rate cut
+macro_news,dot plot
+macro_news,qe
+macro_news,qt
+macro_news,hawkish
+macro_news,dovish
+macro_news,recession
+macro_news,inflation
+macro_news,stagflation
+sentiment_words,panic
+sentiment_words,capitulation
+sentiment_words,risk-on
+sentiment_words,risk-off
+sentiment_words,flight to safety
+sentiment_words,liquidation cascade
+sentiment_words,short squeeze
+sentiment_words,long squeeze
+execution,slippage
+execution,spread
+execution,latency
+execution,vwap
+execution,twap
+execution,pov
+execution,smart routing
+execution,liquidity fragmentation
+microstructure,order flow
+microstructure,tape
+microstructure,footprint
+microstructure,delta
+microstructure,absorption
+microstructure,iceberg
+microstructure,spoofing
+microstructure,stop run
+microstructure,high volume node
+microstructure,low volume node
+regimes,trend
+regimes,range
+regimes,chop
+regimes,high vol
+regimes,news-driven
+strategies,trend following
+strategies,breakout
+strategies,mean reversion
+strategies,divergence
+strategies,pairs trading
+strategies,stat arb
+strategies,grid
+strategies,martingale (avoid)
+strategies,turtle trading
+strategies,swing trading
+strategies,scalping
+strategies,position trading
+strategies,news trading
+risk_events,earnings
+risk_events,central bank speech
+risk_events,bond auction
+risk_events,flash crash
+risk_events,black swan
+risk_events,fat finger
+fx_cross_signals,dxy
+fx_cross_signals,us10y
+fx_cross_signals,vix
+fx_cross_signals,gold
+fx_cross_signals,oil
+fx_cross_signals,sp500
+fx_cross_signals,nasdaq

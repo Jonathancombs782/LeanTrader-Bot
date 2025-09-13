@@ -46,7 +46,9 @@ except Exception:
 # ---- Telegram (optional) ----
 try:
     from tg_utils import send_text  # def send_text(msg:str)->bool
-    from tg_utils import heartbeat
+    from tg_utils import (
+        heartbeat,
+    )
 except Exception:
 
     def send_text(_: str) -> None:  # no-op if unavailable
@@ -120,10 +122,10 @@ def _attach_feats(sig: Dict[str, Any]) -> None:
     if df is not None:
         try:
             sig["feats"] = {k: float(features(df).get(k, 0.0)) for k in FEATS}
-        except Exception as e:
+        except Exception as _e:
             # preserve signal but note the failure
             try:
-                sig.setdefault("context", []).append(f"feat_err:{e}")
+                sig.setdefault("context", []).append(f"feat_err:{_e}")
             except Exception:
                 pass
 
@@ -144,9 +146,7 @@ def _blend_confidence(sig: Dict[str, Any]) -> float:
         pw = 0.4 if prior.get("n", 0) < 50 else 0.6
         prior_conf = 2.0 * (float(prior.get("winrate", 0.5)) - 0.5)
         try:
-            ctx = recall(
-                sig["symbol"], sig["tf"], sig.get("df") or sig.get("df_now"), k=200
-            )
+            ctx = recall(sig["symbol"], sig["tf"], sig.get("df") or sig.get("df_now"), k=200)
             prior_conf = max(prior_conf, 2.0 * (ctx.get("winrate", 50.0) / 100.0 - 0.5))
             if ctx.get("note"):
                 sig.setdefault("context", []).append(ctx["note"])
@@ -161,13 +161,9 @@ def _blend_confidence(sig: Dict[str, Any]) -> float:
 # =================== NORMALIZE FOR PUBLISHER ===================
 def _normalize_for_publisher(sig: Dict[str, Any]) -> Dict[str, Any]:
     out = dict(sig)
-    out["market"] = out.get("market") or (
-        "fx" if out.get("symbol", "").isalpha() else "crypto"
-    )
+    out["market"] = out.get("market") or ("fx" if out.get("symbol", "").isalpha() else "crypto")
     out["tf"] = out.get("tf") or os.getenv("SCAN_TF", "5m")
-    side = out.get("side") or (
-        "buy" if out.get("direction", "long") in ("long", "buy") else "sell"
-    )
+    side = out.get("side") or ("buy" if out.get("direction", "long") in ("long", "buy") else "sell")
     out["side"] = side
 
     px = float(out.get("entry") or out.get("price") or 0.0)
@@ -211,10 +207,10 @@ def _cooldown_ok(symbol: str, now: float, cd_sec: int) -> bool:
 
 
 # =================== AUTOTRADE (CCXT) ===================
-_ccxt_router: Optional[ExchangeRouter] = None
+_ccxt_router: Optional[Any] = None
 
 
-def _router() -> Optional[ExchangeRouter]:
+def _router() -> Optional[Any]:
     global _ccxt_router
     if _ccxt_router is None and ExchangeRouter is not None:
         try:
@@ -224,7 +220,7 @@ def _router() -> Optional[ExchangeRouter]:
     return _ccxt_router
 
 
-def _equity_now_fallback(router: Optional[ExchangeRouter]) -> float:
+def _equity_now_fallback(router: Optional[Any]) -> float:
     """Use risk_engine.equity_from_router if available, else do a cheap parse."""
     if equity_from_router and router:
         try:
@@ -233,9 +229,7 @@ def _equity_now_fallback(router: Optional[ExchangeRouter]) -> float:
             pass
     try:
         bal = (router.account().get("balance", {}) if router else {}) or {}
-        total = float(
-            bal.get("total", {}).get("USDT", 0) or bal.get("total", 0) or 5000
-        )
+        total = float(bal.get("total", {}).get("USDT", 0) or bal.get("total", 0) or 5000)
         if total <= 0 and "free" in bal:
             total = float(bal["free"].get("USDT", 0) or 5000)
         return total if total > 0 else 5000.0
@@ -254,13 +248,11 @@ def _maybe_autotrade(picks: List[Dict[str, Any]]) -> None:
     for s in picks:
         try:
             slippage = float(os.getenv("AUTOTRADE_SLIPPAGE", 0.001))
-            entry_adj = float(s.get("entry", 0)) * (
-                1 + slippage if s["side"] == "buy" else 1 - slippage
-            )
+            entry_adj = float(s.get("entry", 0)) * (1 + slippage if s["side"] == "buy" else 1 - slippage)
             s["entry"] = entry_adj
-            if str(s.get("market", "")).lower().startswith("crypto") and float(
-                s.get("qty", 0)
-            ) > max(0.0, AUTO_TRADE_MIN_QTY):
+            if str(s.get("market", "")).lower().startswith("crypto") and float(s.get("qty", 0)) > max(
+                0.0, AUTO_TRADE_MIN_QTY
+            ):
                 place_oco_ccxt_safe(
                     ex,
                     s["symbol"],
@@ -271,13 +263,11 @@ def _maybe_autotrade(picks: List[Dict[str, Any]]) -> None:
                     float(s["tp1"]),
                     leverage=s.get("leverage"),
                 )
-        except Exception as e:
-            send_text(f"⚠️ Autotrade error {s.get('symbol')}: {e}")
+        except Exception as _e:
+            send_text(f"⚠️ Autotrade error {s.get('symbol')}: {_e}")
 
 
-def _fill_missing_price(
-    sig: Dict[str, Any], router: Optional[ExchangeRouter]
-) -> Dict[str, Any]:
+def _fill_missing_price(sig: Dict[str, Any], router: Optional[Any]) -> Dict[str, Any]:
     """Best-effort: populate missing entry/sl using router tickers or recent OHLCV.
 
     Writes a debug line to runtime/price_fill_debug.ndjson describing attempts.
@@ -303,16 +293,13 @@ def _fill_missing_price(
     try:
         if entry <= 0.0 and router is not None:
             try:
-                tk = (
-                    router.safe_fetch_ticker(out.get("symbol") or out.get("market"))
-                    or {}
-                )
+                tk = router.safe_fetch_ticker(out.get("symbol") or out.get("market")) or {}
                 last = float(tk.get("last") or 0.0)
                 if last and last > 0.0:
                     out["entry"] = last
                     debug["attempts"].append({"from": "ticker", "last": last})
-            except Exception as e:
-                debug["attempts"].append({"ticker_err": str(e)})
+            except Exception as _e:
+                debug["attempts"].append({"ticker_err": str(_e)})
 
         # if sl missing, try a conservative SL from recent ohlcv
         if sl <= 0.0 and router is not None:
@@ -326,37 +313,21 @@ def _fill_missing_price(
                     or []
                 )
                 if ohlcv:
-                    lows = [
-                        float(x[3])
-                        for x in ohlcv
-                        if isinstance(x, (list, tuple)) and len(x) > 3
-                    ]
-                    highs = [
-                        float(x[2])
-                        for x in ohlcv
-                        if isinstance(x, (list, tuple)) and len(x) > 2
-                    ]
-                    last_px = (
-                        float(ohlcv[-1][4]) if ohlcv and len(ohlcv[-1]) > 4 else 0.0
-                    )
-                    side = out.get("side") or (
-                        "buy"
-                        if out.get("direction", "long") in ("long", "buy")
-                        else "sell"
-                    )
+                    lows = [float(x[3]) for x in ohlcv if isinstance(x, (list, tuple)) and len(x) > 3]
+                    highs = [float(x[2]) for x in ohlcv if isinstance(x, (list, tuple)) and len(x) > 2]
+                    last_px = float(ohlcv[-1][4]) if ohlcv and len(ohlcv[-1]) > 4 else 0.0
+                    side = out.get("side") or ("buy" if out.get("direction", "long") in ("long", "buy") else "sell")
                     if lows and highs:
                         if side == "buy":
                             slv = float(min(lows))
                         else:
                             slv = float(max(highs))
                         out["sl"] = slv
-                        debug["attempts"].append(
-                            {"from": "ohlcv", "sl": slv, "last": last_px}
-                        )
-            except Exception as e:
-                debug["attempts"].append({"ohlcv_err": str(e)})
-    except Exception as e:
-        debug["error"] = str(e)
+                        debug["attempts"].append({"from": "ohlcv", "sl": slv, "last": last_px})
+            except Exception as _e:
+                debug["attempts"].append({"ohlcv_err": str(_e)})
+    except Exception as _e:
+        debug["error"] = str(_e)
 
     # persist debug line (best-effort)
     try:
@@ -386,14 +357,12 @@ def think_once() -> List[Dict[str, Any]]:
             if s.get("confidence") is None:
                 s["confidence"] = s.get("quality", 0.0)
             c = _blend_confidence(s)
-            if c >= THINK_MIN_CONF and _cooldown_ok(
-                s["symbol"], time.time(), THINK_COOLDOWN_SEC
-            ):
+            if c >= THINK_MIN_CONF and _cooldown_ok(s["symbol"], time.time(), THINK_COOLDOWN_SEC):
                 with lock:
                     enriched.append(s)
-        except Exception as e:
+        except Exception as _e:
             try:
-                send_text(f"[think_once] enrich error {s.get('symbol')}: {e}")
+                send_text(f"[think_once] enrich error {s.get('symbol')}: {_e}")
             except Exception:
                 pass
 
@@ -411,16 +380,12 @@ def think_once() -> List[Dict[str, Any]]:
     except Exception:
         pass
 
-    enriched.sort(
-        key=lambda z: float(z.get("confidence", z.get("quality", 0.0))), reverse=True
-    )
+    enriched.sort(key=lambda z: float(z.get("confidence", z.get("quality", 0.0))), reverse=True)
     picks: List[Dict[str, Any]] = []
     for s in enriched:
         if len(picks) >= THINK_TOP:
             break
-        picks.append(
-            s if random.random() >= THINK_EPSILON else s
-        )  # hook for diversification
+        picks.append(s if random.random() >= THINK_EPSILON else s)  # hook for diversification
 
     # plan (sizing/targets) -> optional autotrade -> normalize for publisher
     router = _router()
@@ -435,9 +400,9 @@ def think_once() -> List[Dict[str, Any]]:
                     pass
             p = attach_plan(s, eq)
             planned.append(p)
-        except Exception as e:
+        except Exception as _e:
             try:
-                send_text(f"[think_once] attach_plan error {s.get('symbol')}: {e}")
+                send_text(f"[think_once] attach_plan error {s.get('symbol')}: {_e}")
             except Exception:
                 pass
             continue
@@ -465,9 +430,9 @@ def think_once() -> List[Dict[str, Any]]:
     if AUTO_TRADE and planned:
         try:
             _maybe_autotrade(planned)
-        except Exception as e:
+        except Exception as _e:
             try:
-                send_text(f"[think_once] autotrade error: {e}")
+                send_text(f"[think_once] autotrade error: {_e}")
             except Exception:
                 pass
 
@@ -481,18 +446,14 @@ def think_once() -> List[Dict[str, Any]]:
                 nb = news_bias(s.get("symbol"), s.get("market"))
                 bias = float(nb.get("bias", 0.0))
                 if bias:
-                    s["confidence"] = float(
-                        s.get("confidence", s.get("quality", 0.0))
-                    ) * (1.0 + 0.1 * bias)
-                    s.setdefault("context", []).append(
-                            f"news_bias:{nb.get('reason', '')}"
-                        )
+                    s["confidence"] = float(s.get("confidence", s.get("quality", 0.0))) * (1.0 + 0.1 * bias)
+                    s.setdefault("context", []).append(f"news_bias:{nb.get('reason', '')}")
             except Exception:
                 pass
             normalized.append(_normalize_for_publisher(s))
-        except Exception as e:
+        except Exception as _e:
             try:
-                send_text(f"[think_once] normalize error {s.get('symbol')}: {e}")
+                send_text(f"[think_once] normalize error {s.get('symbol')}: {_e}")
             except Exception:
                 pass
             continue

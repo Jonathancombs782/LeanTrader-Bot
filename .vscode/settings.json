@@ -1,11 +1,28 @@
 {
-    "python.testing.unittestArgs": [
-        "-v",
-        "-s",
-        ".",
-        "-p",
-        "*test.py"
-    ],
-    "python.testing.pytestEnabled": false,
-    "python.testing.unittestEnabled": true
+  "python.analysis.extraPaths": [
+    "src"
+  ],
+  "python.analysis.exclude": [
+    "_incoming/**",
+    "leantrader/**",
+    "tools/**",
+    "runtime/**",
+    "tests/**",
+    ".venv/**"
+  ],
+  "python.analysis.diagnosticMode": "openFilesOnly",
+  "python.analysis.typeCheckingMode": "off",
+  "files.exclude": {
+    "_incoming/**": true,
+    "leantrader/**": true
+  },
+  "python.testing.unittestArgs": [
+    "-v",
+    "-s",
+    ".",
+    "-p",
+    "*test.py"
+  ],
+  "python.testing.pytestEnabled": false,
+  "python.testing.unittestEnabled": true
 }

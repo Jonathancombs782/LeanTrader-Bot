@@ -1,0 +1,36 @@
+apiVersion: 1
+groups:
+  - orgId: 1
+    name: "LeanTraderBot-Canary"
+    folder: "LeanTraderBot"
+    interval: 1m
+    rules:
+      - uid: "canary-missing"
+        title: "Canary Missing"
+        condition: "A"
+        data:
+          - refId: "A"
+            datasourceUid: "Prometheus"
+            queryType: "timeSeriesQuery"
+            relativeTimeRange:
+              from: 600
+              to: 0
+            model:
+              refId: "A"
+              expr: "max_over_time(leantrader_canary_up[10m])"
+              interval: ""
+              legendFormat: ""
+              datasource:
+                type: "prometheus"
+                uid: "Prometheus"
+        noDataState: "Alerting"
+        execErrState: "Alerting"
+        for: 2m
+        annotations:
+          summary: "Startup canary not observed in last 10m"
+          description: "App /metrics may be down or exporter not running."
+        labels:
+          severity: "warning"
+        notifications:
+          - uid: "slack-default"
+

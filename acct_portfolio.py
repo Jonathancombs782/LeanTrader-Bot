@@ -105,14 +105,12 @@ def _estimate_in_quote(ex, asset: str, amount: float, quote: str = "USD") -> flo
                     ticker = router.safe_fetch_ticker(s)
                 else:
                     try:
-                        ticker = (
-                            router.ex.fetch_ticker(s) if hasattr(router, "ex") else {}
-                        )
-                    except Exception as e:
-                        print(f"[acct_portfolio] fetch_ticker failed for {s}: {e}")
+                        ticker = router.ex.fetch_ticker(s) if hasattr(router, "ex") else {}
+                    except Exception as _e:
+                        print(f"[acct_portfolio] fetch_ticker failed for {s}: {_e}")
                         ticker = {}
-            except Exception as e:
-                print(f"[acct_portfolio] safe_fetch_ticker outer failed for {s}: {e}")
+            except Exception as _e:
+                print(f"[acct_portfolio] safe_fetch_ticker outer failed for {s}: {_e}")
                 ticker = {}
             px = float(
                 (ticker.get("last") if isinstance(ticker, dict) else None)
@@ -127,9 +125,7 @@ def _estimate_in_quote(ex, asset: str, amount: float, quote: str = "USD") -> flo
 
 
 # ---------- public: crypto balances ----------
-def ccxt_summary(
-    exchange=None, exchange_id: Optional[str] = None, quote: str = "USD"
-) -> List[str]:
+def ccxt_summary(exchange=None, exchange_id: Optional[str] = None, quote: str = "USD") -> List[str]:
     """
     Returns pretty lines with non-zero balances and totals.
     If you already created an exchange instance, pass it via 'exchange'.
@@ -146,11 +142,11 @@ def ccxt_summary(
                 if hasattr(router, "safe_fetch_balance")
                 else router.account().get("balance", {})
             )
-        except Exception as e:
-            print(f"[acct_portfolio] safe_fetch_balance/account fetch failed: {e}")
+        except Exception as _e:
+            print(f"[acct_portfolio] safe_fetch_balance/account fetch failed: {_e}")
             bal = router.account().get("balance", {})
-    except Exception as e:
-        raise RuntimeError(f"{ex.id} balance error: {e}")
+    except Exception as _e:
+        raise RuntimeError(f"{ex.id} balance error: {_e}")
 
     totals: Dict[str, float] = {}
     try:
@@ -192,9 +188,7 @@ def mt5_summary() -> List[str]:
         raise RuntimeError("MetaTrader5 package not installed")
 
     # Initialize if not already
-    path = os.getenv(
-        "MTS_PATH"
-    )  # e.g. C:\Program Files\OctaFX MetaTrader 5\terminal64.exe
+    path = os.getenv("MTS_PATH")  # e.g. C:\Program Files\OctaFX MetaTrader 5\terminal64.exe
     if not mt5.initialize(path=path):
         # capture last error
         code, desc = mt5.last_error()

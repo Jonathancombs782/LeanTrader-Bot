@@ -47,9 +47,7 @@ def discover_symbols(ex, quote="USDT", top_n=8, min_notional=10.0) -> List[str]:
     for m in markets.values():
         if m.get("spot") and m.get("quote") == quote and m.get("active", True):
             s = m.get("symbol")
-            v = float(
-                m.get("info", {}).get("quoteVolume", 0) or m.get("baseVolume") or 0
-            )
+            v = float(m.get("info", {}).get("quoteVolume", 0) or m.get("baseVolume") or 0)
             rows.append((v, s))
     rows.sort(reverse=True)
     out = [s for _, s in rows[:top_n]]
@@ -120,10 +118,7 @@ def get_exchange(exchange_id: str):
         from router import ExchangeRouter
 
         router = ExchangeRouter()
-        if (
-            getattr(router, "ex", None)
-            and getattr(router.ex, "id", "").lower() == exchange_id.lower()
-        ):
+        if getattr(router, "ex", None) and getattr(router.ex, "id", "").lower() == exchange_id.lower():
             return router
     except Exception:
         pass
@@ -168,9 +163,7 @@ def estimate_usd_volume(ticker: Dict[str, Any], base: str, quote: str) -> float:
     return 0.0
 
 
-def fetch_liquidity_table(
-    ex, markets: Dict[str, Any], quotes: set[str], preselect_max: int, log
-) -> pd.DataFrame:
+def fetch_liquidity_table(ex, markets: Dict[str, Any], quotes: set[str], preselect_max: int, log) -> pd.DataFrame:
     from router import ExchangeRouter
 
     router = ExchangeRouter()
@@ -216,17 +209,11 @@ def fetch_liquidity_table(
     df = pd.DataFrame(rows)
     if df.empty:
         return df
-    df = (
-        df.sort_values("usd_vol", ascending=False)
-        .head(preselect_max)
-        .reset_index(drop=True)
-    )
+    df = df.sort_values("usd_vol", ascending=False).head(preselect_max).reset_index(drop=True)
     return df
 
 
-def compute_vol_metric(
-    ex, df_liq: pd.DataFrame, timeframe: str, limit: int, log
-) -> pd.DataFrame:
+def compute_vol_metric(ex, df_liq: pd.DataFrame, timeframe: str, limit: int, log) -> pd.DataFrame:
     if df_liq.empty:
         return df_liq.assign(vol_metric=0.0)
     vals = []
@@ -240,9 +227,7 @@ def compute_vol_metric(
             if not ohlcv or len(ohlcv) < 10:
                 vals.append(0.0)
                 continue
-            d = pd.DataFrame(
-                ohlcv, columns=["ts", "open", "high", "low", "close", "vol"]
-            )
+            d = pd.DataFrame(ohlcv, columns=["ts", "open", "high", "low", "close", "vol"])
             atr_abs = (d["high"] - d["low"]).rolling(14).mean().iloc[-1]
             close = float(d["close"].iloc[-1])
             volp = float(atr_abs / max(1e-9, close)) if pd.notna(atr_abs) else 0.0
@@ -284,9 +269,7 @@ def _read_recent_pnl(xp_dir: Path, days: int) -> pd.DataFrame:
     return agg
 
 
-def _score_from_xp(
-    df_pick: pd.DataFrame, agg_pnl: pd.DataFrame, xp_weight: float
-) -> pd.DataFrame:
+def _score_from_xp(df_pick: pd.DataFrame, agg_pnl: pd.DataFrame, xp_weight: float) -> pd.DataFrame:
     if df_pick.empty or agg_pnl.empty:
         df_pick["xp_score"] = 0.0
         df_pick["score_xp"] = df_pick.get("score", 0.0)
@@ -307,9 +290,7 @@ def _score_from_xp(
     return m
 
 
-def score_and_pick(
-    df: pd.DataFrame, min_usd_vol: float, w_liq: float, w_vol: float, max_symbols: int
-) -> pd.DataFrame:
+def score_and_pick(df: pd.DataFrame, min_usd_vol: float, w_liq: float, w_vol: float, max_symbols: int) -> pd.DataFrame:
     if df.empty:
         return df
     df = df[df["usd_vol"] >= float(min_usd_vol)].copy()
@@ -323,11 +304,7 @@ def score_and_pick(
     vmax = df["vol_metric"].max() or 1.0
     df["vol_score"] = df["vol_metric"] / vmax
     df["score"] = 0.65 * df["liq_score"] + 0.35 * df["vol_score"]  # base blend
-    return (
-        df.sort_values("score", ascending=False)
-        .head(max_symbols)
-        .reset_index(drop=True)
-    )
+    return df.sort_values("score", ascending=False).head(max_symbols).reset_index(drop=True)
 
 
 def save_outputs(
@@ -360,9 +337,7 @@ def save_outputs(
                     "score",
                 ]
             ).to_csv(out_csv, index=False)
-    log.info(
-        f"Saved {len(payload['symbols'])} symbols -> {out_json.name} and {out_csv.name}"
-    )
+    log.info(f"Saved {len(payload['symbols'])} symbols -> {out_json.name} and {out_csv.name}")
     return payload["symbols"]
 
 
@@ -375,25 +350,15 @@ def main():
         type=float,
         default=float(os.getenv("UNIVERSE_MIN_USD_VOL", "500000")),
     )
-    ap.add_argument(
-        "--preselect", type=int, default=int(os.getenv("UNIVERSE_PRESELECT", "120"))
-    )
+    ap.add_argument("--preselect", type=int, default=int(os.getenv("UNIVERSE_PRESELECT", "120")))
     ap.add_argument("--max", type=int, default=int(os.getenv("UNIVERSE_MAX", "25")))
     ap.add_argument("--tf", default=os.getenv("UNIVERSE_TF", "1m"))
-    ap.add_argument(
-        "--limit", type=int, default=int(os.getenv("UNIVERSE_LIMIT", "200"))
-    )
-    ap.add_argument(
-        "--w_liq", type=float, default=float(os.getenv("UNIVERSE_W_LIQ", "0.65"))
-    )
-    ap.add_argument(
-        "--w_vol", type=float, default=float(os.getenv("UNIVERSE_W_VOL", "0.35"))
-    )
+    ap.add_argument("--limit", type=int, default=int(os.getenv("UNIVERSE_LIMIT", "200")))
+    ap.add_argument("--w_liq", type=float, default=float(os.getenv("UNIVERSE_W_LIQ", "0.65")))
+    ap.add_argument("--w_vol", type=float, default=float(os.getenv("UNIVERSE_W_VOL", "0.35")))
     ap.add_argument("--include_regex", default=os.getenv("UNIVERSE_INCLUDE_RE", ""))
     ap.add_argument("--exclude_regex", default=os.getenv("UNIVERSE_EXCLUDE_RE", ""))
-    ap.add_argument(
-        "--out", default=os.getenv("UNIVERSE_OUT", "")
-    )  # per-exchange out file
+    ap.add_argument("--out", default=os.getenv("UNIVERSE_OUT", ""))  # per-exchange out file
     # ---- NEW XP knobs ----
     ap.add_argument(
         "--xp_days",
@@ -413,12 +378,8 @@ def main():
 
     log = setup_logger()
     quotes = {q.strip().upper() for q in args.quotes.split(",") if q.strip()}
-    include_re = (
-        re.compile(args.include_regex, re.IGNORECASE) if args.include_regex else None
-    )
-    exclude_re = (
-        re.compile(args.exclude_regex, re.IGNORECASE) if args.exclude_regex else None
-    )
+    include_re = re.compile(args.include_regex, re.IGNORECASE) if args.include_regex else None
+    exclude_re = re.compile(args.exclude_regex, re.IGNORECASE) if args.exclude_regex else None
 
     ex = get_exchange(args.exchange)
     log.info(f"Loading markets for {args.exchange}…")
@@ -445,9 +406,7 @@ def main():
             print("")
         return
     # Volatility metric on shortlist
-    df_liq = compute_vol_metric(
-        ex, df_liq, timeframe=args.tf, limit=args.limit, log=log
-    )
+    df_liq = compute_vol_metric(ex, df_liq, timeframe=args.tf, limit=args.limit, log=log)
 
     # Base score
     df_pick = score_and_pick(
@@ -507,13 +466,9 @@ class Universe:
     router if available, otherwise attempts to load markets from CCXT.
     """
 
-    def __init__(
-        self, router=None, exchange_id: str | None = None, symbols: list | None = None
-    ):
+    def __init__(self, router=None, exchange_id: str | None = None, symbols: list | None = None):
         self.router = router
-        self.exchange_id = exchange_id or (
-            getattr(router, "id", None) if router else os.getenv("EXCHANGE_ID")
-        )
+        self.exchange_id = exchange_id or (getattr(router, "id", None) if router else os.getenv("EXCHANGE_ID"))
         self._markets = None
         try:
             if symbols:

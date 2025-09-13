@@ -29,7 +29,5 @@ def compute_bias() -> float:
 
 if __name__ == "__main__":
     b = compute_bias()
-    OUT.write_text(
-        json.dumps({"bias": b, "ts": int(time.time())}, indent=2), encoding="utf-8"
-    )
+    OUT.write_text(json.dumps({"bias": b, "ts": int(time.time())}, indent=2), encoding="utf-8")
     print(f"[news-bias] wrote bias={b:+.2f} -> {OUT}")

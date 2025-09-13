@@ -1,0 +1,59 @@
+image:
+  repository: ghcr.io/your-org/leantraderbot
+  tag: "latest"
+  pullPolicy: IfNotPresent
+
+env:
+  # Additional environment variables
+  # - name: RUN_DAEMONS
+  #   value: "true"
+
+resources:
+  requests:
+    cpu: 100m
+    memory: 256Mi
+  limits:
+    cpu: 500m
+    memory: 512Mi
+
+service:
+  type: ClusterIP
+  port: 8000
+
+ingress:
+  enabled: false
+  className: ""
+  annotations: {}
+  hosts:
+    - host: metrics.local
+      paths:
+        - path: /
+          pathType: Prefix
+  tls: []
+
+hpa:
+  enabled: true
+  minReplicas: 1
+  maxReplicas: 5
+  targetCPUUtilizationPercentage: 70
+
+secrets:
+  create: true   # for dev only; use kubectl secrets in prod
+  name: leantraderbot-secrets
+  stringData:
+    IBM_QUANTUM_API_KEY: ""
+    SLACK_WEBHOOK_URL: ""
+    REDIS_URL: ""
+    Q_USE_RUNTIME: "false"
+    Q_ENABLE_QUANTUM: "true"
+
+pod:
+  annotations: {}
+  labels: {}
+
+deployment:
+  replicas: 1
+  extraArgs: []     # e.g., ["-m","observability.http_metrics","--port","8000"]
+  command: []       # override container command if needed
+  args: []          # override args
+

@@ -1,26 +1,31 @@
 """Demo runner: generate FX and crypto signals once, publish and optionally place testnet orders.
 Respects ENABLE_LIVE env var; will not place real mainnet orders unless ENABLE_LIVE=true and other guards are set.
 """
+
 from __future__ import annotations
 
 import os
 import time
-from typing import List
+from typing import Any, List
 
-from trader_core import TraderCore
-from signals_publisher import publish_signal
 from futures_signals import fut_side_from_ema
-from mt5_signals import gen_signal
+from signals_publisher import publish_signal
+
+# avoid top-level mt5_signals import (may fail in env without MT5); import lazily
 
 
 def _csv(s: str) -> List[str]:
     return [x.strip() for x in (s or "").split(",") if x.strip()]
 
 
-def make_fx_signal(sym: str, tf: str, core: TraderCore):
+def make_fx_signal(sym: str, tf: str, core: Any):
     df = core.mt5 and core.mt5  # placeholder to show mt5 is initialized
+    # lazy import mt5_signals in a robust way (importlib) and fall back to direct import
     try:
-        df = __import__("mt5_signals").mt5_signals.fetch_bars_safe(sym, tf, limit=250)
+        import importlib
+
+        ms = importlib.import_module("mt5_signals")
+        df = getattr(ms, "fetch_bars_safe")(sym, tf, limit=250)
     except Exception:
         try:
             from mt5_signals import fetch_bars_safe
@@ -30,6 +35,13 @@ def make_fx_signal(sym: str, tf: str, core: TraderCore):
             return None
     if df is None or getattr(df, "empty", True):
         return None
+    try:
+        gen_signal = getattr(__import__("mt5_signals"), "gen_signal")
+    except Exception:
+
+        def gen_signal(d):
+            return {}
+
     sig = gen_signal(df)
     if not sig:
         return None
@@ -45,11 +57,11 @@ def make_fx_signal(sym: str, tf: str, core: TraderCore):
         "tp3": sig.get("tp", entry * 1.003),
         "sl": sig.get("sl", entry * 0.998),
         "confidence": float(sig.get("conf", 0.6)),
-        "context": ["demo_run", "mt5"] ,
+        "context": ["demo_run", "mt5"],
     }
 
 
-def make_crypto_signal(sym: str, tf: str, core: TraderCore):
+def make_crypto_signal(sym: str, tf: str, core: Any):
     try:
         m = core.router._resolve_symbol(sym, futures=False)
         rows = core.router.safe_fetch_ohlcv(m, timeframe=tf, limit=150)
@@ -87,6 +99,18 @@ def main():
     crypto_syms = _csv(os.getenv("CRYPTO_SYMBOLS", "BTC/USDT,ETH/USDT"))
     crypto_tfs = _csv(os.getenv("CRYPTO_SPOT_TFS", "1m,5m"))
 
+    # import TraderCore lazily so missing optional modules don't crash the process
+    try:
+        from trader_core import TraderCore
+    except Exception:
+        # last-resort shim: minimal core with router None and mt5 None
+        class TraderCore:  # type: ignore
+            def __init__(self, *a, **k):
+                self.mt5 = None
+                self.router = None
+
+        TraderCore = TraderCore
+
     core = TraderCore(fx_syms, fx_tfs, crypto_syms, crypto_tfs, [], [], loop_sec=1)
     # short pause to ensure router/mt5 initialized
     time.sleep(1)
@@ -120,7 +144,22 @@ def main():
                     print("order result:", out)
                 else:
                     # for FX, place via MT5 demo
-                    out = core.mt5 and __import__("mt5_signals").mt5_signals.place_mt5_signal(core.mt5, sig["symbol"], sig["side"], 0.01, sig["sl"], sig["tp1"])
+                    try:
+                        import importlib
+
+                        ms = importlib.import_module("mt5_signals")
+                        out = core.mt5 and getattr(ms, "place_mt5_signal")(
+                            core.mt5, sig["symbol"], sig["side"], 0.01, sig["sl"], sig["tp1"]
+                        )
+                    except Exception:
+                        try:
+                            from mt5_signals import place_mt5_signal
+
+                            out = core.mt5 and place_mt5_signal(
+                                core.mt5, sig["symbol"], sig["side"], 0.01, sig["sl"], sig["tp1"]
+                            )
+                        except Exception:
+                            out = {"ok": False, "comment": "mt5_signals not available"}
                     print("mt5 order:", out)
             except Exception as e:
                 print("order error:", e)

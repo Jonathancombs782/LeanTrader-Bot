@@ -6,6 +6,7 @@ Goals:
  - If mismatch, update runtime/open_trades.json to reflect canonical quantities
  - Emit a reconciliation log under runtime/reconcile_log.json
 """
+
 from __future__ import annotations
 
 import json

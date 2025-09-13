@@ -76,9 +76,7 @@ def _ensure_files():
             csv.writer(f).writerow(["ts", "source", "title", "summary", "link"])
     if not CLEAN_PATH.exists():
         with open(CLEAN_PATH, "w", newline="", encoding="utf-8") as f:
-            csv.writer(f).writerow(
-                ["ts", "source", "title", "summary", "link", "score", "sent", "hits"]
-            )
+            csv.writer(f).writerow(["ts", "source", "title", "summary", "link", "score", "sent", "hits"])
 
 
 def harvest_rss(sources: List[str] | None = None, limit_per_feed: int = 80) -> int:
@@ -105,13 +103,7 @@ def harvest_rss(sources: List[str] | None = None, limit_per_feed: int = 80) -> i
                     if not link or link in seen:
                         continue
                     title = html.unescape((getattr(e, "title", "") or "").strip())
-                    summary = html.unescape(
-                        (
-                            getattr(e, "summary", "")
-                            or getattr(e, "description", "")
-                            or ""
-                        ).strip()
-                    )
+                    summary = html.unescape((getattr(e, "summary", "") or getattr(e, "description", "") or "").strip())
                     w.writerow([_ts(), url, title, summary, link])
                     added += 1
                     seen.add(link)
@@ -136,9 +128,7 @@ def _kw_for(symbol: str, is_fx: bool) -> List[str]:
     return list(dict.fromkeys(CRYPTO_TICKER_WORDS.get(base, []) + [base.lower()]))
 
 
-def _score_row(
-    title: str, summary: str, kws: List[str]
-) -> tuple[float, float, list[str]]:
+def _score_row(title: str, summary: str, kws: List[str]) -> tuple[float, float, list[str]]:
     text = f"{title} {summary}"
     toks = _tokenize(text)
     hits = {k for k in kws if k in toks}
@@ -169,9 +159,7 @@ def build_clean() -> int:
     return len(raw)
 
 
-def filtered_news_for(
-    symbol: str, is_fx: bool, top_n: int = 5, min_score: float = 1.5
-) -> List[Dict[str, Any]]:
+def filtered_news_for(symbol: str, is_fx: bool, top_n: int = 5, min_score: float = 1.5) -> List[Dict[str, Any]]:
     _ensure_files()
     if not CLEAN_PATH.exists():
         return []

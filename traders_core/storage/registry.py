@@ -15,9 +15,7 @@ def _dir(base: str, *parts) -> Path:
     return p
 
 
-def save_model(
-    symbol: str, timeframe: str, model: Any, meta: dict, models_dir: str
-) -> str:
+def save_model(symbol: str, timeframe: str, model: Any, meta: dict, models_dir: str) -> str:
     ts = int(time.time())
     mid = f"{symbol}_{timeframe}_{ts}"
     d = _dir(models_dir, symbol, timeframe, mid)
@@ -34,17 +32,13 @@ def load_latest(symbol: str, timeframe: str, models_dir: str):
     if not mids:
         return None, None
     last = root / mids[-1]
-    return joblib.load(last / "model.joblib"), json.loads(
-        (last / "meta.json").read_text()
-    )
+    return joblib.load(last / "model.joblib"), json.loads((last / "meta.json").read_text())
 
 
 # ADD these helpers under existing code
 
 
-def save_model_tagged(
-    symbol: str, timeframe: str, tag: str, model: Any, meta: dict, models_dir: str
-) -> str:
+def save_model_tagged(symbol: str, timeframe: str, tag: str, model: Any, meta: dict, models_dir: str) -> str:
     # saves under .../<symbol>/<timeframe>/<tag>/<ts>/
     import json
     import time
@@ -71,6 +65,4 @@ def load_latest_tagged(symbol: str, timeframe: str, tag: str, models_dir: str):
 
     import joblib
 
-    return joblib.load(last / "model.joblib"), json.loads(
-        (last / "meta.json").read_text()
-    )
+    return joblib.load(last / "model.joblib"), json.loads((last / "meta.json").read_text())

@@ -1,0 +1,37 @@
+[project]
+name = "leantrader"
+version = "0.1.0"
+description = "LeanTrader: evolving FX bot with DSL, RAG research, GA alpha factory, and meta-routing"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+  "pandas>=2.2",
+  "numpy>=1.26",
+  "scikit-learn>=1.5",
+  "scipy>=1.13",
+  "statsmodels>=0.14",
+  "pydantic>=2.8",
+  "pyyaml>=6.0",
+  "tenacity>=8.5",
+  "tiktoken>=0.7.0",
+  "matplotlib>=3.9",
+  "networkx>=3.3",
+  "numba>=0.60",
+  "requests>=2.32",
+  "beautifulsoup4>=4.12",
+  "fastapi>=0.112",
+  "uvicorn>=0.30",
+  "ccxt>=4.3",
+  "aiohttp>=3.9",
+  "redis>=5.0",
+  "python-multipart>=0.0.9",
+  "cryptography>=43.0"
+]
+
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+addopts = "-q"

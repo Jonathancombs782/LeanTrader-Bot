@@ -1,0 +1,26 @@
+{
+  "type": "timeseries",
+  "title": "On-chain Spikes (rate)",
+  "fieldConfig": {
+    "defaults": {
+      "custom": {
+        "drawStyle": "bars",
+        "lineWidth": 1,
+        "spanNulls": true
+      }
+    },
+    "overrides": []
+  },
+  "options": {
+    "legend": { "displayMode": "list", "showLegend": true },
+    "tooltip": { "mode": "single" }
+  },
+  "targets": [
+    {
+      "refId": "A",
+      "expr": "sum by (type) (rate(onchain_spikes_total[5m]))",
+      "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" }
+    }
+  ]
+}
+

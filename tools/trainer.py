@@ -4,17 +4,18 @@ This module offers a minimal interface to train a scikit-learn model on
 features derived from OHLCV CSVs saved by `market_data.py`. It is optional and
 only runs if scikit-learn is present.
 """
+
 from __future__ import annotations
 
 import json
 import pickle
 from pathlib import Path
-from typing import Dict, List, Optional
+from typing import Dict, List
 
 try:
     from sklearn.ensemble import RandomForestClassifier  # type: ignore
-    from sklearn.model_selection import train_test_split  # type: ignore
     from sklearn.metrics import accuracy_score  # type: ignore
+    from sklearn.model_selection import train_test_split  # type: ignore
 except Exception:
     RandomForestClassifier = None
 
@@ -54,16 +55,17 @@ def _save_model_and_meta(clf, meta: Dict[str, object]) -> Dict[str, object]:
     # retention: keep only latest N models to avoid unbounded disk use
     try:
         import os
-        keep = int(os.getenv('MODEL_RETENTION', '5'))
-        models = sorted(_model_dir().glob('rf_model_*.pkl'), key=lambda p: p.stat().st_mtime, reverse=True)
+
+        keep = int(os.getenv("MODEL_RETENTION", "5"))
+        models = sorted(_model_dir().glob("rf_model_*.pkl"), key=lambda p: p.stat().st_mtime, reverse=True)
         for old in models[keep:]:
             try:
                 old_meta = _model_meta_path(old)
                 # record deletion in a small audit log
                 try:
-                    logp = Path('runtime') / 'logs' / 'model_retention.log'
+                    logp = Path("runtime") / "logs" / "model_retention.log"
                     logp.parent.mkdir(parents=True, exist_ok=True)
-                    with logp.open('a', encoding='utf-8') as lf:
+                    with logp.open("a", encoding="utf-8") as lf:
                         lf.write(f"DELETE\t{int(__import__('time').time())}\t{old}\n")
                 except Exception:
                     pass

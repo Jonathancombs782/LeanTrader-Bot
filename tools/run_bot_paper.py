@@ -18,9 +18,7 @@ def bars_to_df(bars):
     import pandas as pd
 
     if not bars:
-        return pd.DataFrame(
-            columns=["open", "high", "low", "close", "volume", "timestamp"]
-        )
+        return pd.DataFrame(columns=["open", "high", "low", "close", "volume", "timestamp"])
     rows = []
     for r in bars:
         ts, o, h, l, c, v = r[:6]
@@ -43,8 +41,7 @@ def run_once(symbol=None, timeframe="1m", limit=200):
     out = {"errors": [], "results": {}}
     try:
         from router import ExchangeRouter
-        from strategy import (get_strategy,  # noqa: F401  # intentionally kept
-                              resolve_strategy_and_params)
+        from strategy import get_strategy, resolve_strategy_and_params  # noqa: F401  # intentionally kept
     except Exception as e:
         out["errors"].append(f"import error: {e}")
         print(json.dumps(out, indent=2))
@@ -94,9 +91,7 @@ def run_once(symbol=None, timeframe="1m", limit=200):
         # default ATR multipliers (adjust as needed)
         atr_stop_mult = float(os.getenv("ATR_STOP_MULT", "1.0"))
         atr_trail_mult = float(os.getenv("ATR_TRAIL_MULT", "0.5"))
-        sig_df, info = strat.entries_and_exits(
-            sample, atr_stop_mult=atr_stop_mult, atr_trail_mult=atr_trail_mult
-        )
+        sig_df, info = strat.entries_and_exits(sample, atr_stop_mult=atr_stop_mult, atr_trail_mult=atr_trail_mult)
         out["results"]["strategy_info"] = info
         # examine last signal
         last = sig_df.iloc[-1].to_dict() if not sig_df.empty else {}

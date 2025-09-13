@@ -1,24 +1,24 @@
 """Orchestrator: run crawl, fetch data, train models, and run a paper-mode simulation."""
+
 from __future__ import annotations
 
-import os
 import time
 import traceback
 from pathlib import Path
 
-from tools.learning_sources import NEWS_FEEDS, DEFAULT_CRAWL_SEEDS
+from tools.ensemble_trainer import train_ensemble_from_dir
+from tools.learning_sources import DEFAULT_CRAWL_SEEDS, NEWS_FEEDS
+from tools.market_data import fetch_ohlcv_multi
 from tools.news_ingest import fetch_feeds
 from tools.web_crawler import crawl_urls
-from tools.market_data import fetch_ohlcv_multi
-from tools.ensemble_trainer import train_ensemble_from_dir
 
 
 def _write(lines: list[str], fname: str) -> None:
     p = Path("runtime") / "logs" / fname
     p.parent.mkdir(parents=True, exist_ok=True)
     with p.open("a", encoding="utf-8") as f:
-        for l in lines:
-            f.write(l + "\n")
+        for line in lines:
+            f.write(line + "\n")
 
 
 def main() -> int:
@@ -53,10 +53,10 @@ def main() -> int:
     ts2 = time.strftime("%Y-%m-%d %H:%M:%S")
     lines.append(f"learning_runner done {ts2}")
     _write(lines, "learning_runner.txt")
-    for l in lines:
-        print(l)
+    for line in lines:
+        print(line)
     return 0
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     raise SystemExit(main())

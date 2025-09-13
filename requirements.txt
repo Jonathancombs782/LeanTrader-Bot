@@ -1,6 +1,19 @@
+apscheduler
+fastapi
+uvicorn
 ccxt
 pandas
 numpy
 python-dotenv
 flake8
+pytest
+mplfinance
+matplotlib
+requests
+pillow
+feedparser
+vaderSentiment
+# optional but useful for news_harvest auto VADER download
+nltk
+python-dotenv
 pytest

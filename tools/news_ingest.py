@@ -4,6 +4,7 @@ This module fetches RSS/Atom feeds via `feedparser` when available and stores
 recent items under `runtime/news/` for use by strategies. It is intentionally
 opt-in and conservative.
 """
+
 from __future__ import annotations
 
 import time

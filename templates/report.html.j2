@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8"/>
+    <title>Daily Report — {{ date }}</title>
+    <style>
+      body { font-family: Arial, sans-serif; margin: 16px; }
+      .row { display:flex; gap:16px; flex-wrap:wrap; }
+      .card { border:1px solid #ddd; padding:12px; border-radius:8px; min-width:160px; }
+      .muted { color:#666; }
+      pre { background:#fafafa; padding:8px; border:1px solid #eee; border-radius:6px; }
+      img { max-width: 100%; }
+    </style>
+  </head>
+  <body>
+    <h1>Daily Report — {{ date }}</h1>
+    <div class="row">
+      <div class="card"><b>Total PnL (Quantum)</b><br/>{{ '%.6f' % pnl.total_q }}</div>
+      <div class="card"><b>Total PnL (Classical)</b><br/>{{ '%.6f' % pnl.total_c }}</div>
+      <div class="card"><b>VaR</b><br/>{{ '%.6f' % risk.var }}</div>
+      <div class="card"><b>CVaR</b><br/>{{ '%.6f' % risk.cvar }}</div>
+      <div class="card"><b>Fallbacks</b><br/>{{ solve.fallbacks }}</div>
+    </div>
+
+    <h3>Allocations</h3>
+    <pre>{{ allocs | tojson(indent=2) }}</pre>
+
+    <h3>Daily PnL</h3>
+    {% if chart_uri %}
+      <img src="{{ chart_uri }}" alt="pnl chart"/>
+    {% else %}
+      <div class="muted">Chart unavailable</div>
+    {% endif %}
+
+    <h3>Notes</h3>
+    <pre>{{ notes }}</pre>
+  </body>
+</html>
+

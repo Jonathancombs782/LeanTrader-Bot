@@ -12,10 +12,7 @@ def build(exchange_id: str, quotes=("USDT", "USD"), min_cost_usd: float = 5.0):
         from router import ExchangeRouter
 
         router = ExchangeRouter()
-        if (
-            getattr(router, "ex", None)
-            and getattr(router.ex, "id", "").lower() == exchange_id.lower()
-        ):
+        if getattr(router, "ex", None) and getattr(router.ex, "id", "").lower() == exchange_id.lower():
             ex = router
         else:
             raise Exception("router mismatch")
@@ -41,12 +38,7 @@ def build(exchange_id: str, quotes=("USDT", "USD"), min_cost_usd: float = 5.0):
             continue
         # estimate min notional if available
         md = m.get("limits", {}).get("cost", {}).get("min")
-        if (
-            md is not None
-            and isinstance(md, (int, float))
-            and md > 0
-            and md > min_cost_usd
-        ):
+        if md is not None and isinstance(md, (int, float)) and md > 0 and md > min_cost_usd:
             continue
         syms.append(symbol)
     syms = sorted(set(syms))

@@ -82,10 +82,12 @@ def ensure_exchange():
     router._load_markets_safe()
     return router
 
+
 # provide a safe top-level reference for `place_market` so linters don't flag F821
 try:
     from order_utils import place_market  # type: ignore
 except Exception:
+
     def place_market(*args, **kwargs):
         """Fallback stub used at import time to satisfy linters; real implementation
         is imported locally where needed.
@@ -107,8 +109,8 @@ def fetch_df(ex, symbol: str, timeframe: str, limit: int = 400) -> pd.DataFrame:
             if hasattr(ex, "safe_fetch_ohlcv"):
                 try:
                     raw = ex.safe_fetch_ohlcv(symbol, timeframe=timeframe, limit=limit)
-                except Exception as e:
-                    print(f"[run_live] safe_fetch_ohlcv failed for {symbol}: {e}")
+                except Exception as _e:
+                    print(f"[run_live] safe_fetch_ohlcv failed for {symbol}: {_e}")
                     raw = []
             else:
                 # try a guarded direct fetch if present
@@ -117,11 +119,11 @@ def fetch_df(ex, symbol: str, timeframe: str, limit: int = 400) -> pd.DataFrame:
                         raw = ex.fetch_ohlcv(symbol, timeframe=timeframe, limit=limit)
                     else:
                         raw = []
-                except Exception as e:
-                    print(f"[run_live] fetch_ohlcv failed for {symbol}: {e}")
+                except Exception as _e:
+                    print(f"[run_live] fetch_ohlcv failed for {symbol}: {_e}")
                     raw = []
-        except Exception as e:
-            print(f"[run_live] safe fetch wrapper raised for {symbol}: {e}")
+        except Exception as _e:
+            print(f"[run_live] safe fetch wrapper raised for {symbol}: {_e}")
             raw = []
 
         if raw:
@@ -129,12 +131,10 @@ def fetch_df(ex, symbol: str, timeframe: str, limit: int = 400) -> pd.DataFrame:
 
         # exponential backoff before retrying
         if attempt < retries - 1:
-            sleep_s = base_backoff * (2 ** attempt)
+            sleep_s = base_backoff * (2**attempt)
             time.sleep(sleep_s)
     if not raw:
-        return pd.DataFrame(
-            columns=["timestamp", "open", "high", "low", "close", "vol"]
-        )
+        return pd.DataFrame(columns=["timestamp", "open", "high", "low", "close", "vol"])
     df = pd.DataFrame(raw, columns=["ts", "open", "high", "low", "close", "vol"])
     df["timestamp"] = pd.to_datetime(df["ts"], unit="ms")
     return df
@@ -184,14 +184,10 @@ def place_oco_ccxt(
         # take-profit
         try:
             if hasattr(ex, "safe_place_order"):
-                notified["tp"] = ex.safe_place_order(
-                    symbol, opp, qty, price=take_px, params={"reduceOnly": True}
-                )
+                notified["tp"] = ex.safe_place_order(symbol, opp, qty, price=take_px, params={"reduceOnly": True})
             elif hasattr(ex, "create_limit_order"):
                 try:
-                    notified["tp"] = ex.create_limit_order(
-                        symbol, opp, qty, float(take_px)
-                    )
+                    notified["tp"] = ex.create_limit_order(symbol, opp, qty, float(take_px))
                 except Exception:
                     # fall back to generic create_order if present
                     try:
@@ -219,58 +215,46 @@ def place_oco_ccxt(
                     )
                 except Exception:
                     try:
-                        notified["tp"] = safe_create_order(
-                            ex, "limit", symbol, opp, qty, float(take_px)
-                        )
+                        notified["tp"] = safe_create_order(ex, "limit", symbol, opp, qty, float(take_px))
                     except Exception:
                         notified["tp"] = {"ok": False, "error": "tp create failed"}
             else:
                 notified["tp_err"] = "no tp order method"
-        except Exception as e:
-            notified["tp_err"] = str(e)
+        except Exception as _e:
+            notified["tp_err"] = str(_e)
 
         # stop-loss
         try:
             params = {"reduceOnly": True, "stopPrice": float(stop_px)}
             if hasattr(ex, "safe_place_order"):
-                notified["sl"] = ex.safe_place_order(
-                    symbol, opp, qty, price=stop_px, params=params
-                )
+                notified["sl"] = ex.safe_place_order(symbol, opp, qty, price=stop_px, params=params)
             elif hasattr(ex, "create_stop_order"):
                 try:
-                    notified["sl"] = ex.create_stop_order(
-                        symbol, opp, qty, float(stop_px), params=params
-                    )
+                    notified["sl"] = ex.create_stop_order(symbol, opp, qty, float(stop_px), params=params)
                 except Exception:
                     try:
                         from order_utils import safe_create_order
 
-                        notified["sl"] = safe_create_order(
-                            ex, "stop", symbol, opp, qty, float(stop_px), params=params
-                        )
+                        notified["sl"] = safe_create_order(ex, "stop", symbol, opp, qty, float(stop_px), params=params)
                     except Exception:
                         notified["sl"] = {"ok": False, "error": "sl create failed"}
             elif hasattr(ex, "create_order"):
                 try:
                     # prefer centralized safe_create_order wrapper
-                    notified["sl"] = safe_create_order(
-                        ex, "stop", symbol, opp, qty, stop_px, params=params
-                    )
+                    notified["sl"] = safe_create_order(ex, "stop", symbol, opp, qty, stop_px, params=params)
                 except Exception:
                     try:
-                        notified["sl"] = safe_create_order(
-                            ex, "stop", symbol, opp, qty, stop_px
-                        )
+                        notified["sl"] = safe_create_order(ex, "stop", symbol, opp, qty, stop_px)
                     except Exception:
                         notified["sl"] = {"ok": False, "error": "sl create failed"}
             else:
                 notified["sl_err"] = "no sl order method"
-        except Exception as e:
-            notified["sl_err"] = str(e)
+        except Exception as _e:
+            notified["sl_err"] = str(_e)
 
         return {"ok": True, "orders": notified}
-    except Exception as e:
-        return {"ok": False, "error": str(e)}
+    except Exception as _e:
+        return {"ok": False, "error": str(_e)}
 
 
 def handle_cmds_ccxt(cmds, router, tg, live: bool):
@@ -293,9 +277,7 @@ def handle_cmds_ccxt(cmds, router, tg, live: bool):
                 base = sym.split("/")[0]
                 try:
                     bal = (
-                        router.safe_fetch_balance()
-                        if hasattr(router, "safe_fetch_balance")
-                        else router.fetch_balance()
+                        router.safe_fetch_balance() if hasattr(router, "safe_fetch_balance") else router.fetch_balance()
                     )
                 except Exception:
                     bal = {}
@@ -313,17 +295,22 @@ def handle_cmds_ccxt(cmds, router, tg, live: bool):
                             except Exception:
                                 # top-level stub defined earlier will raise at runtime if not available
                                 # reference via globals() to satisfy linters and runtime
-                                globals().get("place_market", lambda *a, **k: (_ for _ in ()).throw(RuntimeError("place_market is not available")))(router, sym, "sell", amt)
+                                globals().get(
+                                    "place_market",
+                                    lambda *a, **k: (_ for _ in ()).throw(
+                                        RuntimeError("place_market is not available")
+                                    ),
+                                )(router, sym, "sell", amt)
                         tg.note(f"flattened {sym} {amt}")
-                    except Exception as e:
-                        tg.note(f"flatten failed: {e}")
+                    except Exception as _e:
+                        tg.note(f"flatten failed: {_e}")
                 else:
                     tg.note(f"(paper) flat {sym} free={amt}")
             else:
                 tg.note(f"unknown cmd: {text}")
-        except Exception as e:
+        except Exception as _e:
             try:
-                tg.note(f"cmd error: {text} -> {e}")
+                tg.note(f"cmd error: {text} -> {_e}")
             except Exception:
                 pass
 
@@ -339,7 +326,6 @@ def main():
     args = ap.parse_args()
 
     # local imports (moved from top-level to avoid E402 warnings)
-    from utils import load_config, setup_logger
     from acct_portfolio import ccxt_summary
     from cmd_reader import read_commands
     from guardrails import GuardConfig, TradeGuard
@@ -347,6 +333,7 @@ def main():
     from notifier import TelegramNotifier
     from risk import RiskConfig
     from strategy import TrendBreakoutStrategy
+    from utils import load_config, setup_logger
 
     cfg = load_config("config.yml")
     log = setup_logger(
@@ -357,6 +344,7 @@ def main():
     live = os.getenv("ENABLE_LIVE", "false").lower() == "true"
 
     router = ensure_exchange()
+
     # explicit safety guard: if live is disabled, block any method that would send
     # real orders to an exchange unless the exchange is explicitly the `paper` adapter.
     def _disable_live_orders(router_obj, logger):
@@ -389,7 +377,9 @@ def main():
             # create a closure capturing the method name
             def make_stub(n):
                 def stub(*args, **kwargs):
-                    logger.warning(f"Blocked order call {n} because ENABLE_LIVE is not 'true'. Args={args} kwargs={kwargs}")
+                    logger.warning(
+                        f"Blocked order call {n} because ENABLE_LIVE is not 'true'. Args={args} kwargs={kwargs}"
+                    )
                     return {"ok": False, "error": "live disabled"}
 
                 return stub
@@ -419,11 +409,7 @@ def main():
 
     # discover symbols (simple, from markets)
     if args.symbols == "auto":
-        syms = [
-            s
-            for s, m in router.markets.items()
-            if m.get("spot") and s.endswith("/USDT")
-        ]
+        syms = [s for s, m in router.markets.items() if m.get("spot") and s.endswith("/USDT")]
         preferred = {
             "BTC/USDT",
             "ETH/USDT",
@@ -468,5 +454,38 @@ def main():
             except Exception as e:
                 tg.note(f"portfolio/pnl unavailable: {e}")
             last_bal_ts = now
+
+        # Optional on-chain swap entrypoint (env gated)
+def _maybe_onchain_swap():
+    try:
+        if os.getenv("ONCHAIN_SWAP_ENABLED", "false").lower() not in ("1", "true", "yes", "on"):
+            return
+        # optional dynamic entry module providing tx_builder and senders
+        import importlib
+        from dex_router import execute_swap
+
+        mod_name = os.getenv("ONCHAIN_ENTRY", "onchain_entry").strip()
+        entry = importlib.import_module(mod_name)
+        symbol = os.getenv("DEX_SYMBOL", "ETH/USDC")
+        timeframe = os.getenv("DEX_TIMEFRAME", "M1")
+        notional = float(os.getenv("DEX_NOTIONAL", "250000"))
+        slip = int(os.getenv("DEX_MAX_SLIPPAGE_BPS", "30"))
+        risk_path = os.getenv("MEMPOOL_RISK_PATH", "runtime/mempool_risk.json")
+
+        res = execute_swap(
+            asset=symbol,
+            timeframe=timeframe,
+            notional_usd=notional,
+            max_slippage_bps=slip,
+            tx_builder=getattr(entry, "build_tx"),
+            send_public=getattr(entry, "send_public"),
+            private_sender=getattr(entry, "send_private", None),
+            risk_json_path=risk_path,
+        )
+        print("[onchain] swap result:", res)
+    except Exception:
+        # best-effort, do not break live loop
+        pass
+        _maybe_onchain_swap()
 
         time.sleep(5)

@@ -2,6 +2,7 @@
 
 Writes a small run log to runtime/logs/market_diag.txt so results are persistent.
 """
+
 from __future__ import annotations
 
 import time
@@ -15,8 +16,8 @@ def _write_log(lines: List[str]) -> None:
     p = Path("runtime") / "logs" / "market_diag.txt"
     p.parent.mkdir(parents=True, exist_ok=True)
     with p.open("a", encoding="utf-8") as f:
-        for l in lines:
-            f.write(l + "\n")
+        for line in lines:
+            f.write(line + "\n")
 
 
 def main() -> int:
@@ -40,5 +41,5 @@ def main() -> int:
     return 0
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     raise SystemExit(main())

@@ -4,6 +4,12 @@ from __future__ import annotations
 import argparse
 
 from trader_core import TraderCore
+from traders_core.services.web3_bias_daemon import start as start_bias
+from traders_core.services.pnl_daemon import start as start_pnl
+try:
+    from traders_core.services.ratio_arb_daemon import start as start_ratio_arb
+except Exception:
+    start_ratio_arb = None
 
 
 def main():
@@ -27,6 +33,18 @@ def main():
     spt = [s for s in args.spot_tfs.split(",") if s]
     fu = [s for s in args.fut.split(",") if s]
     fut = [s for s in args.fut_tfs.split(",") if s]
+
+    # Start background services (lightweight)
+    try:
+        import os
+        run_daemons = os.getenv("RUN_DAEMONS", "true").strip().lower() in ("1", "true", "yes", "on")
+        if run_daemons:
+            start_bias()
+            start_pnl()
+            if os.getenv("RUN_RATIO_ARB", "false").lower() == "true" and start_ratio_arb:
+                start_ratio_arb()
+    except Exception:
+        pass
 
     core = TraderCore(
         fx,

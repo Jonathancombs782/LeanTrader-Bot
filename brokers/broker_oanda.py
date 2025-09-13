@@ -31,9 +31,7 @@ class OandaBroker:
         gran = tf_map.get(timeframe, "M5")
         params = {"granularity": gran, "count": limit, "price": "M"}
         try:
-            r = instruments.InstrumentsCandles(
-                instrument=self.normalize(symbol).replace("/", "_"), params=params
-            )
+            r = instruments.InstrumentsCandles(instrument=self.normalize(symbol).replace("/", "_"), params=params)
             data = self.client.request(r)
             rows = []
             for c in data.get("candles", []):

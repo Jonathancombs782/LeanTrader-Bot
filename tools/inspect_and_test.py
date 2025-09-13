@@ -6,9 +6,7 @@ import sys
 
 def run(cmd):
     try:
-        out = subprocess.check_output(
-            cmd, shell=True, stderr=subprocess.STDOUT, universal_newlines=True
-        )
+        out = subprocess.check_output(cmd, shell=True, stderr=subprocess.STDOUT, universal_newlines=True)
         return out.strip()
     except subprocess.CalledProcessError as e:
         return f"ERR: {e.returncode} {e.output[:1000]}"
@@ -27,11 +25,7 @@ if os.path.exists(p):
             print(
                 "SMOKE_SIG",
                 i,
-                {
-                    k: v
-                    for k, v in s.items()
-                    if k in ("symbol", "side", "confidence", "qty")
-                },
+                {k: v for k, v in s.items() if k in ("symbol", "side", "confidence", "qty")},
             )
     except Exception as e:
         print("SMOKE_ERR", type(e).__name__, str(e)[:200])

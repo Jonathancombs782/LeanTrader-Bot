@@ -4,8 +4,7 @@
 from __future__ import annotations
 
 import os
-from typing import (Any, Dict, Optional,  # noqa: F401  # intentionally kept
-                    Tuple)
+from typing import Any, Dict, Optional, Tuple  # noqa: F401  # intentionally kept
 
 try:
     from risk_engine import Equity, plan_crypto, plan_fx
@@ -21,17 +20,18 @@ except Exception:
 
 
 from order_utils import place_market
-from session_filter import (  # noqa: F401  # intentionally kept
-    crypto_session_weight, fx_session_weight)
+from session_filter import crypto_session_weight, fx_session_weight  # noqa: F401  # intentionally kept
 
 EXCHANGE_MODE = os.getenv("EXCHANGE_MODE", "spot").lower()  # "spot" | "linear"
 
 # Safety / sizing defaults
-RISK_PCT_PER_TRADE = float(
-    os.getenv("RISK_PCT_PER_TRADE", "1.0")
-)  # percent of equity risked per trade
+RISK_PCT_PER_TRADE = float(os.getenv("RISK_PCT_PER_TRADE", "1.0"))  # percent of equity risked per trade
 MIN_NOTIONAL_USD = float(os.getenv("MIN_NOTIONAL_USD", "10"))
 FUT_DEFAULT_LEVERAGE = int(os.getenv("FUT_DEFAULT_LEVERAGE", "3"))
+
+# Awareness application flags
+AW_APPLY_SIZING = os.getenv("AW_APPLY_SIZING", "true").strip().lower() in ("1", "true", "yes", "on")
+AW_APPLY_LEVELS = os.getenv("AW_APPLY_LEVELS", "true").strip().lower() in ("1", "true", "yes", "on")
 
 
 # ---------- merge helpers ----------
@@ -52,6 +52,24 @@ def attach_plan(sig: Dict[str, Any], equity: Any) -> Dict[str, Any]:
     entry = float(s.get("entry", 0.0) or 0.0)
     sl = float(s.get("sl", 0.0) or 0.0)
 
+    # Apply Awareness levels first (so we don't bail out due to missing SL)
+    try:
+        if AW_APPLY_LEVELS and entry > 0.0:
+            aw_stop_atr = float(s.get("aw_stop_atr", 0.0) or 0.0)
+            aw_take_atr = float(s.get("aw_take_atr", 0.0) or 0.0)
+            side_ = (s.get("side") or "buy").lower()
+            if aw_stop_atr > 0.0 and sl <= 0.0:
+                sl = entry - aw_stop_atr if side_ == "buy" else entry + aw_stop_atr
+                s["sl"] = sl
+            # Populate TP ladder if not present
+            if aw_take_atr > 0.0 and not all(k in s for k in ("tp1", "tp2", "tp3")):
+                if side_ == "buy":
+                    s["tp1"], s["tp2"], s["tp3"] = entry + aw_take_atr, entry + 2 * aw_take_atr, entry + 3 * aw_take_atr
+                else:
+                    s["tp1"], s["tp2"], s["tp3"] = entry - aw_take_atr, entry - 2 * aw_take_atr, entry - 3 * aw_take_atr
+    except Exception:
+        pass
+
     # Guard: if entry or sl missing/zero, mark plan as non-executable and avoid huge qty
     if entry <= 0.0 or sl <= 0.0:
         s["qty"] = 0.0
@@ -67,11 +85,7 @@ def attach_plan(sig: Dict[str, Any], equity: Any) -> Dict[str, Any]:
         return s
 
     # compute raw R (price distance). If invalid, fallback to small fraction
-    R = (
-        abs(entry - sl)
-        if (entry and sl and entry != sl)
-        else max(0.001, abs(entry) * 0.003)
-    )
+    R = abs(entry - sl) if (entry and sl and entry != sl) else max(0.001, abs(entry) * 0.003)
 
     # equity may be an object or numeric; try to get numeric total
     try:
@@ -99,6 +113,17 @@ def attach_plan(sig: Dict[str, Any], equity: Any) -> Dict[str, Any]:
 
     raw_qty = max(qty_by_risk, qty_notional)
 
+    # Apply Awareness sizing (fraction of equity → qty at entry)
+    try:
+        if AW_APPLY_SIZING and entry > 0.0:
+            aw_frac = float(s.get("aw_size_frac", 0.0) or 0.0)
+            if aw_frac > 0.0 and eq_val > 0.0:
+                qty_aw = (eq_val * aw_frac) / entry
+                if qty_aw > 0.0:
+                    raw_qty = max(raw_qty, qty_aw)
+    except Exception:
+        pass
+
     # clamp raw_qty to a sane multiple of equity to avoid absurd sizes when R is tiny
     try:
         max_qty = max(1.0, eq_val * 10.0)
@@ -114,17 +139,14 @@ def attach_plan(sig: Dict[str, Any], equity: Any) -> Dict[str, Any]:
             ex = s["router"]
         # if exchange provided as ExchangeRouter instance
         if ex is None:
-            from router import \
-                ExchangeRouter  # noqa: F401  # intentionally kept
+            from router import ExchangeRouter  # noqa: F401  # intentionally kept
 
             # no router instance; leave raw_qty
         else:
             step = ex.precision(s.get("symbol"))
             try:
                 # round down to nearest step
-                raw_qty = (
-                    float(int(raw_qty / step) * step) if step and step > 0 else raw_qty
-                )
+                raw_qty = float(int(raw_qty / step) * step) if step and step > 0 else raw_qty
             except Exception:
                 pass
     except Exception:
@@ -151,9 +173,7 @@ def attach_plan(sig: Dict[str, Any], equity: Any) -> Dict[str, Any]:
     s["session_w"] = s.get("session_w", 1.0)
     base = float(s.get("confidence", s.get("quality", 0.0)) or 0.0)
     s["confidence"] = _merge_weight(s, base, s["session_w"])
-    s.setdefault("context", []).append(
-        f"risk_pct={RISK_PCT_PER_TRADE}% min_notional={MIN_NOTIONAL_USD}"
-    )
+    s.setdefault("context", []).append(f"risk_pct={RISK_PCT_PER_TRADE}% min_notional={MIN_NOTIONAL_USD}")
     return s
 
 
@@ -183,6 +203,21 @@ def place_oco_ccxt_safe(
     side = side.lower()
 
     params = {}
+    # Exchange-specific hints
+    try:
+        x = getattr(ex, "ex", ex)  # unwrap router -> ccxt exchange if needed
+        ex_id = getattr(x, "id", "").lower()
+    except Exception:
+        ex_id = ""
+    # Common hints
+    params["reduceOnly"] = True
+    # Binance futures prefers GTC and may accept postOnly for TP
+    if ex_id == "binance":
+        params.setdefault("timeInForce", "GTC")
+        params.setdefault("postOnly", True)
+    # OKX may require postOnly for limit TP; let adapter map reduceOnly appropriately
+    if ex_id == "okx":
+        params.setdefault("postOnly", True)
     if leverage and hasattr(ex, "set_leverage"):
         try:
             ex.set_leverage(leverage, symbol)
@@ -194,6 +229,11 @@ def place_oco_ccxt_safe(
         params1 = dict(params)
         params1["takeProfit"] = float(take_px)
         params1["stopLoss"] = float(stop_px)
+        # For binance/okx add explicit flags too
+        if ex_id == "binance":
+            params1.setdefault("timeInForce", "GTC")
+        if ex_id == "okx":
+            params1.setdefault("postOnly", True)
         # Prefer safe wrapper on adapters or router helpers
         if hasattr(ex, "safe_place_order"):
             out["entry"] = ex.safe_place_order(symbol, side, qty, params=params1)
@@ -221,16 +261,12 @@ def place_oco_ccxt_safe(
                 try:
                     from order_utils import safe_create_order
 
-                    out["entry"] = safe_create_order(
-                        ex, "market", symbol, side, qty, price=None, params=params1
-                    )
+                    out["entry"] = safe_create_order(ex, "market", symbol, side, qty, price=None, params=params1)
                 except Exception:
                     try:
                         from order_utils import safe_create_order
 
-                        out["entry"] = safe_create_order(
-                            ex, "market", symbol, side, qty
-                        )
+                        out["entry"] = safe_create_order(ex, "market", symbol, side, qty)
                     except Exception:
                         out["entry"] = {"ok": False, "error": "create_order failed"}
             return out
@@ -264,11 +300,13 @@ def place_oco_ccxt_safe(
         # TP: opposite side
         tp_side = "sell" if side == "buy" else "buy"
         if hasattr(ex, "safe_place_order"):
-            out["tp"] = ex.safe_place_order(
-                symbol, tp_side, qty, price=float(take_px), params=params
-            )
+            p_tp = dict(params)
+            p_tp.setdefault("postOnly", True)
+            out["tp"] = ex.safe_place_order(symbol, tp_side, qty, price=float(take_px), params=p_tp)
         elif hasattr(ex, "create_limit_order"):
             try:
+                p_tp = dict(params)
+                p_tp.setdefault("postOnly", True)
                 out["tp"] = ex.create_limit_order(symbol, tp_side, qty, float(take_px))
             except Exception:
                 try:
@@ -280,7 +318,7 @@ def place_oco_ccxt_safe(
                             tp_side,
                             qty,
                             float(take_px),
-                            params=params,
+                            params=p_tp,
                         )
                     else:
                         out["tp"] = {"ok": False, "error": "tp create failed"}
@@ -292,16 +330,14 @@ def place_oco_ccxt_safe(
             try:
                 from order_utils import safe_create_order
 
-                out["tp"] = safe_create_order(
-                    ex, "limit", symbol, tp_side, qty, float(take_px), params=params
-                )
+                p_tp = dict(params)
+                p_tp.setdefault("postOnly", True)
+                out["tp"] = safe_create_order(ex, "limit", symbol, tp_side, qty, float(take_px), params=p_tp)
             except Exception:
                 try:
                     from order_utils import safe_create_order
 
-                    out["tp"] = safe_create_order(
-                        ex, "limit", symbol, tp_side, qty, float(take_px)
-                    )
+                    out["tp"] = safe_create_order(ex, "limit", symbol, tp_side, qty, float(take_px))
                 except Exception:
                     out["tp"] = {"ok": False, "error": "tp create failed"}
         else:
@@ -319,15 +355,11 @@ def place_oco_ccxt_safe(
             out["sl"] = ex.safe_place_order(symbol, sl_side, qty, params=p)
         elif hasattr(ex, "create_stop_order"):
             try:
-                out["sl"] = ex.create_stop_order(
-                    symbol, sl_side, qty, float(stop_px), params=p
-                )
+                out["sl"] = ex.create_stop_order(symbol, sl_side, qty, float(stop_px), params=p)
             except Exception:
                 try:
                     if hasattr(ex, "create_order"):
-                        out["sl"] = safe_create_order(
-                            ex, "stop", symbol, sl_side, qty, None, params=p
-                        )
+                        out["sl"] = safe_create_order(ex, "stop", symbol, sl_side, qty, None, params=p)
                     else:
                         out["sl"] = {"ok": False, "error": "sl create failed"}
                 except Exception:
@@ -338,16 +370,12 @@ def place_oco_ccxt_safe(
             try:
                 from order_utils import safe_create_order
 
-                out["sl"] = safe_create_order(
-                    ex, "stop", symbol, sl_side, qty, None, params=p
-                )
+                out["sl"] = safe_create_order(ex, "stop", symbol, sl_side, qty, None, params=p)
             except Exception:
                 try:
                     from order_utils import safe_create_order
 
-                    out["sl"] = safe_create_order(
-                        ex, "stop", symbol, sl_side, qty, float(stop_px)
-                    )
+                    out["sl"] = safe_create_order(ex, "stop", symbol, sl_side, qty, float(stop_px))
                 except Exception:
                     out["sl"] = {"ok": False, "error": "sl create failed"}
         else:

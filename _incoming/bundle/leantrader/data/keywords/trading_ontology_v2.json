@@ -1,0 +1,83 @@
+{
+  "price_action": [
+    "breakout",
+    "pullback",
+    "retest",
+    "fakeout",
+    "liquidity_sweep",
+    "orderblock",
+    "fair_value_gap"
+  ],
+  "indicators": [
+    "ema",
+    "sma",
+    "rsi",
+    "macd",
+    "adx",
+    "atr",
+    "bollinger_bands",
+    "stochastic"
+  ],
+  "patterns": [
+    "double_top",
+    "double_bottom",
+    "head_shoulders",
+    "triangle",
+    "flag",
+    "wedge",
+    "cup_handle",
+    "ichimoku_kumo_break"
+  ],
+  "microstructure": [
+    "hh_hl",
+    "lh_ll",
+    "eq_highs",
+    "eq_lows",
+    "stop_run",
+    "imbalance"
+  ],
+  "regime": [
+    "trend",
+    "range",
+    "vol_crush",
+    "high_vol",
+    "news"
+  ],
+  "risk": [
+    "atr_sl_tp",
+    "exposure_netting",
+    "daily_dd_lock",
+    "cooldown",
+    "position_sizing_kelly_sqrt"
+  ],
+  "execution": [
+    "market",
+    "limit",
+    "iceberg",
+    "vwap",
+    "twap",
+    "pov",
+    "post_only"
+  ],
+  "assets": [
+    "xauusd",
+    "majors_fx",
+    "minors_fx",
+    "btc",
+    "eth",
+    "alts"
+  ],
+  "sessions": [
+    "asia",
+    "london",
+    "ny"
+  ],
+  "analytics": [
+    "sharpe",
+    "max_drawdown",
+    "hit_rate",
+    "rr_distribution",
+    "latency",
+    "slippage"
+  ]
+}

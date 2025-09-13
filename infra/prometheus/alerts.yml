@@ -1,0 +1,72 @@
+groups:
+  - name: quantum-alerts
+    rules:
+      - alert: HighQuantumFallbackRate
+        expr: rate(METRIC_Q_FALLBACKS[10m]) > 0.1
+        for: 15m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Quantum fallback rate is elevated"
+          description: "Investigate Runtime availability or QPU queues."
+
+      - alert: SlowQAOA
+        expr: histogram_quantile(0.9, sum(rate(HIST_Q_SOLVE_MS_bucket[10m])) by (le)) > 1500
+        for: 15m
+        labels:
+          severity: warning
+        annotations:
+          summary: "QAOA p90 solve time > 1.5s"
+          description: "Consider lowering reps or switching to local fallback."
+      - alert: HighRejectRate
+        expr: REJECT_RATE > 0.05
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Reject rate > 5%"
+          description: "Investigate exchange connectivity, min notional, or order sizing."
+      - alert: SlippageTooHigh
+        expr: histogram_quantile(0.9, sum(rate(SLIPPAGE_BPS_bucket[10m])) by (le)) > 40
+        for: 15m
+        labels:
+          severity: warning
+        annotations:
+          summary: "p90 slippage > 40 bps"
+          description: "Check liquidity, venue selection, or throttling."
+
+      - alert: FlashCrashHedgeFired
+        expr: increase(flash_hedge_count_total[10m]) > 0
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Flash-crash hedge fired in last 10m"
+          description: "Investigate liquidity crash and hedging logic."
+
+      - alert: LiquidityBlocksHigh
+        expr: rate(LIQUIDITY_BLOCKS[10m]) > 5
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High rate of liquidity blocks"
+          description: "Orders frequently reduced/blocked by liquidity guard."
+
+      - alert: MempoolRiskHigh
+        expr: avg_over_time(mempool_risk[10m]) > 0.7
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Mempool risk high for 10m"
+          description: "Prefer private txs and tighter slippage."
+
+      - alert: HedgeDrift
+        expr: abs(sum by(asset) (net_exposure_usd) - sum by(asset) (hedge_notional_usd)) > 1e4
+        for: 15m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Net exposure and hedge drift detected"
+          description: "Check hedger and exposure computation."

@@ -1,0 +1,22 @@
+apiVersion: 1
+contactPoints:
+  - orgId: 1
+    name: slack-leantraderbot
+    receivers:
+      - uid: slack-default
+        type: slack
+        settings:
+          url: $__env{SLACK_WEBHOOK_URL}
+          recipient: ""
+          username: "LeanTraderBot Alerts"
+          icon_emoji: ":satellite:"
+          title: '{{ template "default.title" . }}'
+          text: >-
+            *Alert:* {{ .CommonLabels.alertname }}
+            *Severity:* {{ .CommonLabels.severity }}
+            *Status:* {{ .Status }}
+            *Summary:* {{ .Annotations.summary }}
+            *Description:* {{ .Annotations.description }}
+            *StartsAt:* {{ .Alerts | first | .StartsAt }}
+            *EndsAt:* {{ .Alerts | first | .EndsAt }}
+

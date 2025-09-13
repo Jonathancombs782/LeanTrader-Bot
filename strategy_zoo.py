@@ -72,12 +72,7 @@ def structure_uptrend(h: pd.Series, low: pd.Series, look=5):
     # Higher highs and higher lows over last window
     hh = h.iloc[-look:].dropna()
     ll = low.iloc[-look:].dropna()
-    return (
-        len(hh) >= 2
-        and len(ll) >= 2
-        and (hh.iloc[-1] > hh.iloc[0])
-        and (ll.iloc[-1] > ll.iloc[0])
-    )
+    return len(hh) >= 2 and len(ll) >= 2 and (hh.iloc[-1] > hh.iloc[0]) and (ll.iloc[-1] > ll.iloc[0])
 
 
 def nearest_support_distance(close_val: float, support_levels: np.ndarray) -> float:
@@ -194,9 +189,7 @@ class EvoCombo(BaseStrategy):
             },
             index=out.index,
         )
-        z = (feats - feats.rolling(100).mean()) / (
-            feats.rolling(100).std(ddof=0) + 1e-9
-        )
+        z = (feats - feats.rolling(100).mean()) / (feats.rolling(100).std(ddof=0) + 1e-9)
         w = pd.Series(rng.normal(size=z.shape[1]), index=z.columns)
         score = (z * w).sum(axis=1)
         thr = score.rolling(200).quantile(0.7)
@@ -261,9 +254,7 @@ class NakedFXPriceAction(BaseStrategy):
         # compute proximity to support (per bar)
         dist_support = []
         for i in range(len(d)):
-            dist_support.append(
-                nearest_support_distance(float(d["close"].iloc[i]), sup_levels_arr)
-            )
+            dist_support.append(nearest_support_distance(float(d["close"].iloc[i]), sup_levels_arr))
         d["dist_support"] = np.array(dist_support)
 
         # pattern detections
@@ -287,16 +278,12 @@ class NakedFXPriceAction(BaseStrategy):
                     p["pin_body_max"],
                 )
             )
-            eng_bull.append(
-                bullish_engulf(prev_o.iloc[i], prev_c.iloc[i], o.iloc[i], c.iloc[i])
-            )
+            eng_bull.append(bullish_engulf(prev_o.iloc[i], prev_c.iloc[i], o.iloc[i], c.iloc[i]))
         d["pin_bull"] = pd.Series(pin_bull, index=d.index)
         d["eng_bull"] = pd.Series(eng_bull, index=d.index)
 
         # near support?
-        d["near_sup"] = d["dist_support"] <= (
-            p["zone_touch_atr"] * d["atr"].clip(lower=1e-9)
-        )
+        d["near_sup"] = d["dist_support"] <= (p["zone_touch_atr"] * d["atr"].clip(lower=1e-9))
 
         # breakout above last swing high + buffer
         buffer_px = p["breakout_buffer_atr"] * d["atr"]
@@ -306,20 +293,14 @@ class NakedFXPriceAction(BaseStrategy):
 
         # context selection
         if str(p["use_context"]).lower() == "structure":
-            ctx = d.index.map(
-                lambda idx: structure_uptrend(
-                    d["high"].loc[:idx], d["low"].loc[:idx], look=5
-                )
-            )
+            ctx = d.index.map(lambda idx: structure_uptrend(d["high"].loc[:idx], d["low"].loc[:idx], look=5))
             ctx = pd.Series(ctx.values, index=d.index)
         else:
             ctx = ema_up
 
         # final signal: context + (pin OR engulf) near support  OR breakout
         d["long_signal"] = (
-            ctx
-            & d["near_sup"]
-            & (d["pin_bull"] | (d["eng_bull"] if p["use_engulfing"] else False))
+            ctx & d["near_sup"] & (d["pin_bull"] | (d["eng_bull"] if p["use_engulfing"] else False))
         ) | d["breakout"]
 
         return d

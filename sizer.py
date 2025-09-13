@@ -90,10 +90,7 @@ def suggest_size(signal: Dict[str, Any], equity_usd: float) -> Dict[str, Any]:
 
     # Leverage suggestion (for futures)
     lev = None
-    if (
-        str(out.get("market", "")).startswith("crypto-")
-        and os.getenv("EXCHANGE_MODE", "spot") == "linear"
-    ):
+    if str(out.get("market", "")).startswith("crypto-") and os.getenv("EXCHANGE_MODE", "spot") == "linear":
         # Use ATR% proxy from TP ladder (if present) or ATR note in context
         atr_pct = abs(price - sl) / max(1e-9, price)  # ~1R as ATR-ish
         # map atr% to leverage: smaller ATR% -> can size higher

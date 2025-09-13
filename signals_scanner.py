@@ -7,16 +7,50 @@ import os
 import time
 from typing import Any, Dict, List, Optional
 
-from mt5_adapter import bars_df as mt5_bars
-from mt5_adapter import mt5_init
-from news_adapter import (  # NEW  # noqa: F401  # intentionally kept
-    fetch_crypto_sentiment, fx_guard_for_symbol)
-from pattern_memory import (get_score,  # noqa: F401  # intentionally kept
-                            recall)
-from router import ExchangeRouter
-from signals_hub import (  # noqa: F401  # intentionally kept
-    analyze_symbol_ccxt, analyze_symbol_mt5, mtf_confirm)
-from signals_publisher import publish_batch
+
+# mt5_adapter is optional in some environments (CI, headless demo).
+# Use lazy, defensive helpers so importing this module won't raise.
+def _lazy_mt5_helpers():
+    try:
+        import importlib
+
+        mod = importlib.import_module("mt5_adapter")
+        return getattr(mod, "bars_df", None), getattr(mod, "mt5_init", None)
+    except Exception:
+        try:
+            import importlib.util
+            import sys
+            from pathlib import Path
+
+            repo_root = Path(__file__).resolve().parent
+            candidate = repo_root / "mt5_adapter.py"
+            if candidate.exists():
+                spec = importlib.util.spec_from_file_location("mt5_adapter", str(candidate))
+                mod = importlib.util.module_from_spec(spec)
+                sys.modules["mt5_adapter"] = mod
+                spec.loader.exec_module(mod)  # type: ignore
+                return getattr(mod, "bars_df", None), getattr(mod, "mt5_init", None)
+        except Exception:
+            pass
+
+    def mt5_bars(symbol, timeframe, limit=300):
+        import pandas as _pd
+
+        return _pd.DataFrame()
+
+    def mt5_init():
+        return None
+
+    return mt5_bars, mt5_init
+
+
+# Do not call _lazy_mt5_helpers() at module import time; call inside functions
+# to avoid import-time failures when mt5_adapter is missing or partially broken.
+from news_adapter import fetch_crypto_sentiment, fx_guard_for_symbol  # NEW  # noqa: F401,E402  # intentionally kept
+from pattern_memory import get_score, recall  # noqa: F401,E402  # intentionally kept
+from router import ExchangeRouter  # noqa: E402
+from signals_hub import analyze_symbol_ccxt, analyze_symbol_mt5, mtf_confirm  # noqa: F401,E402  # intentionally kept
+from signals_publisher import publish_batch  # noqa: E402
 
 
 def env_bool(k: str, d: bool) -> bool:
@@ -61,9 +95,7 @@ def _ok_liquidity(t: Dict[str, Any], min_qv: float) -> bool:
         return True
 
 
-def _ok_spread_atr(
-    t: Dict[str, Any], bars: List[List[float]], max_spread_bp: float, min_atr_bp: float
-) -> bool:
+def _ok_spread_atr(t: Dict[str, Any], bars: List[List[float]], max_spread_bp: float, min_atr_bp: float) -> bool:
     try:
         bid = float(t.get("bid") or 0.0)
         ask = float(t.get("ask") or 0.0)
@@ -111,9 +143,7 @@ def _scan_ccxt(
             return None
         if not _ok_spread_atr(t, bars, max_spread_bp, min_atr_bp):
             return None
-        sig = analyze_symbol_ccxt(
-            bars, tf, sym, market="linear" if kind == "linear" else "spot"
-        )
+        sig = analyze_symbol_ccxt(bars, tf, sym, market="linear" if kind == "linear" else "spot")
         # ensure confidence exists; if missing use quality
         try:
             if sig is None:
@@ -138,6 +168,7 @@ def _scan_ccxt(
 
 def _scan_fx(sym: str, tf: str, limit: int) -> Optional[Dict[str, Any]]:
     try:
+        mt5_bars, mt5_init = _lazy_mt5_helpers()
         bars = mt5_bars(sym, TF_MAP_MT5.get(tf, "M5"), limit=limit)
         if not bars:
             return None
@@ -173,19 +204,29 @@ def run_once(args) -> List[Dict[str, Any]]:
             "confidence": float(plan.get("size", plan.get("confidence", 0.0)) or 0.0),
             "tf": args.tf,
             "market": "crypto",
-            "context": plan.get("context", ["UltraCore god mode"])
-            or ["UltraCore god mode"],
+            "context": plan.get("context", ["UltraCore god mode"]) or ["UltraCore god mode"],
         }
         out.append(sig)
 
     out.sort(key=lambda s: float(s.get("confidence", 0.0)), reverse=True)
 
+    # Optional: enrich signals with hype_score feature from scanners.hype_radar
+    try:
+        if env_bool("HYPE_RADAR_ENABLED", False) and out:
+            from scanners.hype_radar import hype_score as _hype_score
+
+            symbols = [str(s.get("symbol", "")).upper() for s in out]
+            scores = _hype_score(symbols)
+            for s in out:
+                sym = str(s.get("symbol", "")).upper()
+                if sym in scores:
+                    s["hype_score"] = float(scores[sym])
+    except Exception:
+        pass
+
     # Optional: when publishing, send Telegram messages with small chart images
     try:
-        do_publish = (
-            bool(getattr(args, "publish", False))
-            or os.getenv("TELEGRAM_ENABLED", "false").lower() == "true"
-        )
+        do_publish = bool(getattr(args, "publish", False)) or os.getenv("TELEGRAM_ENABLED", "false").lower() == "true"
         if do_publish:
             import charting
             from notifier import TelegramNotifier
@@ -206,16 +247,12 @@ def run_once(args) -> List[Dict[str, Any]]:
                             bars = []
 
                         # entry / qty / sl / tp best-effort
-                        entry = float(
-                            plan.get("entry") or (bars[-1][4] if bars else 0.0)
-                        )
+                        entry = float(plan.get("entry") or (bars[-1][4] if bars else 0.0))
                         qty = float(plan.get("qty") or plan.get("size") or 0)
                         sl = plan.get("sl")
                         tp = plan.get("tp1") or plan.get("tp") or None
                         reasons = plan.get("context") or []
-                        quality = float(
-                            plan.get("confidence") or plan.get("quality") or 0.0
-                        )
+                        quality = float(plan.get("confidence") or plan.get("quality") or 0.0)
 
                         # build a marker at the latest bar
                         entries = []
@@ -277,9 +314,7 @@ def run_once(args) -> List[Dict[str, Any]]:
 
 # ---------- CLI ----------
 def main():
-    p = argparse.ArgumentParser(
-        description="News-aware multi-market scanner (spot + futures + FX)"
-    )
+    p = argparse.ArgumentParser(description="News-aware multi-market scanner (spot + futures + FX)")
     p.add_argument(
         "--tf",
         default=os.getenv("SCAN_TF", "5m"),
@@ -293,9 +328,10 @@ def main():
 
     if env_bool("FX_ENABLE", True):
         try:
+            _, mt5_init = _lazy_mt5_helpers()
             mt5_init()
-        except Exception as e:
-            print("MT5 init warning:", e)
+        except Exception as _e:
+            print("MT5 init warning:", _e)
 
     def cycle():
         sigs = run_once(args)
@@ -314,8 +350,8 @@ def main():
         while True:
             try:
                 cycle()
-            except Exception as e:
-                print("scan error:", e)
+            except Exception as _e:
+                print("scan error:", _e)
             time.sleep(args.repeat)
     else:
         cycle()

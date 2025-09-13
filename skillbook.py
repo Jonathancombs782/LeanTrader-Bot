@@ -24,9 +24,7 @@ def _save(d: Dict) -> None:
     os.replace(tmp, _PATH)
 
 
-def update_vol_stats(
-    market: str, symbol: str, tf: str, atr_pct: float, bbw: float
-) -> None:
+def update_vol_stats(market: str, symbol: str, tf: str, atr_pct: float, bbw: float) -> None:
     """
     Simple EMA-style memory of recent vol per (market,symbol,tf).
     """
@@ -42,9 +40,7 @@ def update_vol_stats(
     _save(d)
 
 
-def personalized_thresholds(
-    symbol: str, base_atr_th: float, base_bbw_th: float
-) -> Tuple[float, float]:
+def personalized_thresholds(symbol: str, base_atr_th: float, base_bbw_th: float) -> Tuple[float, float]:
     """
     For very volatile symbols (e.g., XAUUSD, BTC/USDT), nudge thresholds upward
     so the bot trades only in cleaner impulses; for quiet symbols, lower them a bit.

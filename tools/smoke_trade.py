@@ -3,6 +3,7 @@
 This script forces the router into `paper` backend and attempts a sample order.
 It writes a persistent log to `runtime/logs/smoke_trade.txt` showing the results.
 """
+
 from __future__ import annotations
 
 import os
@@ -15,8 +16,8 @@ def _write(lines: list[str]) -> None:
     p = Path("runtime") / "logs" / "smoke_trade.txt"
     p.parent.mkdir(parents=True, exist_ok=True)
     with p.open("w", encoding="utf-8") as f:
-        for l in lines:
-            f.write(l + "\n")
+        for line in lines:
+            f.write(line + "\n")
 
 
 def main() -> int:
@@ -49,10 +50,10 @@ def main() -> int:
     ts2 = time.strftime("%Y-%m-%d %H:%M:%S")
     lines.append(f"smoke_trade done {ts2}")
     _write(lines)
-    for l in lines:
-        print(l)
+    for line in lines:
+        print(line)
     return 0
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     raise SystemExit(main())

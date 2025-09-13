@@ -1,0 +1,69 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: lt-supervisor
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: lt-supervisor
+  template:
+    metadata:
+      labels:
+        app: lt-supervisor
+    spec:
+      containers:
+        - name: supervisor
+          image: your-registry/leantrader:latest
+          command: ["python", "-m", "cli.cluster_node", "--role", "standby"]
+          env:
+            - name: REDIS_URL
+              valueFrom:
+                secretKeyRef:
+                  name: redis
+                  key: url
+          ports:
+            - containerPort: 8081
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 8081
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /readyz
+              port: 8081
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          restartPolicy: Always
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: lt-supervisor-hpa
+spec:
+  minReplicas: 2
+  maxReplicas: 5
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: lt-supervisor
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 70
+---
+apiVersion: coordination.k8s.io/v1
+kind: Lease
+metadata:
+  name: lt-supervisor-lease
+spec:
+  holderIdentity: ""
+  leaseDurationSeconds: 30
+  acquireTime: null
+  renewTime: null
+

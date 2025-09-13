@@ -20,9 +20,7 @@ from bs4 import BeautifulSoup
 
 
 class UltraScout:
-    def __init__(
-        self, max_threads: Optional[int] = None, user_agent: Optional[str] = None
-    ):
+    def __init__(self, max_threads: Optional[int] = None, user_agent: Optional[str] = None):
         self.sources = [
             "https://www.investing.com/news/cryptocurrency-news",
             "https://cryptopanic.com/news",
@@ -48,19 +46,14 @@ class UltraScout:
         self.session = requests.Session()
         self.session.headers.update(
             {
-                "User-Agent": user_agent
-                or os.getenv(
-                    "ULTRA_USER_AGENT", "UltraScout/1.0 (+https://example.com)"
-                ),
+                "User-Agent": user_agent or os.getenv("ULTRA_USER_AGENT", "UltraScout/1.0 (+https://example.com)"),
                 "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
             }
         )
         self.request_timeout = float(os.getenv("ULTRA_REQUEST_TIMEOUT", "8.0"))
 
         # concurrency
-        self.max_threads = int(
-            max_threads or int(os.getenv("ULTRA_SCOUT_THREADS", "4"))
-        )
+        self.max_threads = int(max_threads or int(os.getenv("ULTRA_SCOUT_THREADS", "4")))
         self._lock = threading.Lock()
 
         # optional components (lazy)
@@ -88,9 +81,7 @@ class UltraScout:
             try:
                 from sklearn.ensemble import IsolationForest
 
-                self._anomaly_detector = IsolationForest(
-                    contamination=0.05, random_state=0
-                )
+                self._anomaly_detector = IsolationForest(contamination=0.05, random_state=0)
             except Exception:
                 self._anomaly_detector = None
         return self._anomaly_detector
@@ -161,9 +152,7 @@ class UltraScout:
                 return random.uniform(-1, 2)
 
             study = optuna.create_study(direction="maximize")
-            study.optimize(
-                objective, n_trials=int(os.getenv("ULTRA_BACKTEST_TRIALS", "8"))
-            )
+            study.optimize(objective, n_trials=int(os.getenv("ULTRA_BACKTEST_TRIALS", "8")))
             return {
                 "strategy": strategy,
                 "params": study.best_params,
@@ -176,9 +165,7 @@ class UltraScout:
                 "score": random.uniform(-1, 2),
             }
 
-    def swarm_collaboration(
-        self, signals: List[Dict[str, Any]]
-    ) -> List[Dict[str, Any]]:
+    def swarm_collaboration(self, signals: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
         agents = int(os.getenv("ULTRA_SWARM_AGENTS", "5"))
         out = []
         for sig in signals:
@@ -194,29 +181,19 @@ class UltraScout:
         alerts = []
         try:
             if det:
-                features = [
-                    [float(t.get("pnl", 0) or 0), float(t.get("volume", 0) or 0)]
-                    for t in trades
-                ]
+                features = [[float(t.get("pnl", 0) or 0), float(t.get("volume", 0) or 0)] for t in trades]
                 preds = det.fit_predict(features)
-                alerts += [
-                    f"Anomaly in trade {i}: {trades[i]}"
-                    for i, p in enumerate(preds)
-                    if p == -1
-                ]
+                alerts += [f"Anomaly in trade {i}: {trades[i]}" for i, p in enumerate(preds) if p == -1]
             alerts += [
                 f"High PnL detected: {t.get('symbol', '?')} {t.get('pnl')}"
                 for t in trades
-                if abs(float(t.get("pnl", 0) or 0))
-                > float(os.getenv("ULTRA_PNL_ALERT", "10000"))
+                if abs(float(t.get("pnl", 0) or 0)) > float(os.getenv("ULTRA_PNL_ALERT", "10000"))
             ]
         except Exception:
             # fallback simple check
             for t in trades:
                 if abs(float(t.get("pnl", 0) or 0)) > 10000:
-                    alerts.append(
-                        f"High PnL detected: {t.get('symbol', '?')} {t.get('pnl')}"
-                    )
+                    alerts.append(f"High PnL detected: {t.get('symbol', '?')} {t.get('pnl')}")
         return alerts
 
     def broker_api_integration(self, broker_name: str) -> Dict[str, Any]:
@@ -286,9 +263,7 @@ class UltraScout:
     # -------------------------
     # News / social scraping
     # -------------------------
-    def fetch_news(
-        self, sources: Optional[List[str]] = None, max_per_source: int = 10
-    ) -> List[str]:
+    def fetch_news(self, sources: Optional[List[str]] = None, max_per_source: int = 10) -> List[str]:
         sources = sources if sources is not None else list(self.sources)
         headlines: List[str] = []
 
@@ -389,9 +364,7 @@ class UltraScout:
         neg_words = ["bear", "dump", "crash", "loss", "risk", "fear", "selloff"]
         out = {}
         for t in texts:
-            s = sum(t.lower().count(w) for w in pos_words) - sum(
-                t.lower().count(w) for w in neg_words
-            )
+            s = sum(t.lower().count(w) for w in pos_words) - sum(t.lower().count(w) for w in neg_words)
             out[t] = float(s)
         return out
 
@@ -462,9 +435,7 @@ class UltraScout:
                 return "bear"
         except Exception:
             pass
-        fast = (
-            float(np.mean(prices[-5:])) if len(prices) >= 5 else float(np.mean(prices))
-        )
+        fast = float(np.mean(prices[-5:])) if len(prices) >= 5 else float(np.mean(prices))
         slow = float(np.mean(prices[-20:])) if len(prices) >= 20 else fast
         if fast > slow:
             return "bull"
@@ -482,12 +453,7 @@ class UltraScout:
         self.patterns = patterns
         self.sentiment = sentiment
         # generate synthetic trend samples if no price data available
-        self.trends = list(
-            {
-                self.detect_trends([random.uniform(0.9, 1.1) for _ in range(30)])
-                for _ in range(5)
-            }
-        )
+        self.trends = list({self.detect_trends([random.uniform(0.9, 1.1) for _ in range(30)]) for _ in range(5)})
         self.last_update = time.time()
         # swarm & satellite placeholders
         patterns = self.swarm_ai_decision(patterns)

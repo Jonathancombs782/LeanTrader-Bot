@@ -12,9 +12,7 @@ except Exception:  # pragma: no cover
     ccxt = None
 
 USER_AGENT = (
-    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
-    "AppleWebKit/537.36 (KHTML, like Gecko) "
-    "Chrome/124.0 Safari/537.36"
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) " "AppleWebKit/537.36 (KHTML, like Gecko) " "Chrome/124.0 Safari/537.36"
 )
 
 # ---------------------------------------------------------------------
@@ -50,10 +48,7 @@ def _build_ex(ex_id: str):
         from router import ExchangeRouter
 
         router = ExchangeRouter()
-        if (
-            getattr(router, "ex", None)
-            and getattr(router.ex, "id", "").lower() == ex_id.lower()
-        ):
+        if getattr(router, "ex", None) and getattr(router.ex, "id", "").lower() == ex_id.lower():
             return router
     except Exception:
         pass
@@ -86,10 +81,7 @@ def _map_symbol_for(ex_id: str, symbol: str) -> str:
 
     quote = quote.upper()
     # Most crypto venues want USDT
-    if (
-        ex_id in ("binanceus", "binance", "bybit", "okx", "kucoin", "gateio")
-        and quote == "USD"
-    ):
+    if ex_id in ("binanceus", "binance", "bybit", "okx", "kucoin", "gateio") and quote == "USD":
         return f"{base}/USDT"
     return symbol
 
@@ -148,23 +140,21 @@ def fetch_ohlcv_router(
                 rows = ex_primary.safe_fetch_ohlcv(s, timeframe=timeframe, limit=limit, since=since)  # type: ignore[arg-type]
                 if rows:
                     return rows
-            except Exception as e:
-                print(f"[data_sources] safe_fetch_ohlcv primary failed: {e}")
+            except Exception as _e:
+                print(f"[data_sources] safe_fetch_ohlcv primary failed: {_e}")
                 # fall through to try direct fetch
         try:
-            rows = ex_primary.fetch_ohlcv(
-                s, timeframe=timeframe, limit=limit, since=since
-            )
+            rows = ex_primary.fetch_ohlcv(s, timeframe=timeframe, limit=limit, since=since)
             if rows:
                 return rows
             tried.append(primary_id)
-        except Exception as e:
+        except Exception as _e:
             tried.append(primary_id)
             # Log the error and continue to fallback routes; do not re-raise to avoid crashing callers
-            print(f"[data_sources] primary fetch_ohlcv failed for {primary_id}: {e}")
-    except Exception as e:
+            print(f"[data_sources] primary fetch_ohlcv failed for {primary_id}: {_e}")
+    except Exception as _e:
         tried.append(primary_id)
-        if not _is_geo_or_cred_error(e):
+        if not _is_geo_or_cred_error(_e):
             # Different error -> surface it
             raise
 
@@ -177,12 +167,10 @@ def fetch_ohlcv_router(
             rows = ex.fetch_ohlcv(s, timeframe=timeframe, limit=limit, since=since)
             if rows:
                 return rows
-        except Exception as e:  # pragma: no cover
-            last_err = e
+        except Exception as _e:  # pragma: no cover
+            last_err = _e
             tried.append(ex_id)
             continue
     # If we reach here no route returned data; return empty list rather than raise so callers can handle gracefully
-    print(
-        f"[data_sources] fetch_ohlcv_router no data for {symbol}@{timeframe}; tried={tried}; last_err={last_err}"
-    )
+    print(f"[data_sources] fetch_ohlcv_router no data for {symbol}@{timeframe}; tried={tried}; last_err={last_err}")
     return []

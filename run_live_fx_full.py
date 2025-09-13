@@ -211,6 +211,7 @@ def main():
     # local imports to avoid top-level E402 warnings
     import charting
     from news_adapter import fx_guard_for_symbol
+    from notifier import TelegramNotifier
 
     mt5_init()
     notif = TelegramNotifier()
@@ -244,14 +245,8 @@ def main():
                     # trailing SL
                     d_atr = float(atr(df, 14).iloc[-1])
                     if args.trail_mult > 0 and d_atr > 0:
-                        new_sl = (
-                            best - args.trail_mult * d_atr
-                            if side == "buy"
-                            else best + args.trail_mult * d_atr
-                        )
-                        if (side == "buy" and new_sl > st["sl"]) or (
-                            side == "sell" and new_sl < st["sl"]
-                        ):
+                        new_sl = best - args.trail_mult * d_atr if side == "buy" else best + args.trail_mult * d_atr
+                        if (side == "buy" and new_sl > st["sl"]) or (side == "sell" and new_sl < st["sl"]):
                             if args.live and modify_sl(sym, new_sl):
                                 st["sl"] = new_sl
 
@@ -295,9 +290,7 @@ def main():
                     if guard["bias"] != 0:
                         want = "buy" if guard["bias"] > 0 else "sell"
                         if sig["side"] != want:
-                            notif.note(
-                                f"🟡 {sym}: skipped by news bias ({guard['reason']})"
-                            )
+                            notif.note(f"🟡 {sym}: skipped by news bias ({guard['reason']})")
                             continue
 
                     lots = float(args.lots)
@@ -338,10 +331,7 @@ def main():
                                     df,
                                     entries=[
                                         {
-                                            "ts": int(
-                                                df["timestamp"].iloc[-1].timestamp()
-                                                * 1000
-                                            ),
+                                            "ts": int(df["timestamp"].iloc[-1].timestamp() * 1000),
                                             "price": float(df["close"].iloc[-1]),
                                             "side": sig["side"],
                                         }

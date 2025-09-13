@@ -1,0 +1,25 @@
+name: Auto Throttle Ensemble Lambda
+on:
+  workflow_dispatch: {}
+
+jobs:
+  throttle:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install project (if needed)
+        run: |
+          python -m pip install --upgrade pip
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+      - name: Set Lambda Cap 0.4
+        run: |
+          python -c "from ops.auto_throttle import set_lambda_cap; set_lambda_cap(0.4); print('cap set 0.4')"
+      - name: Clear Cap
+        run: |
+          python -c "from ops.auto_throttle import clear_lambda_cap; clear_lambda_cap(); print('cap cleared')"
+

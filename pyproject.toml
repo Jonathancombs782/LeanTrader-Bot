@@ -1,0 +1,85 @@
+[project]
+name = "leantrader"
+version = "0.1.0"
+description = "LeanTrader: evolving FX bot with DSL, RAG research, GA alpha factory, and meta-routing"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+  "pandas>=2.2",
+  "numpy>=1.26",
+  "scikit-learn>=1.5",
+  "scipy>=1.13",
+  "statsmodels>=0.14",
+  "pydantic>=2.8",
+  "pyyaml>=6.0",
+  "tenacity>=8.5",
+  "tiktoken>=0.7.0",
+  "matplotlib>=3.9",
+  "networkx>=3.3",
+  "numba>=0.60",
+  "requests>=2.32",
+  "beautifulsoup4>=4.12",
+  "fastapi>=0.112",
+  "uvicorn>=0.30",
+  "ccxt>=4.3",
+  "aiohttp>=3.9",
+  "redis>=5.0",
+  "python-multipart>=0.0.9",
+  "cryptography>=43.0",
+  "python-dotenv>=1.0"
+]
+
+[project.optional-dependencies]
+torch = ["torch"]
+tensorflow = ["tensorflow"]
+gym = ["gym"]
+sb3 = ["stable-baselines3"]
+transformers = ["transformers"]
+kivy = ["kivy"]
+qiskit = ["qiskit"]
+openai = ["openai"]
+optuna = ["optuna"]
+xgboost = ["xgboost"]
+
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+addopts = "-q"
+
+[tool.black]
+line-length = 120
+target-version = ["py310", "py311"]
+extend-exclude = '''
+(
+  ^\.venv/
+| ^runtime/
+| ^tools/experimental/
+)
+'''
+
+[tool.isort]
+profile = "black"
+line_length = 120
+skip = [".venv", "runtime"]
+
+[tool.ruff]
+line-length = 120
+target-version = "py311"
+extend-exclude = [".venv", "runtime", "runtime/backups", "_incoming", "build", "dist", "**/*.ipynb", "src/leantrader/**/notebooks"]
+fix = true
+
+[tool.ruff.lint]
+extend-select = ["E", "F", "W"]
+ignore = ["E203", "E501"]  # ignore long line errors for now to speed up fixes
+unfixable = ["E711", "E712"]
+
+[tool.ruff.lint.per-file-ignores]
+"tools/*.py" = ["E402", "F401", "F841", "E741"]
+"runtime/*.py" = ["E402", "F401", "F841"]
+"tests/*.py" = ["E402", "F401", "F841"]
+"src/leantrader/features/ta.py" = ["E741", "F841"]
+"tools/close_open_trades.py" = ["F821"]
+"tools/web_crawler.py" = ["F811"]

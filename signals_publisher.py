@@ -7,16 +7,6 @@ Advanced signal publisher
 - NDJSON queue (daily roll)
 - Optional HTTPS webhook (HMAC-SHA256)
 - Telegram push via tg_utils.send_signal(title, lines)
-
-ENV (defaults):
-  SIGNALS_QUEUE_DIR=runtime
-  SIGNALS_QUEUE_PREFIX=signals
-  SIGNALS_ROLL_DAILY=true
-  SIGNALS_DEDUPE_WINDOW_SEC=300
-  SIGNALS_RATE_PER_MIN=60
-  SIGNALS_MIN_CONF=0.0
-  SIGNALS_WEBHOOK_URL=
-  SIGNALS_WEBHOOK_SECRET=
 """
 
 from __future__ import annotations
@@ -25,7 +15,6 @@ import hashlib
 import hmac
 import json
 import os
-import threading
 import time
 from datetime import datetime
 from pathlib import Path
@@ -36,22 +25,19 @@ import requests  # make sure it's installed in your venv
 
 # ---- optional memory hooks (safe if absent) ----
 try:
-    from pattern_memory import \
-        record as pm_record  # (symbol, tf, df_on_entry, entry_price, meta)
+    from pattern_memory import record as pm_record  # (symbol, tf, df_on_entry, entry_price, meta)
 except Exception:
     pm_record = None
 
 try:
     # if you maintain outcomes elsewhere you can import your writer here
-    from pattern_memory import \
-        set_outcome as pm_set_outcome  # (symbol, tf, entry_ts, outcome, label)
+    from pattern_memory import set_outcome as pm_set_outcome  # (symbol, tf, entry_ts, outcome, label)
 except Exception:
     pm_set_outcome = None
 
 # ---- Telegram helper (safe no-op if disabled) ----
 try:
-    from tg_utils import \
-        send_signal as tg_send  # expects (title: str, lines: list[str])
+    from tg_utils import send_signal as tg_send  # expects (title: str, lines: list[str])
 except Exception:
 
     def tg_send(_: str, __: List[str]) -> bool:
@@ -66,11 +52,28 @@ DEDUP_S: int = int(os.getenv("SIGNALS_DEDUPE_WINDOW_SEC", "300"))
 RATE_PM: int = int(os.getenv("SIGNALS_RATE_PER_MIN", "60"))
 MINCONF: float = float(os.getenv("SIGNALS_MIN_CONF", "0.0"))
 
+# Ultra Pro mode toggles (opt-in via env)
+ULTRA_PRO_MODE: bool = os.getenv("ULTRA_PRO_MODE", "false").strip().lower() in ("1", "true", "yes")
+ULTRA_PRO_MINCONF: float = float(os.getenv("ULTRA_PRO_MINCONF", "0.7"))
+ULTRA_PRO_INLINE: bool = os.getenv("ULTRA_PRO_INLINE", "true").strip().lower() in ("1", "true", "yes")
+ULTRA_PRO_PRIOR_WEIGHT: float = float(os.getenv("ULTRA_PRO_PRIOR_WEIGHT", "0.25"))
+
 WEBHOOK_URL = os.getenv("SIGNALS_WEBHOOK_URL", "").strip()
 WEBHOOK_SECRET = os.getenv("SIGNALS_WEBHOOK_SECRET", "").strip()
 
 SEEN_PATH = Q_DIR / "signals_seen.json"
 Q_DIR.mkdir(parents=True, exist_ok=True)
+CHART_DIR = Q_DIR / "charts"
+CHART_DIR.mkdir(parents=True, exist_ok=True)
+
+# Prefer clean confirm button helper if available
+try:
+    from tg_utils import build_confirm_buttons_clean as _build_confirm_buttons
+except Exception:
+    try:
+        from tg_utils import build_confirm_buttons as _build_confirm_buttons  # type: ignore
+    except Exception:
+        _build_confirm_buttons = None  # type: ignore
 
 
 # ------------ token bucket ------------
@@ -80,93 +83,21 @@ class _Bucket:
         self.tokens = float(self.capacity)
         self.rate = self.capacity / 60.0  # tokens per second
         self.last = time.time()
-        self.lock = threading.Lock()
 
     def allow(self) -> bool:
-        with self.lock:
-            now = time.time()
-            dt = now - self.last
-            self.last = now
-            self.tokens = min(self.capacity, self.tokens + dt * self.rate)
-            if self.tokens >= 1.0:
-                self.tokens -= 1.0
-                return True
-            return False
+        now = time.time()
+        elapsed = now - self.last
+        # refill tokens
+        self.tokens = min(self.capacity, self.tokens + elapsed * self.rate)
+        self.last = now
+        if self.tokens >= 1.0:
+            self.tokens -= 1.0
+            return True
+        return False
 
 
+# instantiate module-level bucket
 _BUCKET = _Bucket(RATE_PM)
-
-
-# ------------ de-dupe store ------------
-def _load_seen() -> Dict[str, float]:
-    try:
-        if SEEN_PATH.exists():
-            with open(SEEN_PATH, "r", encoding="utf-8") as f:
-                return json.load(f)
-    except Exception:
-        pass
-    return {}
-
-
-def _save_seen(seen: Dict[str, float]) -> None:
-    try:
-        cutoff = time.time() - DEDUP_S
-        slim = {k: v for k, v in seen.items() if v >= cutoff}
-        with open(SEEN_PATH, "w", encoding="utf-8") as f:
-            json.dump(slim, f)
-    except Exception:
-        pass
-
-
-# ------------ helpers ------------
-def _fingerprint(sig: Dict[str, Any]) -> str:
-    core = {
-        "market": sig.get("market"),
-        "symbol": sig.get("symbol"),
-        "tf": sig.get("tf"),
-        "side": sig.get("side"),
-        "entry": round(float(sig.get("entry", 0.0)), 6),
-        "tp1": round(float(sig.get("tp1", 0.0)), 6),
-        "tp2": round(float(sig.get("tp2", 0.0)), 6),
-        "tp3": round(float(sig.get("tp3", 0.0)), 6),
-        "sl": round(float(sig.get("sl", 0.0)), 6),
-    }
-    s = json.dumps(core, sort_keys=True, separators=(",", ":"))
-    return hashlib.sha256(s.encode("utf-8")).hexdigest()
-
-
-def _validate_and_normalize(sig: Dict[str, Any]) -> Dict[str, Any]:
-    req = [
-        "market",
-        "symbol",
-        "tf",
-        "side",
-        "entry",
-        "tp1",
-        "tp2",
-        "tp3",
-        "sl",
-        "confidence",
-    ]
-    miss = [k for k in req if k not in sig]
-    if miss:
-        raise ValueError(f"missing keys: {miss}")
-    out = dict(sig)
-    out["market"] = str(out["market"]).lower()
-    out["symbol"] = str(out["symbol"]).upper()
-    out["tf"] = str(out["tf"]).lower()
-    out["side"] = str(out["side"]).lower()
-    for k in ["entry", "tp1", "tp2", "tp3", "sl", "confidence"]:
-        out[k] = float(out[k])
-    if not (0.0 <= out["confidence"] <= 1.0):
-        raise ValueError("confidence must be within [0,1]")
-    # optional
-    if "qty" in out:
-        out["qty"] = float(out["qty"])
-    if "context" not in out:
-        out["context"] = []
-    # passthrough extras: news bullets, reasons, df snapshot pointer, etc.
-    return out
 
 
 def _queue_path() -> Path:
@@ -197,13 +128,136 @@ def _post_webhook(payload: Dict[str, Any]) -> bool:
         if not ok:
             print("[webhook] failed:", r.status_code, r.text[:200])
         return ok
-    except Exception as e:
-        print("[webhook] error:", e)
+    except Exception as _e:
+        print("[webhook] error:", _e)
         return False
 
 
 def _fmt_price(x: float) -> str:
     return f"{x:.6f}".rstrip("0").rstrip(".")
+
+
+def _fingerprint(s: Dict[str, Any]) -> str:
+    """Create a stable fingerprint for a signal dict."""
+    try:
+        j = json.dumps({k: s.get(k) for k in sorted(s.keys())}, sort_keys=True, ensure_ascii=False)
+        return hashlib.sha1(j.encode("utf-8")).hexdigest()
+    except Exception:
+        return hashlib.sha1(str(s).encode("utf-8")).hexdigest()
+
+
+def _load_seen() -> Dict[str, float]:
+    if SEEN_PATH.exists():
+        try:
+            return json.loads(SEEN_PATH.read_text(encoding="utf-8"))
+        except Exception:
+            return {}
+    return {}
+
+
+def _save_seen(seen: Dict[str, float]) -> None:
+    try:
+        SEEN_PATH.write_text(json.dumps(seen, ensure_ascii=False), encoding="utf-8")
+    except Exception:
+        pass
+
+
+def _validate_and_normalize(sig: Dict[str, Any]) -> Dict[str, Any]:
+    """Minimal validation/normalization to keep behavior stable."""
+    out = dict(sig)
+    # ensure required fields exist with defaults
+    out.setdefault("symbol", "")
+    out.setdefault("side", "")
+    out.setdefault("entry", 0.0)
+    out.setdefault("sl", 0.0)
+    out.setdefault("tp1", 0.0)
+    out.setdefault("tp2", 0.0)
+    out.setdefault("tp3", 0.0)
+    out.setdefault("confidence", 0.0)
+    out.setdefault("market", "")
+    out.setdefault("tf", "")
+    # normalize types
+    try:
+        out["confidence"] = float(out.get("confidence", 0.0))
+    except Exception:
+        out["confidence"] = 0.0
+    return out
+
+
+def _q_emoji2(q: float) -> str:
+    """ASCII/emoji confidence badge based on env TELEGRAM_ASCII."""
+    ascii_only = os.getenv("TELEGRAM_ASCII", "false").strip().lower() in ("1", "true", "yes")
+    try:
+        q = float(q)
+    except Exception:
+        q = 0.0
+    q = max(0.0, min(1.0, q))
+    if ascii_only:
+        return f"Q{int(q*100):d}%"
+    return "🟢" if q >= 0.75 else "🟡" if q >= 0.5 else "🟠" if q >= 0.25 else "⚪"
+
+
+def _render_for_telegram2(s: Dict[str, Any]) -> Tuple[str, List[str]]:
+    """Clean renderer for Telegram message title + lines.
+
+    Keeps strings ASCII-safe when TELEGRAM_ASCII=true; otherwise uses mild unicode.
+    """
+    mkt = str(s.get("market", "")).upper()
+    tf = str(s.get("tf", "?"))
+    side = str(s.get("side", "?")).upper()
+    ascii_only = os.getenv("TELEGRAM_ASCII", "false").strip().lower() in ("1", "true", "yes")
+    sep = " | " if ascii_only else " · "
+    title = f"Signal{sep}{s.get('symbol', '')}{sep}{side}{sep}{tf}{sep}{mkt}"
+
+    entry = float(s.get("entry", 0.0))
+    sl = float(s.get("sl", 0.0))
+    tp1 = float(s.get("tp1", 0.0))
+    tp2 = float(s.get("tp2", 0.0))
+    tp3 = float(s.get("tp3", 0.0))
+
+    def _rr(tp: float) -> str:
+        try:
+            risk = abs(entry - sl)
+            if risk == 0:
+                return "n/a"
+            reward = abs(tp - entry)
+            return f"{(reward / risk):.2f}"
+        except Exception:
+            return "n/a"
+
+    lines: List[str] = []
+    lines.append(
+        f"Entry: {_fmt_price(entry)}  |  SL: {_fmt_price(sl)}  |  Q: {_q_emoji2(s.get('confidence', 0.0))} {float(s.get('confidence', 0.0)):.2f}"
+    )
+    lines.append(
+        f"TP1: {_fmt_price(tp1)} (RR {_rr(tp1)})  |  TP2: {_fmt_price(tp2)} (RR {_rr(tp2)})  |  TP3: {_fmt_price(tp3)} (RR {_rr(tp3)})"
+    )
+
+    ctx = s.get("context") or s.get("reasons") or s.get("bullets")
+    if ctx:
+        lines.append("")
+        lines.append("*Why this trade?*")
+        bullet = "- " if ascii_only else "• "
+        for c in list(ctx)[:6]:
+            lines.append(bullet + str(c))
+
+    base = s.get("symbol", "")
+    side_l = "buy" if str(s.get("side", "")).lower() == "buy" else "sell"
+    lines.append("")
+    lines.append(f"Quick: /{side_l} {base} <qty>   /flat {base}   /balance")
+
+    src = "MT5" if mkt == "FX" else "CCXT"
+    lines.append(f"_Source: {src} | TF: {tf}_")
+
+    try:
+        ts = int(s.get("ts", time.time()))
+        from datetime import datetime as _dt
+
+        lines.append(f"_Published: {_dt.utcfromtimestamp(ts).isoformat()}Z_")
+    except Exception:
+        pass
+
+    return title, lines
 
 
 def _q_emoji(q: float) -> str:
@@ -212,24 +266,58 @@ def _q_emoji(q: float) -> str:
 
 def _render_for_telegram(s: Dict[str, Any]) -> Tuple[str, List[str]]:
     mkt = s.get("market", "").upper()
-    title = f"🚀 Signal {s['symbol']} — {s['side'].upper()} ({mkt} {s.get('tf', '?')})"
-    lines = [
-        f"Entry: {_fmt_price(s['entry'])} | SL: {_fmt_price(s['sl'])}",
-        f"TP1: {_fmt_price(s['tp1'])} | TP2: {_fmt_price(s['tp2'])} | TP3: {_fmt_price(s['tp3'])}",
-        f"Quality: {_q_emoji(s['confidence'])} {s['confidence']:.2f}",
-    ]
+    tf = s.get("tf", "?")
+    side = s.get("side", "?").upper()
+    title = f"🚀 Signal — {s['symbol']} · {side} · {tf} · {mkt}"
+
+    entry = float(s.get("entry", 0.0))
+    sl = float(s.get("sl", 0.0))
+    tp1 = float(s.get("tp1", 0.0))
+    tp2 = float(s.get("tp2", 0.0))
+    tp3 = float(s.get("tp3", 0.0))
+
+    def _rr(tp: float) -> str:
+        try:
+            risk = abs(entry - sl)
+            if risk == 0:
+                return "n/a"
+            reward = abs(tp - entry)
+            return f"{(reward / risk):.2f}"
+        except Exception:
+            return "n/a"
+
+    lines: List[str] = []
+    # Header summary
+    lines.append(
+        f"Entry: {_fmt_price(entry)}  ·  SL: {_fmt_price(sl)}  ·  Q: {_q_emoji(s['confidence'])} {s['confidence']:.2f}"
+    )
+    lines.append(
+        f"TP1: {_fmt_price(tp1)} (RR {_rr(tp1)})  ·  TP2: {_fmt_price(tp2)} (RR {_rr(tp2)})  ·  TP3: {_fmt_price(tp3)} (RR {_rr(tp3)})"
+    )
+
+    # Rationale / context
     ctx = s.get("context") or s.get("reasons") or s.get("bullets")
     if ctx:
-        lines.append("*Context*")
+        lines.append("")
+        lines.append("*Why this trade?*")
         for c in list(ctx)[:6]:
             lines.append("• " + str(c))
-    # quick-tap helpers
+
+    # Quick action helpers
     base = s["symbol"]
     side_l = "buy" if s["side"] == "buy" else "sell"
     lines.append("")
-    lines.append(f"Tap: /{side_l} {base} <qty>   /flat {base}   /balance")
+    lines.append(f"Quick: /{side_l} {base} <qty>   /flat {base}   /balance")
+
     src = "MT5" if mkt == "FX" else "CCXT"
-    lines.append(f"_Source: {src} | TF: {s.get('tf', '?')}_")
+    lines.append(f"_Source: {src} | TF: {tf}_")
+
+    # Small footer (timestamped)
+    try:
+        ts = int(s.get("ts", time.time()))
+        lines.append(f"_Published: {datetime.utcfromtimestamp(ts).isoformat()}Z_")
+    except Exception:
+        pass
 
     return title, lines
 
@@ -247,11 +335,33 @@ def publish_signal(sig: Dict[str, Any]) -> Dict[str, Any]:
     ts = int(time.time())
     try:
         s = _validate_and_normalize(sig)
-    except Exception as e:
-        return {"ok": False, "error": f"validate: {e}"}
+    except Exception as _e:
+        return {"ok": False, "error": f"validate: {_e}"}
 
-    if s["confidence"] < MINCONF:
-        return {"ok": False, "id": None, "skipped_reason": f"conf<{MINCONF}"}
+    # Ultra Pro: read env toggles dynamically per-call (so tests and runtime can tweak without restart)
+    ultra_mode = os.getenv("ULTRA_PRO_MODE", "false").strip().lower() in ("1", "true", "yes")
+    ultra_minconf = float(os.getenv("ULTRA_PRO_MINCONF", str(ULTRA_PRO_MINCONF)))
+    ultra_prior_w = float(os.getenv("ULTRA_PRO_PRIOR_WEIGHT", str(ULTRA_PRO_PRIOR_WEIGHT)))
+    ultra_inline = os.getenv("ULTRA_PRO_INLINE", "true").strip().lower() in ("1", "true", "yes")
+
+    eff_minconf = max(MINCONF, ultra_minconf) if ultra_mode else MINCONF
+    if ultra_mode:
+        try:
+            from pattern_memory import get_score as _get_prior
+
+            prior = _get_prior(s) or {}
+            winrate = float(prior.get("winrate", 0.5))
+            prior_conf = 0.5 + max(0.0, min(1.0, winrate)) * 0.5
+            s["context"] = list(s.get("context") or [])
+            s["context"].insert(
+                0, f"Prior winrate {winrate*100:.1f}% avg_out {prior.get('avg_out', 0.0):.4f} n={prior.get('n', 0)}"
+            )
+            w = max(0.0, min(1.0, ultra_prior_w))
+            s["confidence"] = max(0.0, min(1.0, (1 - w) * float(s.get("confidence", 0.0)) + w * prior_conf))
+        except Exception:
+            pass
+    if s["confidence"] < eff_minconf:
+        return {"ok": False, "id": None, "skipped_reason": f"conf<{eff_minconf}"}
 
     fp = _fingerprint(s)
     s = dict(s, id=fp, ts=ts)
@@ -290,14 +400,123 @@ def publish_signal(sig: Dict[str, Any]) -> Dict[str, Any]:
     notified: Dict[str, Any] = {
         "rate_limited": False,
         "telegram": False,
+        "telegram_chart": False,
         "webhook": False,
     }
+    chart_url = None
+    chart_path = None
+    # --- chart generation (pro-grade candlestick) ---
+    try:
+        from charting import plot_candlestick
+
+        # Try to fetch an ohlcv snapshot if caller provided 'df' or 'ohlcv'
+        ohlcv = s.get("ohlcv") or s.get("df")
+        # If absent, try to fetch a tiny recent window via router if included (best-effort)
+        if ohlcv is None and s.get("market"):
+            # many callers embed a 'df' or rely on external router; we won't attempt network here
+            ohlcv = None
+
+        fname = f"{s['symbol'].replace('/', '_')}_{int(time.time())}.png"
+        chart_path = str((CHART_DIR / fname).resolve())
+        # plot_candlestick will fallback to a simple chart if no mplfinance
+        plot_candlestick(
+            s.get("symbol", ""),
+            ohlcv or [],
+            entries=[{"ts": s.get("ts") * 1000, "price": s.get("entry"), "side": s.get("side")}],
+            tps=[s.get("tp1"), s.get("tp2"), s.get("tp3")],
+            sl=s.get("sl"),
+            out_path=chart_path,
+        )
+        # local file path used for upload
+        chart_url = chart_path
+    except Exception:
+        chart_url = None
+
     if _BUCKET.allow():
         try:
-            title, lines = _render_for_telegram(s)
-            notified["telegram"] = bool(tg_send(title, lines))
-        except Exception as e:
-            print("[telegram] error:", e)
+            # Use sanitized renderer
+            try:
+                title, lines = _render_for_telegram2(s)
+            except Exception:
+                title, lines = ("Signal", [])
+
+            # market snapshot: try to generate an educative summary
+            try:
+                from charting import analyze_ohlcv
+
+                ohlcv = s.get("ohlcv") or s.get("df") or []
+                # best-effort: try to fetch a small OHLCV sample if missing
+                if not ohlcv:
+                    try:
+                        from tools.market_data import fetch_ohlcv_multi
+
+                        # try common exchanges quickly (best-effort)
+                        ex_used, rows = fetch_ohlcv_multi(
+                            ["binance", "bybit"], s.get("symbol"), timeframe=s.get("tf", "1m"), limit=150
+                        )
+                        ohlcv = rows
+                    except Exception:
+                        ohlcv = []
+                snap = analyze_ohlcv(ohlcv)
+                if snap:
+                    lines.insert(0, "*Market Snapshot*")
+                    lines.insert(
+                        1,
+                        f"Trend: {snap.get('trend')} ({snap.get('trend_score'):.4f}) | RSI: {snap.get('rsi')} | ATR: {snap.get('atr')}",
+                    )
+                    lines.insert(2, f"Momentum: {snap.get('momentum_pct')}% | Vol: {snap.get('volatility')}")
+            except Exception:
+                pass
+
+            sent_ok = False
+            if ultra_mode and ultra_inline and _build_confirm_buttons is not None:
+                try:
+                    from tg_utils import send_message_with_buttons, send_photo_with_buttons
+                except Exception:
+                    send_photo_with_buttons = None  # type: ignore
+                    send_message_with_buttons = None  # type: ignore
+                try:
+                    buttons = _build_confirm_buttons(fp, include_simulate=True, include_subscribe=True)  # type: ignore
+                except Exception:
+                    buttons = []
+                if buttons:
+                    if chart_url and send_photo_with_buttons:
+                        sent_ok = bool(send_photo_with_buttons(title, chart_url, buttons))
+                    elif send_message_with_buttons:
+                        text = title + ("\n\n" + "\n".join(lines) if lines else "")
+                        sent_ok = bool(send_message_with_buttons(text, buttons))
+            if not sent_ok:
+                notified["telegram"] = bool(tg_send(title, lines))
+            else:
+                notified["telegram"] = True
+
+            # Send chart image if available (skip if already sent with buttons in Ultra inline mode)
+            if chart_url and not (ultra_mode and ultra_inline and sent_ok):
+                try:
+                    from tg_utils import send_photo
+
+                    # photo caption: short trend overview
+                    caption = title
+                    try:
+                        if snap:
+                            caption = f"{title} — {snap.get('trend')} | RSI {snap.get('rsi')} | ATR {snap.get('atr')}"
+                    except Exception:
+                        pass
+                    # If CHART_PUBLIC_URL is set, construct the remote URL and send that
+                    public_base = os.getenv("CHART_PUBLIC_URL", "").strip()
+                    if public_base:
+                        import urllib.parse as _up
+
+                        rel = _up.quote(os.path.basename(chart_url))
+                        photo_remote = public_base.rstrip("/") + "/" + rel
+                        notified["telegram_chart"] = bool(send_photo(caption, photo_remote))
+                    else:
+                        # fallback to local multipart upload
+                        notified["telegram_chart"] = bool(send_photo(caption, chart_url))
+                except Exception as _e:
+                    print("[telegram chart] error:", _e)
+        except Exception as _e:
+            print("[telegram] error:", _e)
         notified["webhook"] = _post_webhook(s)
     else:
         notified["rate_limited"] = True
@@ -314,8 +533,8 @@ def publish_batch(signals: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
     for s in signals:
         try:
             out.append(publish_signal(s))
-        except Exception as e:
-            out.append({"ok": False, "error": str(e)})
+        except Exception as _e:
+            out.append({"ok": False, "error": str(_e)})
     return out
 
 

@@ -18,14 +18,14 @@ PROJECT_ROOT = Path(__file__).resolve().parent
 REPORTS = PROJECT_ROOT / "reports"
 REPORTS.mkdir(exist_ok=True)
 
-from news_service import build_clean, harvest_rss  # keep our store fresh
-from strategy import TrendBreakoutStrategy
-from utils import bps_to_frac  # noqa: F401  # intentionally kept
+# The following imports are intentionally placed after REPORTS.mkdir() as they
+# may rely on runtime filesystem state; mark with noqa to avoid E402 complaints.
+from news_service import build_clean, harvest_rss  # keep our store fresh  # noqa: E402
+from strategy import TrendBreakoutStrategy  # noqa: E402
+from utils import bps_to_frac  # noqa: F401,E402  # intentionally kept
 
 
-def fetch_history_ccxt(
-    exchange_id: str, symbol: str, timeframe: str, days: int = 60
-) -> pd.DataFrame:
+def fetch_history_ccxt(exchange_id: str, symbol: str, timeframe: str, days: int = 60) -> pd.DataFrame:
     from router import ExchangeRouter
 
     ex = ExchangeRouter()
@@ -95,15 +95,11 @@ def simulate(df: pd.DataFrame, params: Dict[str, Any]) -> Tuple[float, float, in
     total_ret = float(np.nansum(rets))
     if len(rets) == 0:
         return total_ret, 0.0, 0
-    sharpe = float(
-        np.nanmean(rets) / (np.nanstd(rets) + 1e-9) * math.sqrt(252 * 24 * 60)
-    )  # rough scale
+    sharpe = float(np.nanmean(rets) / (np.nanstd(rets) + 1e-9) * math.sqrt(252 * 24 * 60))  # rough scale
     return total_ret, sharpe, len(rets)
 
 
-def walk_forward_optimize(
-    df: pd.DataFrame, train_days=30, test_days=7, n_trials=50
-) -> Dict[str, Any]:
+def walk_forward_optimize(df: pd.DataFrame, train_days=30, test_days=7, n_trials=50) -> Dict[str, Any]:
     # Split into rolling windows; optimize on train, evaluate on test.
     windows = []
     ts = df["timestamp"]
@@ -118,12 +114,8 @@ def walk_forward_optimize(
 
     results = []
     for t0, t1, t2 in windows:
-        train = df[(df["timestamp"] >= t0) & (df["timestamp"] < t1)].reset_index(
-            drop=True
-        )
-        test = df[(df["timestamp"] >= t1) & (df["timestamp"] < t2)].reset_index(
-            drop=True
-        )
+        train = df[(df["timestamp"] >= t0) & (df["timestamp"] < t1)].reset_index(drop=True)
+        test = df[(df["timestamp"] >= t1) & (df["timestamp"] < t2)].reset_index(drop=True)
         if len(train) < 300 or len(test) < 200:
             continue
 
@@ -197,9 +189,7 @@ def main():
         pass
 
     df = fetch_history_ccxt(args.exchange, args.symbol, args.timeframe, days=args.days)
-    payload = walk_forward_optimize(
-        df, train_days=args.train_days, test_days=args.test_days, n_trials=args.trials
-    )
+    payload = walk_forward_optimize(df, train_days=args.train_days, test_days=args.test_days, n_trials=args.trials)
     print("Saved", REPORTS / "best_params.json", "=>", payload)
 
 

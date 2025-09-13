@@ -1,0 +1,20 @@
+loop_sec: 120
+
+dexscreener:
+  chains: [ethereum, solana, bsc, base, arbitrum, polygon]
+  min_liquidity_usd: 20000
+  min_vol5m_usd: 5000
+  min_change5m_pct: 10
+
+geckoterminal:
+  networks: [solana, ethereum, base]
+  min_score: 50
+
+etherscan:
+  api_key: ""          # optional
+  watch_contracts: []  # optional
+  blocks_lookback: 5000
+
+publish:
+  channel: signal.web3.trending
+

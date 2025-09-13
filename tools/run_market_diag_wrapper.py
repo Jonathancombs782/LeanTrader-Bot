@@ -4,10 +4,11 @@ This script imports and runs `tools.market_diag.main()` and captures any
 exceptions, writing a persistent `runtime/logs/market_diag.txt` file so the
 results are visible even if shell redirection fails.
 """
+
 from __future__ import annotations
 
-import traceback
 import time
+import traceback
 from pathlib import Path
 
 
@@ -15,8 +16,8 @@ def _write(lines: list[str]) -> None:
     p = Path("runtime") / "logs" / "market_diag.txt"
     p.parent.mkdir(parents=True, exist_ok=True)
     with p.open("w", encoding="utf-8") as f:
-        for l in lines:
-            f.write(l + "\n")
+        for line in lines:
+            f.write(line + "\n")
 
 
 def main() -> int:
@@ -42,10 +43,10 @@ def main() -> int:
     ts2 = time.strftime("%Y-%m-%d %H:%M:%S")
     lines.append(f"market_diag wrapper done {ts2}")
     _write(lines)
-    for l in lines:
-        print(l)
+    for line in lines:
+        print(line)
     return 0
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     raise SystemExit(main())

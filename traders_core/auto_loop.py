@@ -49,28 +49,18 @@ def main() -> None:
                 try:
                     if hasattr(r, "safe_fetch_ohlcv"):
                         try:
-                            bars = r.safe_fetch_ohlcv(
-                                m["symbol"], timeframe="1m", limit=limit
-                            )
-                        except Exception as e:
-                            print(
-                                f"[traders_core.auto_loop] safe_fetch_ohlcv failed for {m['symbol']}: {e}"
-                            )
+                            bars = r.safe_fetch_ohlcv(m["symbol"], timeframe="1m", limit=limit)
+                        except Exception as _e:
+                            print(f"[traders_core.auto_loop] safe_fetch_ohlcv failed for {m['symbol']}: {_e}")
                             bars = []
                     else:
                         try:
-                            bars = r.fetch_ohlcv(
-                                m["symbol"], timeframe="1m", limit=limit
-                            )
-                        except Exception as e:
-                            print(
-                                f"[traders_core.auto_loop] fetch_ohlcv failed for {m['symbol']}: {e}"
-                            )
+                            bars = r.fetch_ohlcv(m["symbol"], timeframe="1m", limit=limit)
+                        except Exception as _e:
+                            print(f"[traders_core.auto_loop] fetch_ohlcv failed for {m['symbol']}: {_e}")
                             bars = []
-                except Exception as e:
-                    print(
-                        f"[traders_core.auto_loop] unexpected error fetching {m['symbol']}: {e}"
-                    )
+                except Exception as _e:
+                    print(f"[traders_core.auto_loop] unexpected error fetching {m['symbol']}: {_e}")
                     bars = []
                 sig = breakout_signal(bars)
                 if sig["side"] != "buy":
@@ -81,9 +71,7 @@ def main() -> None:
                     if not res.get("ok"):
                         print("[spot order error]", res)
                         continue
-                    qty = float(
-                        res["result"].get("amount", res["result"].get("filled", 0))
-                    )
+                    qty = float(res["result"].get("amount", res["result"].get("filled", 0)))
                     mem.add_position(
                         {
                             "symbol": m["symbol"],
@@ -96,9 +84,7 @@ def main() -> None:
                         }
                     )
                 else:  # linear
-                    res = r.place_futures_market(
-                        m["symbol"], "buy", qty=fut_qty, leverage=lev
-                    )
+                    res = r.place_futures_market(m["symbol"], "buy", qty=fut_qty, leverage=lev)
                     if not res.get("ok"):
                         print("[fut order error]", res)
                         continue
@@ -138,16 +124,14 @@ def main() -> None:
                             close=True,
                         )
                     pnl = (px - p["px_open"]) * p["qty"]
-                    mem.close_position(
-                        p["id"], px_close=px, reason=("TP" if hit_tp else "SL"), pnl=pnl
-                    )
+                    mem.close_position(p["id"], px_close=px, reason=("TP" if hit_tp else "SL"), pnl=pnl)
 
             # 4) heartbeat
             print(f"[loop] open={len(mem.open_positions())} | scan={len(movers)}")
             time.sleep(sleep_s)
 
-        except Exception as e:
-            print("[loop error]", e)
+        except Exception as _e:
+            print("[loop error]", _e)
             time.sleep(sleep_s)
 
 

@@ -11,9 +11,7 @@ def atr(df: pd.DataFrame, n: int = 14) -> pd.Series:
     if df.empty or not all(c in df for c in ("high", "low", "close")):
         return pd.Series([], dtype=float)
     h, low, c = df["high"], df["low"], df["close"]
-    tr = pd.concat([(h - low), (h - c.shift()).abs(), (low - c.shift()).abs()], axis=1).max(
-        axis=1
-    )
+    tr = pd.concat([(h - low), (h - c.shift()).abs(), (low - c.shift()).abs()], axis=1).max(axis=1)
     return tr.rolling(n, min_periods=1).mean()
 
 
@@ -26,9 +24,7 @@ def bb_width(df: pd.DataFrame, n: int = 20, k: float = 2.0) -> pd.Series:
     return (upper - lower) / m.replace(0, np.nan)
 
 
-def vol_hot(
-    df: pd.DataFrame, atr_th: float = 0.003, bbw_th: float = 0.02
-) -> Dict[str, float]:
+def vol_hot(df: pd.DataFrame, atr_th: float = 0.003, bbw_th: float = 0.02) -> Dict[str, float]:
     """Return latest ATR% and BBW and whether 'hot' >= thresholds."""
     if df.empty or "close" not in df:
         return {"atr_pct": 0.0, "bbw": 0.0, "hot": 0.0}

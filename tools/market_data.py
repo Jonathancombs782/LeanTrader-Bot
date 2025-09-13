@@ -4,6 +4,7 @@ This module provides safe, opt-in helpers to fetch historical OHLCV and
 persist to CSV under `runtime/data/`. It is intentionally conservative and
 does not perform any live trading.
 """
+
 from __future__ import annotations
 
 import csv
@@ -73,12 +74,14 @@ def fetch_ohlcv(
         variants = [s]
         if "/" in s:
             base, quote = s.split("/", 1)
-            variants.extend([
-                f"{base}{quote}",          # BTCUSDT
-                f"{base}-{quote}",         # BTC-USDT
-                f"{base}_{quote}",         # BTC_USDT
-                f"{base}/{quote}:USDT" if quote.upper() == "USDT" else f"{base}/{quote}",
-            ])
+            variants.extend(
+                [
+                    f"{base}{quote}",  # BTCUSDT
+                    f"{base}-{quote}",  # BTC-USDT
+                    f"{base}_{quote}",  # BTC_USDT
+                    f"{base}/{quote}:USDT" if quote.upper() == "USDT" else f"{base}/{quote}",
+                ]
+            )
         else:
             # if user passed BTCUSDT, try BTC/USDT
             if len(s) >= 6:

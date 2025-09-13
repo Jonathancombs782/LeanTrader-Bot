@@ -3,17 +3,16 @@
 This is intentionally simple: it executes at next-bar open and exits at next-bar close,
 uses fixed fraction position sizing, and writes a summary to logs.
 """
+
 from __future__ import annotations
 
 import pickle
-import time
 from pathlib import Path
 from typing import Dict
 
 import numpy as np
-import pandas as pd
 
-from tools.featurizer import load_csv, featurize_basic
+from tools.featurizer import featurize_basic, load_csv
 
 
 def load_model(model_path: str):
@@ -47,7 +46,6 @@ def run_backtest(model_path: str, csv_path: str, initial_cash: float = 10000.0, 
         preds = np.zeros(len(X), dtype=int)
 
     cash = float(initial_cash)
-    positions = []  # list of tuples (entry_price, size, entry_idx)
     trades = []
 
     for i in range(len(df) - 1):
@@ -65,14 +63,16 @@ def run_backtest(model_path: str, csv_path: str, initial_cash: float = 10000.0, 
             exit_price = next_close
             pnl = (exit_price - entry_price) * size
             cash += pnl
-            trades.append({
-                "idx": i,
-                "entry": entry_price,
-                "exit": exit_price,
-                "size": size,
-                "pnl": pnl,
-                "cash": cash,
-            })
+            trades.append(
+                {
+                    "idx": i,
+                    "entry": entry_price,
+                    "exit": exit_price,
+                    "size": size,
+                    "pnl": pnl,
+                    "cash": cash,
+                }
+            )
 
     total_pnl = cash - initial_cash
     wins = sum(1 for t in trades if t["pnl"] > 0)

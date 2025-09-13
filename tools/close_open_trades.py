@@ -7,10 +7,10 @@ This is safe to run in paper mode (EXCHANGE_ID=paper). It will:
  - remove closed trades from runtime/open_trades.json
  - print a short summary
 """
+
 from __future__ import annotations
 
 import json
-import os
 import pathlib
 import time
 from typing import Any, Dict, List
@@ -67,6 +67,18 @@ def close_open_trades():
         except Exception as e:
             res = {"ok": False, "error": str(e)}
 
+        # prepare entry record early so we can annotate retries below
+        now = int(time.time())
+        entry = {
+            "symbol": sym,
+            "side_open": side,
+            "side_close": close_side,
+            "mode": mode,
+            "amount": amt,
+            "closed_at": now,
+            "result": res,
+        }
+
         # If we failed due to insufficient qty, try to query holdings and retry with available qty
         if isinstance(res, dict) and not res.get("ok"):
             err = str(res.get("error") or "")
@@ -101,16 +113,6 @@ def close_open_trades():
                     # include retry result as final result for record
                     entry["result"] = retry
 
-        now = int(time.time())
-        entry = {
-            "symbol": sym,
-            "side_open": side,
-            "side_close": close_side,
-            "mode": mode,
-            "amount": amt,
-            "closed_at": now,
-            "result": res,
-        }
         closed.append(entry)
         # remove this entry from open list regardless (to avoid repeated attempts)
         try:

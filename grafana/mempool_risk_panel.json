@@ -1,0 +1,26 @@
+{
+  "type": "timeseries",
+  "title": "Mempool Risk",
+  "fieldConfig": {
+    "defaults": {
+      "custom": {
+        "drawStyle": "line",
+        "lineWidth": 2,
+        "spanNulls": true
+      }
+    },
+    "overrides": []
+  },
+  "options": {
+    "legend": { "displayMode": "list", "showLegend": true },
+    "tooltip": { "mode": "single" }
+  },
+  "targets": [
+    {
+      "refId": "A",
+      "expr": "avg by (symbol, timeframe) (mempool_risk)",
+      "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" }
+    }
+  ]
+}
+

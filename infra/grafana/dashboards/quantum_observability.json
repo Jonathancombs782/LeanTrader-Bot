@@ -1,0 +1,11 @@
+{
+  "title": "Quantum Observability",
+  "panels": [
+    {"type": "timeseries", "title": "Arbitrage Opps Rate", "targets": [{"expr": "rate(ARB_OPPS[5m])", "refId": "A"}]},
+    {"type": "timeseries", "title": "Mempool Risk", "targets": [{"expr": "avg by (symbol,timeframe) (mempool_risk)", "refId": "A"}]},
+    {"type": "timeseries", "title": "On-chain Spikes", "targets": [{"expr": "sum by (type) (rate(onchain_spikes_total[5m]))", "refId": "A"}]},
+    {"type": "timeseries", "title": "Hedge Notional", "targets": [{"expr": "sum by (asset) (hedge_notional_usd)", "refId": "A"}]},
+    {"type": "timeseries", "title": "Expl Files Written", "targets": [{"expr": "rate(expl_files_written_total[5m])", "refId": "A"}]},
+    {"type": "timeseries", "title": "Liquidity Blocks", "targets": [{"expr": "rate(LIQUIDITY_BLOCKS[5m])", "refId": "A"}]}]
+}
+

@@ -103,9 +103,7 @@ def main():
         save_state(state)
 
     prev_balance = get_balance_estimate()
-    print(
-        f"[daemon] starting: prev_balance_estimate={prev_balance} USD, daily_loss={state['cumulative_loss']} USD"
-    )
+    print(f"[daemon] starting: prev_balance_estimate={prev_balance} USD, daily_loss={state['cumulative_loss']} USD")
 
     try:
         while True:
@@ -129,24 +127,18 @@ def main():
             curr_balance = get_balance_estimate()
             delta = prev_balance - curr_balance  # positive if we lost USD
             if delta > 0:
-                state["cumulative_loss"] = round(
-                    float(state.get("cumulative_loss", 0.0)) + float(delta), 8
-                )
+                state["cumulative_loss"] = round(float(state.get("cumulative_loss", 0.0)) + float(delta), 8)
                 state["last_delta"] = float(delta)
                 state["date"] = today
                 save_state(state)
-                print(
-                    f"[daemon] loss this run: {delta:.6f} USD -> cumulative {state['cumulative_loss']:.6f} USD"
-                )
+                print(f"[daemon] loss this run: {delta:.6f} USD -> cumulative {state['cumulative_loss']:.6f} USD")
             else:
                 print(f"[daemon] no loss this run (delta={delta:.6f})")
             prev_balance = curr_balance
 
             # check after update
             if circuit_enabled and state.get("cumulative_loss", 0.0) >= daily_max_loss:
-                print(
-                    f"[daemon] circuit-breaker tripped after run: cumulative_loss={state['cumulative_loss']}"
-                )
+                print(f"[daemon] circuit-breaker tripped after run: cumulative_loss={state['cumulative_loss']}")
                 break
 
             time.sleep(poll_interval)

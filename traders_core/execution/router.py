@@ -7,6 +7,17 @@ from dotenv import load_dotenv
 from traders_core.features.pipeline import make_features, rates_to_df
 from traders_core.mt5_adapter import copy_rates_days, market_buy, symbol_info
 from traders_core.observability.metrics import METRICS
+try:
+    from observability.metrics import record_slippage, record_order_sent, record_order_reject
+except Exception:
+    def record_slippage(_: float):
+        return None
+
+    def record_order_sent(n: int = 1):
+        return None
+
+    def record_order_reject(n: int = 1):
+        return None
 from traders_core.storage.registry import load_latest
 from traders_core.utils.ta import atr
 
@@ -40,9 +51,7 @@ def decide_and_execute_mt5(
 
     rates = copy_rates_days(symbol, timeframe, research_lookback_days)
     df = rates_to_df(rates)
-    feats = make_features(
-        df, rsi_window=cfg["risk"]["atr_window"], atr_window=cfg["risk"]["atr_window"]
-    )
+    feats = make_features(df, rsi_window=cfg["risk"]["atr_window"], atr_window=cfg["risk"]["atr_window"])
     X_live = feats[meta["features"]].iloc[[-1]]
 
     prob = float(model.predict_proba(X_live)[0, 1])
@@ -63,9 +72,7 @@ def decide_and_execute_mt5(
         if (v_per_unit <= 0 or latest_atr <= 0)
         else risk_money / (float(latest_atr) * v_per_unit)
     )
-    vol = _round_lot(
-        vol, cfg["risk"]["min_lot"], cfg["risk"]["lot_step"], cfg["risk"]["max_lot"]
-    )
+    vol = _round_lot(vol, cfg["risk"]["min_lot"], cfg["risk"]["lot_step"], cfg["risk"]["max_lot"])
 
     px = df["close"].iloc[-1]
     sl = float(px - cfg["risk"]["atr_stop_mult"] * latest_atr)
@@ -75,6 +82,7 @@ def decide_and_execute_mt5(
         from traders_core.sim.paper_broker import PaperBroker  # noqa: E402
 
         brk = PaperBroker()
+        record_order_sent(1)
         fill = brk.market_buy(
             symbol=f"MT5:{symbol}",
             price=float(px),
@@ -84,7 +92,13 @@ def decide_and_execute_mt5(
             tp=tp,
         )
         METRICS.orders_total.labels(venue="mt5", symbol=symbol, status="paper").inc()
-        return {
+        try:
+            fp = float((fill or {}).get("price") or px)
+            bps = abs(fp - float(px)) / max(1e-9, float(px)) * 1e4
+            record_slippage(bps)
+        except Exception:
+            pass
+        result = {
             "status": "paper_filled",
             "prob": prob,
             "volume": float(vol),
@@ -93,13 +107,53 @@ def decide_and_execute_mt5(
             "tp": tp,
             "fill": fill,
         }
+        # Best-effort: write per-trade explanation
+        try:
+            from reporting.explain import write_explanation_markdown
+            import time as _t
 
+            write_explanation_markdown(
+                order={
+                    "id": getattr(fill, "ticket", None) or f"mt5-paper-{symbol}-{int(_t.time())}",
+                    "symbol": symbol,
+                    "side": "buy",
+                    "price": float((fill or {}).get("price") or px),
+                    "qty": float(vol),
+                    "ts": int(_t.time()),
+                    "route": "mt5",
+                },
+                context={
+                    "regime": None,
+                    "selector": "mt5_router",
+                    "key_signals": [{"name": "model_prob", "score": prob}],
+                },
+            )
+            # Encrypted trade log
+            try:
+                from security.vault import secure_write  # type: ignore
+
+                trade_log = {
+                    "venue": "mt5",
+                    "symbol": symbol,
+                    "mode": "paper",
+                    "qty": float(vol),
+                    "price": float((fill or {}).get("price") or px),
+                    "ts": int(_t.time()),
+                }
+                secure_write(f"runtime/trade_logs/MT5_{symbol}_{int(_t.time())}.enc", trade_log)
+            except Exception:
+                pass
+        except Exception:
+            pass
+        return result
+
+    record_order_sent(1)
     res = market_buy(symbol, float(vol), sl, tp)
     ok = (res is not None) and (getattr(res, "retcode", None) in (10009, 10008, 0))
-    METRICS.orders_total.labels(
-        venue="mt5", symbol=symbol, status=("live_sent" if ok else "live_error")
-    ).inc()
-    return {
+    METRICS.orders_total.labels(venue="mt5", symbol=symbol, status=("live_sent" if ok else "live_error")).inc()
+    if not ok:
+        record_order_reject(1)
+    result = {
         "status": "live_sent" if ok else "live_error",
         "retcode": getattr(res, "retcode", None),
         "prob": prob,
@@ -107,3 +161,42 @@ def decide_and_execute_mt5(
         "sl": sl,
         "tp": tp,
     }
+    # Best-effort: write per-trade explanation
+    try:
+        from reporting.explain import write_explanation_markdown
+        import time as _t
+
+        write_explanation_markdown(
+            order={
+                "id": getattr(res, "order", None) or f"mt5-live-{symbol}-{int(_t.time())}",
+                "symbol": symbol,
+                "side": "buy",
+                "price": float(px),
+                "qty": float(vol),
+                "ts": int(_t.time()),
+                "route": "mt5",
+            },
+            context={
+                "regime": None,
+                "selector": "mt5_router",
+                "key_signals": [{"name": "model_prob", "score": prob}],
+            },
+        )
+        # Encrypted trade log
+        try:
+            from security.vault import secure_write  # type: ignore
+
+            trade_log = {
+                "venue": "mt5",
+                "symbol": symbol,
+                "mode": ("live" if ok else "live_error"),
+                "qty": float(vol),
+                "price": float(px),
+                "ts": int(_t.time()),
+            }
+            secure_write(f"runtime/trade_logs/MT5_{symbol}_{int(_t.time())}.enc", trade_log)
+        except Exception:
+            pass
+    except Exception:
+        pass
+    return result

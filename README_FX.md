@@ -1,13 +1,12 @@
+# LeanTrader — ForexPack (OANDA, MetaTrader5, IBKR)
 
-# LeanTrader – ForexPack (OANDA, MetaTrader5, IBKR)
+Adds forex support to LeanTrader with:
+- Broker adapters: OANDA (REST/stream), MetaTrader5 (terminal), IBKR (ib_insync)
+- Forex backtesting using Yahoo Finance symbols (e.g., `EURUSD=X`)
+- Live/paper runners reusing your existing strategy, risk, and guardrails
+- Daemonization guide so the bot runs while you’re offline
 
-Adds **forex** support to LeanTrader with:
-- Broker adapters: **OANDA** (REST/stream), **MetaTrader5** (terminal), **IBKR** (ib_insync).
-- **Forex backtesting** using Yahoo Finance (`yfinance`) symbols (e.g., `EURUSD=X`).
-- Live/paper runners reusing your existing **strategy, risk, and guardrails**.
-- **Daemonization guide** so the bot runs while you're offline.
-
-> ⚠️ No guaranteed profits. Use practice/demo accounts first. Start micro-size.
+> No guaranteed profits. Use practice/demo accounts first. Start micro-size.
 
 ---
 
@@ -15,10 +14,10 @@ Adds **forex** support to LeanTrader with:
 ```bash
 pip install -r requirements_fx.txt
 ```
-On Windows for MetaTrader5, install the **MetaTrader 5 terminal** and log in to your broker; the Python `MetaTrader5` package attaches to it.
+On Windows for MetaTrader5, install the MetaTrader 5 terminal and log in to your broker; the Python `MetaTrader5` package attaches to it.
 
 ## Configure Keys
-Copy `.env.example` → `.env` and set:
+Copy `.env.example` to `.env` and set:
 
 ```env
 # OANDA (practice strongly recommended)
@@ -37,7 +36,7 @@ IB_PORT=7497
 IB_CLIENT_ID=1
 ```
 
-Choose pairs in `config_fx.yml` (defaults below use majors).
+Choose pairs in `config_fx.yml` (defaults use majors).
 
 ---
 
@@ -64,13 +63,13 @@ python run_live_fx.py --adapter mt5 --pairs "EURUSD,GBPUSD,USDJPY" --timeframe 5
 # IBKR
 python run_live_fx.py --adapter ibkr --pairs "EUR.USD,GBP.USD,USD.JPY" --timeframe 5m
 ```
-Uses **guardrails** (cooldown, loss-streak, profit lock) + **ATR stops/trailing**. Sizing uses **fixed USD risk** per trade.
+Uses guardrails (cooldown, loss-streak, profit lock) plus ATR stops/trailing. Sizing uses fixed USD risk per trade.
 
 ---
 
 ## Run While Offline (Daemon)
-- **Linux/macOS**: use `tmux` or `screen`, or create a `systemd` service (see `daemonize.md`).
-- **Windows**: run in a persistent PowerShell window or use `NSSM` to wrap the Python script as a service.
+- Linux/macOS: use `tmux` or `screen`, or create a `systemd` service (see `daemonize.md`).
+- Windows: run in a persistent PowerShell window or use NSSM to wrap the Python script as a service.
 
 ---
 
@@ -78,3 +77,4 @@ Uses **guardrails** (cooldown, loss-streak, profit lock) + **ATR stops/trailing*
 - IBKR & MetaTrader5 require local apps running.
 - Symbol formats differ per adapter (see each runner’s help).
 - Spread and pip value matter: we estimate pip value per unit and size positions to risk a fixed USD per trade.
+
