@@ -2,13 +2,14 @@
 from __future__ import annotations
 
 import argparse
-from typing import Dict, Any, Optional
+from typing import Any, Dict, Optional  # noqa: F401  # intentionally kept
+
 import numpy as np
 
-from mt5_adapter import (
-    mt5_init, bars_df, account_summary_lines,
-    min_stop_distance_points, order_send_market,
-)
+from mt5_adapter_old import (account_summary_lines, bars_df,
+                             min_stop_distance_points, mt5_init,
+                             order_send_market)
+
 
 def atr(series: np.ndarray, n: int = 14) -> float:
     if len(series) < n + 1:
@@ -21,6 +22,7 @@ def atr(series: np.ndarray, n: int = 14) -> float:
     tr = np.maximum(highs - lows, np.maximum(np.abs(highs - prev), np.abs(lows - prev)))
     return float(np.nanmean(tr[-n:]))
 
+
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--symbol", required=True)
@@ -32,10 +34,15 @@ def main() -> None:
     ap.add_argument("--print_bars", type=int, default=5)
 
     # Choose one: points OR ATR multiplier (fallback)
-    ap.add_argument("--sl_tp_pts", type=float, default=None,
-                    help="If set, use this many points for both SL/TP (symmetric).")
-    ap.add_argument("--atr_mult", type=float, default=2.0,
-                    help="Used if sl_tp_pts not provided.")
+    ap.add_argument(
+        "--sl_tp_pts",
+        type=float,
+        default=None,
+        help="If set, use this many points for both SL/TP (symmetric).",
+    )
+    ap.add_argument(
+        "--atr_mult", type=float, default=2.0, help="Used if sl_tp_pts not provided."
+    )
     args = ap.parse_args()
 
     mt5_init()
@@ -63,8 +70,10 @@ def main() -> None:
         pts = max(float(args.sl_tp_pts), float(pts_min))
     else:
         # ATR-based distance converted to points
-        a = atr(df[["high","low","close"]].to_records(index=False), 14)
-        pts = max(float(round(a / (last * 0.0001))), float(pts_min))  # rough: convert price ATR to points
+        a = atr(df[["high", "low", "close"]].to_records(index=False), 14)
+        pts = max(
+            float(round(a / (last * 0.0001))), float(pts_min)
+        )  # rough: convert price ATR to points
 
     # Convert points -> price
     pt_value = 0.0001  # for most FX majors; for metals/indices adjust if needed
@@ -77,8 +86,10 @@ def main() -> None:
         sl = last + dist_px
         tp = last - dist_px
 
-    print(f"\nRequest: {args.side.upper()} {args.symbol} lots={args.lots} "
-          f"entry~{last:.5f} SL~{sl:.5f} TP~{tp:.5f}  (min_dist_pts={pts_min}, used_pts={pts:.0f})")
+    print(
+        f"\nRequest: {args.side.upper()} {args.symbol} lots={args.lots} "
+        f"entry~{last:.5f} SL~{sl:.5f} TP~{tp:.5f}  (min_dist_pts={pts_min}, used_pts={pts:.0f})"
+    )
 
     if args.dry_run.lower() == "yes":
         print("[dry-run] not sending order.")
@@ -93,8 +104,16 @@ def main() -> None:
         tp=tp,
         deviation=20,
     )
-    print("retcode:", res.get("retcode"), "comment:", res.get("comment"),
-          "deal:", res.get("deal"), "order:", res.get("order"))
+    print(
+        "retcode:",
+        res.get("retcode"),
+        "comment:",
+        res.get("comment"),
+        "deal:",
+        res.get("deal"),
+        "order:",
+        res.get("order"),
+    )
     if res.get("request"):
         print("request:", res["request"])
 

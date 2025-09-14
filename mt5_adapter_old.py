@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 import os
-from typing import Optional, Dict, Any, List
+from typing import Any, Dict, List, Optional
 
 from dotenv import load_dotenv
 
@@ -17,17 +17,19 @@ load_dotenv()
 
 # ----------------------------- env helpers -----------------------------
 
+
 def _envs() -> Dict[str, str]:
     """Read MT5 settings from environment (.env)."""
     return {
-        "PATH":   (os.getenv("MT5_PATH") or "").strip(),
-        "LOGIN":  (os.getenv("MT5_LOGIN") or "").strip(),
+        "PATH": (os.getenv("MT5_PATH") or "").strip(),
+        "LOGIN": (os.getenv("MT5_LOGIN") or "").strip(),
         "PASSWORD": (os.getenv("MT5_PASSWORD") or "").strip(),
         "SERVER": (os.getenv("MT5_SERVER") or "").strip(),
     }
 
 
 # ------------------------------ init ----------------------------------
+
 
 def mt5_init(path: Optional[str] = None):
     """
@@ -37,7 +39,9 @@ def mt5_init(path: Optional[str] = None):
     Raises RuntimeError on failure with mt5.last_error() details.
     """
     if mt5 is None:
-        raise RuntimeError("MetaTrader5 package is not installed (pip install MetaTrader5)")
+        raise RuntimeError(
+            "MetaTrader5 package is not installed (pip install MetaTrader5)"
+        )
 
     env = _envs()
     use_path = path or (env["PATH"] if env["PATH"] else None)
@@ -50,15 +54,20 @@ def mt5_init(path: Optional[str] = None):
 
     # optional login if creds provided
     if env["LOGIN"] and env["PASSWORD"] and env["SERVER"]:
-        if not mt5.login(int(env["LOGIN"]), password=env["PASSWORD"], server=env["SERVER"]):
+        if not mt5.login(
+            int(env["LOGIN"]), password=env["PASSWORD"], server=env["SERVER"]
+        ):
             code, desc = mt5.last_error()
             mt5.shutdown()
-            raise RuntimeError(f"mt5.login failed: ({code}) {desc} (server={env['SERVER']})")
+            raise RuntimeError(
+                f"mt5.login failed: ({code}) {desc} (server={env['SERVER']})"
+            )
 
     return mt5
 
 
 # --------------------------- symbol utilities --------------------------
+
 
 def ensure_symbol(symbol: str) -> None:
     """Ensure symbol exists and is visible."""
@@ -104,21 +113,26 @@ def min_stop_distance_points(symbol: str) -> int:
 
 # ------------------------------ market data ----------------------------
 
+
 def bars_df(symbol: str, timeframe_str: str, limit: int = 200):
     """
     Return a DataFrame with stable OHLCV columns:
     ['time','open','high','low','close','tick_volume','spread','real_volume'].
     Handles installs where pandas creates numeric column names (0..N-1).
     """
-    import pandas as pd
+    import pandas as pd  # noqa: E402
 
     ensure_symbol(symbol)
 
     tf_map = {
-        "M1":  mt5.TIMEFRAME_M1,   "M5":  mt5.TIMEFRAME_M5,
-        "M15": mt5.TIMEFRAME_M15,  "M30": mt5.TIMEFRAME_M30,
-        "H1":  mt5.TIMEFRAME_H1,   "H4":  mt5.TIMEFRAME_H4,
-        "D1":  mt5.TIMEFRAME_D1,   "W1":  mt5.TIMEFRAME_W1,
+        "M1": mt5.TIMEFRAME_M1,
+        "M5": mt5.TIMEFRAME_M5,
+        "M15": mt5.TIMEFRAME_M15,
+        "M30": mt5.TIMEFRAME_M30,
+        "H1": mt5.TIMEFRAME_H1,
+        "H4": mt5.TIMEFRAME_H4,
+        "D1": mt5.TIMEFRAME_D1,
+        "W1": mt5.TIMEFRAME_W1,
         "MN1": mt5.TIMEFRAME_MN1,
     }
     tf = tf_map.get(timeframe_str.upper())
@@ -141,9 +155,18 @@ def bars_df(symbol: str, timeframe_str: str, limit: int = 200):
 
     # Some environments end up with numeric columns (0..7). Rename explicitly.
     if "time" not in df.columns:
-        expected_cols = ["time", "open", "high", "low", "close", "tick_volume", "spread", "real_volume"]
+        expected_cols = [
+            "time",
+            "open",
+            "high",
+            "low",
+            "close",
+            "tick_volume",
+            "spread",
+            "real_volume",
+        ]
         if len(df.columns) >= len(expected_cols):
-            df = df.iloc[:, :len(expected_cols)]
+            df = df.iloc[:, : len(expected_cols)]
             df.columns = expected_cols
 
     # Convert time -> datetime if present
@@ -154,6 +177,7 @@ def bars_df(symbol: str, timeframe_str: str, limit: int = 200):
 
 
 # --------------------------- account snapshot --------------------------
+
 
 def account_summary_lines() -> List[str]:
     info = mt5.account_info()
@@ -177,6 +201,7 @@ def account_summary_lines() -> List[str]:
 
 # ------------------------------- orders --------------------------------
 
+
 def order_send_market(
     symbol: str,
     side: str,
@@ -197,7 +222,14 @@ def order_send_market(
 
     tick = mt5.symbol_info_tick(symbol)
     if tick is None:
-        return {"ok": False, "retcode": -1, "comment": "no tick", "deal": 0, "order": 0, "request": {}}
+        return {
+            "ok": False,
+            "retcode": -1,
+            "comment": "no tick",
+            "deal": 0,
+            "order": 0,
+            "request": {},
+        }
 
     price = float(tick.ask if side == "buy" else tick.bid)
     order_type = mt5.ORDER_TYPE_BUY if side == "buy" else mt5.ORDER_TYPE_SELL

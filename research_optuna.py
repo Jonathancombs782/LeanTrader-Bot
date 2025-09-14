@@ -1,12 +1,16 @@
 # research_optuna.py
 from __future__ import annotations
-import os, json, time
+
+import json
+import os
+import time
 from pathlib import Path
-import pandas as pd
+
 import optuna
+import pandas as pd
 
 # our strategies
-from strategy import TrendBreakoutStrategy, NakedForexStrategy
+from strategy import NakedForexStrategy, TrendBreakoutStrategy
 
 ROOT = Path(__file__).resolve().parent
 DATA_DIR = ROOT / "data"
@@ -15,17 +19,21 @@ DATA_PATH = DATA_DIR / "history.csv"
 BEST_PATH = ROOT / "reports" / "best_params.json"
 BEST_PATH.parent.mkdir(parents=True, exist_ok=True)
 
+
 # ------------ history helpers ------------
-def build_history_ccxt(exchange_id: str, symbol: str, timeframe: str, lookback_days: int = 30) -> pd.DataFrame:
+def build_history_ccxt(
+    exchange_id: str, symbol: str, timeframe: str, lookback_days: int = 30
+) -> pd.DataFrame:
     """
     Pull OHLCV from a CCXT crypto exchange and write data/history.csv with
     columns: timestamp,open,high,low,close,vol
     """
     from router import ExchangeRouter
+
     ex = ExchangeRouter()
     ms_now = int(time.time() * 1000)
     ms_back = lookback_days * 24 * 60 * 60 * 1000
-    since = ms_now - ms_back
+    ms_now - ms_back
     all_rows = []
 
     while True:
@@ -33,7 +41,7 @@ def build_history_ccxt(exchange_id: str, symbol: str, timeframe: str, lookback_d
         if not batch:
             break
         all_rows += batch
-        since = batch[-1][0] + 60_000
+        batch[-1][0] + 60_000
         if len(batch) < 1000:
             break
         time.sleep(0.2)
@@ -41,11 +49,12 @@ def build_history_ccxt(exchange_id: str, symbol: str, timeframe: str, lookback_d
     if not all_rows:
         raise RuntimeError("No candles returned from exchange.")
 
-    df = pd.DataFrame(all_rows, columns=["ts","open","high","low","close","vol"])
+    df = pd.DataFrame(all_rows, columns=["ts", "open", "high", "low", "close", "vol"])
     df["timestamp"] = pd.to_datetime(df["ts"], unit="ms", utc=True)
-    out = df[["timestamp","open","high","low","close","vol"]]
+    out = df[["timestamp", "open", "high", "low", "close", "vol"]]
     out.to_csv(DATA_PATH, index=False)
     return out
+
 
 def ensure_history() -> pd.DataFrame:
     """
@@ -62,11 +71,16 @@ def ensure_history() -> pd.DataFrame:
             return df
     # build if missing or too small
     ex_id = os.getenv("EXCHANGE_ID", "binanceus")
-    symbol = os.getenv("OPT_SYMBOL", os.getenv("SYMBOLS", "DOGE/USD").split(",")[0].strip())
+    symbol = os.getenv(
+        "OPT_SYMBOL", os.getenv("SYMBOLS", "DOGE/USD").split(",")[0].strip()
+    )
     timeframe = os.getenv("TIMEFRAME", "1m")
     lookback_days = int(os.getenv("OPT_LOOKBACK_DAYS", "30"))
-    print(f"[optuna] building history via CCXT: {ex_id} {symbol} {timeframe} {lookback_days}d")
+    print(
+        f"[optuna] building history via CCXT: {ex_id} {symbol} {timeframe} {lookback_days}d"
+    )
     return build_history_ccxt(ex_id, symbol, timeframe, lookback_days)
+
 
 # ------------ scoring ------------
 def score_equity(d: pd.DataFrame) -> float:
@@ -79,6 +93,7 @@ def score_equity(d: pd.DataFrame) -> float:
     if eq.empty or pd.isna(eq.iloc[-1]):
         return -999.0
     return float(eq.iloc[-1])
+
 
 # ------------ search space ------------
 def make_strategy(trial):
@@ -109,6 +124,7 @@ def make_strategy(trial):
     }
     return choice, strat, params, risk
 
+
 # ------------ objective ------------
 def objective(trial):
     df = ensure_history()
@@ -118,6 +134,7 @@ def objective(trial):
     )
     return score_equity(d)
 
+
 def main():
     trials = int(os.getenv("OPTUNA_TRIALS", "50"))
     study = optuna.create_study(direction="maximize")
@@ -125,13 +142,21 @@ def main():
 
     best = study.best_params
     strat_name = best.pop("strategy")
-    params = {k: v for k, v in best.items() if k not in ("atr_stop_mult","atr_trail_mult")}
-    risk = {k: best[k] for k in ("atr_stop_mult","atr_trail_mult") if k in best}
+    params = {
+        k: v for k, v in best.items() if k not in ("atr_stop_mult", "atr_trail_mult")
+    }
+    risk = {k: best[k] for k in ("atr_stop_mult", "atr_trail_mult") if k in best}
 
-    payload = {"strategy": strat_name, "params": params, "risk": risk, "score": study.best_value}
+    payload = {
+        "strategy": strat_name,
+        "params": params,
+        "risk": risk,
+        "score": study.best_value,
+    }
     with open(BEST_PATH, "w") as f:
         json.dump(payload, f, indent=2)
     print("Saved", BEST_PATH, "=>", payload)
+
 
 if __name__ == "__main__":
     main()

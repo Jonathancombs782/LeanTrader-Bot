@@ -1,12 +1,19 @@
 # utils_runtime.py
-import json, time, pathlib, platform, datetime as dt
+import datetime as dt
+import json
+import pathlib
+import platform
+import time
 
-RUNTIME = pathlib.Path("runtime"); RUNTIME.mkdir(exist_ok=True)
+RUNTIME = pathlib.Path("runtime")
+RUNTIME.mkdir(exist_ok=True)
 KILL = RUNTIME / "kill.flag"
 HEART = RUNTIME / "heartbeat.json"
 
+
 def should_stop() -> bool:
     return KILL.exists()
+
 
 def write_heartbeat(state: dict):
     state = {

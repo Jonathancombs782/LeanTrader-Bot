@@ -1,10 +1,12 @@
 # mt5_list_symbols.py
 from __future__ import annotations
+
 import argparse
 from typing import List, Tuple
 
-from mt5_adapter import mt5_init
 import MetaTrader5 as mt5
+
+from mt5_adapter_old import mt5_init
 
 
 def get_symbols_map() -> dict[str, mt5.SymbolInfo]:
@@ -44,11 +46,22 @@ def ensure_visible(names: List[str]) -> Tuple[List[str], List[str], List[str]]:
 
 
 def main():
-    ap = argparse.ArgumentParser(description="List and (optionally) auto-show MT5 symbols.")
-    ap.add_argument("--want", type=str, default="",
-                    help="Comma-separated symbols to ensure visible (e.g. EURUSD,XAUUSD,USDJPY)")
-    ap.add_argument("--print", dest="print_count", type=int, default=50,
-                    help="How many symbols to print (default 50). Use 0 to skip printing list.")
+    ap = argparse.ArgumentParser(
+        description="List and (optionally) auto-show MT5 symbols."
+    )
+    ap.add_argument(
+        "--want",
+        type=str,
+        default="",
+        help="Comma-separated symbols to ensure visible (e.g. EURUSD,XAUUSD,USDJPY)",
+    )
+    ap.add_argument(
+        "--print",
+        dest="print_count",
+        type=int,
+        default=50,
+        help="How many symbols to print (default 50). Use 0 to skip printing list.",
+    )
     args = ap.parse_args()
 
     # Initialize via your .env (MT5_PATH, MT5_LOGIN, etc.)
@@ -77,12 +90,15 @@ def main():
             print("ℹ️ Already visible:", ", ".join(already))
         if missing:
             print("⚠️ Not found / broker naming differs:", ", ".join(missing))
-            print("   Tip: open MT5 → Market Watch (Ctrl+M) → right-click → Symbols (Ctrl+U),")
-            print("   search for each name; some brokers append suffixes like .i, .m, _pro, etc.")
+            print(
+                "   Tip: open MT5 → Market Watch (Ctrl+M) → right-click → Symbols (Ctrl+U),"
+            )
+            print(
+                "   search for each name; some brokers append suffixes like .i, .m, _pro, etc."
+            )
 
     print("\nDone.")
 
 
 if __name__ == "__main__":
     main()
-    

@@ -1,6 +1,8 @@
 from __future__ import annotations
-from pathlib import Path
+
 from datetime import datetime, timezone
+from pathlib import Path
+
 
 def write_digest(notes_dir: str, symbol: str, body: str):
     Path(notes_dir).mkdir(parents=True, exist_ok=True)

@@ -1,0 +1,110 @@
+.\futures_signals.py:3:1: F401 'typing.Dict' imported but unused
+.\futures_signals.py:3:1: F401 'typing.Any' imported but unused
+.\ml_strategy_engine.py:9:1: F401 'os' imported but unused
+.\mt5_adapter.py:4:1: F401 'typing.Any' imported but unused
+.\mt5_signals.py:3:1: F401 'typing.List' imported but unused
+.\mt5_signals.py:5:1: F401 'mt5_adapter.ensure_symbol' imported but unused
+.\mt5_single_shot.py:5:1: F401 'typing.Optional' imported but unused
+.\mt5_single_shot_old.py:5:1: F401 'typing.Optional' imported but unused
+.\multi_runner.py:3:1: F401 'shlex' imported but unused
+.\news_adapter.py:5:1: F401 'typing.Optional' imported but unused
+.\news_bias_writer.py:2:1: F401 'math' imported but unused
+.\notifier.py:5:1: F401 'typing.Dict' imported but unused
+.\notifier.py:5:1: F401 'typing.Any' imported but unused
+.\online_learner.py:10:1: F401 'json' imported but unused
+.\outcome_logger.py:3:1: F401 'os' imported but unused
+.\paper_fx_oanda.py:2:1: F401 'os' imported but unused
+.\paper_fx_oanda.py:4:1: F401 'utils.bps_to_frac' imported but unused
+.\pattern_memory.py:7:1: F401 'typing.List' imported but unused
+.\regime.py:4:1: F401 'numpy as np' imported but unused
+.\research.py:4:1: F401 'os' imported but unused
+.\research_optuna_walk.py:3:1: F401 'datetime as dt' imported but unused
+.\research_optuna_walk.py:16:1: F401 'utils.bps_to_frac' imported but unused
+.\risk_engine.py:5:1: F401 'math' imported but unused
+.\risk_engine.py:7:1: F401 'typing.Any' imported but unused
+.\router.py:614:5: F401 'json' imported but unused
+.\run_live.py:3:1: F401 'math' imported but unused
+.\run_live_fx.py:3:1: F401 'math' imported but unused
+.\run_live_fx.py:3:1: F401 'datetime as dt' imported but unused
+.\run_live_fx.py:4:1: F401 'typing.List' imported but unused
+.\run_live_meme.py:3:1: F401 'math' imported but unused
+.\run_live_meme.py:5:1: F401 'pandas as pd' imported but unused
+.\run_live_meme.py:18:1: F401 'news_service.bullets_for' imported but unused
+.\run_live_meme.py:21:1: F401 'regional_utils.primary_exchange' imported but unused
+.\run_live_meme.py:21:1: F401 'regional_utils.fallback_exchange' imported but unused
+.\run_live_meme.py:25:1: F401 'pprint.pformat' imported but unused
+.\signals_scanner.py:4:1: F401 'concurrent.futures as cf' imported but unused
+.\signals_scanner.py:9:1: F401 'signals_hub.mtf_confirm' imported but unused
+.\signals_scanner.py:11:1: F401 'news_adapter.fx_guard_for_symbol' imported but unused
+.\signals_scanner.py:11:1: F401 'news_adapter.fetch_crypto_sentiment' imported but unused
+.\signals_scanner.py:12:1: F401 'pattern_memory.recall' imported but unused
+.\signals_scanner_debug.py:3:1: F401 'concurrent.futures as cf' imported but unused
+.\sizer.py:3:1: F401 'math' imported but unused
+.\tester.py:3:1: F401 'numpy as np' imported but unused
+.\tests\test_router_limits.py:1:1: F401 'os' imported but unused
+.\tests\test_router_safety.py:1:1: F401 'os' imported but unused
+.\tests\test_router_safety.py:2:1: F401 'pytest' imported but unused
+.\tf_brains.py:5:1: F401 'typing.Tuple' imported but unused
+.\tg_utils.py:4:1: F401 'typing.Optional' imported but unused
+.\tools\auto_static_fix.py:1:1: F401 'os' imported but unused
+.\tools\auto_static_fix.py:8:5: F401 'sys' imported but unused
+.\tools\auto_static_runner.py:1:1: F401 'os' imported but unused
+.\tools\auto_static_runner.py:7:5: F401 'sys' imported but unused
+.\tools\check_attach.py:2:1: F401 'sys' imported but unused
+.\tools\debug_scan_run.py:1:1: F401 'argparse' imported but unused
+.\tools\run_bot_paper.py:1:1: F401 'time' imported but unused
+.\tools\run_bot_paper.py:29:9: F401 'strategy.get_strategy' imported but unused
+.\tools\ultra_debug.py:1:1: F401 'time' imported but unused
+.\trade_planner.py:6:1: F401 'typing.Tuple' imported but unused
+.\trade_planner.py:18:1: F401 'session_filter.crypto_session_weight' imported but unused
+.\trade_planner.py:18:1: F401 'session_filter.fx_session_weight' imported but unused
+.\trade_planner.py:98:13: F401 'router.ExchangeRouter' imported but unused
+.\trader_core.py:5:1: F401 'typing.Dict' imported but unused
+.\trader_core.py:5:1: F401 'typing.Any' imported but unused
+.\trader_core.py:5:1: F401 'typing.Optional' imported but unused
+.\traders_core\auto_loop.py:3:1: F401 'pprint.pprint' imported but unused
+.\traders_core\auto_loop.py:4:1: F401 'typing.Dict' imported but unused
+.\traders_core\auto_loop.py:4:1: F401 'typing.Any' imported but unused
+.\traders_core\connectors\crypto_ccxt.py:2:1: F401 'time' imported but unused
+.\traders_core\connectors\crypto_ccxt.py:3:1: F401 'typing.List' imported but unused
+.\traders_core\connectors\crypto_ccxt.py:3:1: F401 'typing.Optional' imported but unused
+.\traders_core\execution\crypto_router.py:2:1: F401 'math' imported but unused
+.\traders_core\execution\crypto_router.py:3:1: F401 'pandas as pd' imported but unused
+.\traders_core\execution\router.py:2:1: F401 'math' imported but unused
+.\traders_core\features\pipeline.py:2:1: F401 'numpy as np' imported but unused
+.\traders_core\main.py:2:1: F401 'sys' imported but unused
+.\traders_core\mt5_adapter.py:107:5: F401 'numpy as np' imported but unused
+.\traders_core\observability\metrics.py:2:1: F401 'prometheus_client.Histogram' imported but unused
+.\traders_core\orchestration\jobs.py:7:1: F401 'traders_core.knowledge.note.write_digest' imported but unused
+.\traders_core\orchestration\jobs.py:10:1: F401 'traders_core.observability.metrics.METRICS' imported but unused
+.\traders_core\orchestration\jobs.py:11:1: F401 'traders_core.connectors.crypto_ccxt.ticker_price' imported but unused
+.\traders_core\orchestration\jobs.py:84:13: F401 'pandas as pd' imported but unused
+.\traders_core\portfolio\market_selector.py:2:1: F401 'math' imported but unused
+.\traders_core\portfolio\market_selector.py:7:1: F401 'traders_core.connectors.crypto_ccxt.ohlcv_df' imported but unused
+.\traders_core\portfolio\market_selector.py:8:1: F401 'traders_core.mt5_adapter.copy_rates_days' imported but unused
+.\traders_core\portfolio\market_selector.py:9:1: F401 'traders_core.features.pipeline.rates_to_df' imported but unused
+.\traders_core\portfolio\wallets.py:2:1: F401 'os' imported but unused
+.\traders_core\portfolio\wallets.py:3:1: F401 'typing.Dict' imported but unused
+.\traders_core\portfolio\wallets.py:3:1: F401 'typing.Any' imported but unused
+.\traders_core\research\walk_forward.py:3:1: F401 'os' imported but unused
+.\traders_core\research\walk_forward.py:7:1: F401 'sklearn.ensemble.GradientBoostingClassifier' imported but unused
+.\traders_core\research\walk_forward.py:9:1: F401 'sklearn.metrics.accuracy_score' imported but unused
+.\traders_core\research\walk_forward.py:11:1: F401 'traders_core.mt5_adapter.copy_rates_days' imported but unused
+.\traders_core\research\walk_forward.py:12:1: F401 'traders_core.features.pipeline.rates_to_df' imported but unused
+.\traders_core\research\walk_forward.py:12:1: F401 'traders_core.features.pipeline.make_features' imported but unused
+.\traders_core\research\walk_forward.py:12:1: F401 'traders_core.features.pipeline.build_xy' imported but unused
+.\traders_core\research\walk_forward.py:13:1: F401 'traders_core.storage.registry.save_model' imported but unused
+.\traders_core\research\walk_forward.py:13:1: F401 'traders_core.storage.registry.save_model_tagged' imported but unused
+.\traders_core\research\walk_forward.py:14:1: F401 'traders_core.risk.gates.compute_metrics' imported but unused
+.\traders_core\research\walk_forward.py:15:1: F401 'traders_core.research.cv.PurgedKFold' imported but unused
+.\traders_core\risk\gates.py:2:1: F401 'numpy as np' imported but unused
+.\traders_core\sim\paper_broker.py:2:1: F401 'time' imported but unused
+.\traders_core\storage\registry.py:4:1: F401 'typing.Tuple' imported but unused
+.\traders_core\storage\registry.py:32:5: F401 'pathlib.Path' imported but unused
+.\traders_core\strategist.py:2:1: F401 'typing.Tuple' imported but unused
+.\trades_reports.py:3:1: F401 'sys' imported but unused
+.\ultra_core.py:11:1: F401 'typing.Optional' imported but unused
+.\ultra_core.py:96:13: F401 'torch' imported but unused
+.\ultra_core.py:103:13: F401 'qiskit.execute' imported but unused
+.\ultra_core.py:103:13: F401 'qiskit.QuantumCircuit' imported but unused
+.\utils.py:9:1: F401 'math' imported but unused

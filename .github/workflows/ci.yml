@@ -1,0 +1,51 @@
+name: CI
+
+on:
+  push:
+    branches: [ main, master, 'feature/**' ]
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          if [ -f requirements.txt ]; then
+            python -m pip install -r requirements.txt
+          else
+            python -m pip install pytest
+          fi
+          # Ensure pytest is available regardless
+          python -m pip install pytest
+
+      - name: Lint (flake8)
+        run: |
+          python -m pip install flake8
+          python -m flake8 --max-line-length=120 || true
+
+      - name: Run tests (paper-safe)
+        env:
+          EXCHANGE_ID: paper
+          ENABLE_LIVE: 'false'
+        run: |
+          python -m pytest -q
+
+      - name: Guard for ALLOW_LIVE literals
+        run: |
+          # Only search tracked source files; exclude .github, DOCS and README to avoid false-positives
+            # exclude docs, tests, tools and connectors where tests/examples intentionally set env vars
+            if git grep -n "ALLOW_LIVE.*=.*true" -- ':!\.github' ':!DOCS' ':!README*' ':!tools' ':!tests' ':!traders_core' || git grep -n "ALLOW_LIVE.*=.*1" -- ':!\.github' ':!DOCS' ':!README*' ':!tools' ':!tests' ':!traders_core'; then
+            echo "Found ALLOW_LIVE literal in code; remove before merging"
+            exit 1
+          fi

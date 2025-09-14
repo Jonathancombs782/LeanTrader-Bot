@@ -1,31 +1,64 @@
 # ledger.py
 from __future__ import annotations
-import csv, os, math, json, time
-from pathlib import Path
-from typing import Dict, Any, Optional, List
+
+import csv
+import json
+import time
 from datetime import datetime, timezone
+from pathlib import Path
+from typing import Any, Dict, List, Optional
+
 import pandas as pd
 
-DATA_DIR = Path("data"); DATA_DIR.mkdir(parents=True, exist_ok=True)
-LEDGER   = DATA_DIR / "ledger.csv"
+DATA_DIR = Path("data")
+DATA_DIR.mkdir(parents=True, exist_ok=True)
+LEDGER = DATA_DIR / "ledger.csv"
 
 HEADERS = [
-    "ts_entry","date","venue","market","symbol","tf","side",
-    "entry_px","qty","sl","tp","meta",
-    "ts_exit","exit_px","pnl_raw","pnl_r","hold_min","status"  # status: open|closed|stopped|tp
+    "ts_entry",
+    "date",
+    "venue",
+    "market",
+    "symbol",
+    "tf",
+    "side",
+    "entry_px",
+    "qty",
+    "sl",
+    "tp",
+    "meta",
+    "ts_exit",
+    "exit_px",
+    "pnl_raw",
+    "pnl_r",
+    "hold_min",
+    "status",  # status: open|closed|stopped|tp
 ]
+
 
 def _utc_now() -> int:
     return int(time.time())
+
 
 def _ensure_file():
     if not LEDGER.exists():
         with open(LEDGER, "w", newline="", encoding="utf-8") as f:
             csv.writer(f).writerow(HEADERS)
 
-def log_entry(*, venue:str, market:str, symbol:str, tf:str, side:str,
-              entry_px:float, qty:float, sl:float|None=None, tp:float|None=None,
-              meta:Dict[str,Any]|None=None) -> str:
+
+def log_entry(
+    *,
+    venue: str,
+    market: str,
+    symbol: str,
+    tf: str,
+    side: str,
+    entry_px: float,
+    qty: float,
+    sl: float | None = None,
+    tp: float | None = None,
+    meta: Dict[str, Any] | None = None,
+) -> str:
     """
     Returns trade_id = f"{symbol}|{tf}|{ts_entry}"
     """
@@ -34,14 +67,27 @@ def log_entry(*, venue:str, market:str, symbol:str, tf:str, side:str,
     row = [
         ts,
         datetime.utcfromtimestamp(ts).strftime("%Y-%m-%d"),
-        venue, market, symbol, tf, side.lower(),
-        float(entry_px), float(qty), float(sl or 0.0), float(tp or 0.0),
+        venue,
+        market,
+        symbol,
+        tf,
+        side.lower(),
+        float(entry_px),
+        float(qty),
+        float(sl or 0.0),
+        float(tp or 0.0),
         json.dumps(meta or {}),
-        "", "", "", "", "", "open"
+        "",
+        "",
+        "",
+        "",
+        "",
+        "open",
     ]
     with open(LEDGER, "a", newline="", encoding="utf-8") as f:
         csv.writer(f).writerow(row)
     return f"{symbol}|{tf}|{ts}"
+
 
 def log_exit(trade_id: str, *, exit_px: float, status: str = "closed") -> None:
     """
@@ -57,12 +103,12 @@ def log_exit(trade_id: str, *, exit_px: float, status: str = "closed") -> None:
         return
 
     row = df[idx].iloc[0].copy()
-    side    = str(row["side"])
-    entry   = float(row["entry_px"])
-    sl      = float(row.get("sl", 0.0))
-    ts_now  = _utc_now()
+    side = str(row["side"])
+    entry = float(row["entry_px"])
+    sl = float(row.get("sl", 0.0))
+    ts_now = _utc_now()
 
-    qty     = float(row["qty"])
+    qty = float(row["qty"])
     exit_px = float(exit_px)
 
     # raw PnL in quote currency for spot/futures (sign by side)
@@ -70,19 +116,24 @@ def log_exit(trade_id: str, *, exit_px: float, status: str = "closed") -> None:
 
     # R-multiple: distance to SL (if present); fallback to |entry|*0.003 (0.3%) to avoid /0
     risk_per_unit = abs(entry - sl) if sl and sl > 0 else max(1e-9, abs(entry) * 0.003)
-    pnl_r = ((exit_px - entry) / risk_per_unit) if side == "buy" else ((entry - exit_px) / risk_per_unit)
+    pnl_r = (
+        ((exit_px - entry) / risk_per_unit)
+        if side == "buy"
+        else ((entry - exit_px) / risk_per_unit)
+    )
 
     hold_min = max(0.0, (ts_now - ts_entry) / 60.0)
 
     # write back
-    df.loc[idx, "ts_exit"]  = ts_now
-    df.loc[idx, "exit_px"]  = exit_px
-    df.loc[idx, "pnl_raw"]  = pnl_raw
-    df.loc[idx, "pnl_r"]    = pnl_r
+    df.loc[idx, "ts_exit"] = ts_now
+    df.loc[idx, "exit_px"] = exit_px
+    df.loc[idx, "pnl_raw"] = pnl_raw
+    df.loc[idx, "pnl_r"] = pnl_r
     df.loc[idx, "hold_min"] = hold_min
-    df.loc[idx, "status"]   = status
+    df.loc[idx, "status"] = status
 
     df.to_csv(LEDGER, index=False)
+
 
 def daily_pnl_text(day: Optional[str] = None) -> str:
     """
@@ -103,20 +154,25 @@ def daily_pnl_text(day: Optional[str] = None) -> str:
     wins = (sub["pnl_raw"] > 0).sum()
     losses = (sub["pnl_raw"] <= 0).sum()
     gross = float(sub["pnl_raw"].sum())
-    rsum  = float(sub["pnl_r"].sum())
-    wr    = (wins / max(1, (wins + losses))) * 100.0
-    n     = len(sub)
+    rsum = float(sub["pnl_r"].sum())
+    wr = (wins / max(1, (wins + losses))) * 100.0
+    n = len(sub)
 
-    lines = [f"*Daily PnL — {day}*",
-             f"Trades: `{n}` | Winrate: `{wr:.1f}%`",
-             f"Gross PnL: `{gross:.4f}` (quote) | Sum R: `{rsum:.2f}`",
-             "— Top 5:"]
+    lines = [
+        f"*Daily PnL — {day}*",
+        f"Trades: `{n}` | Winrate: `{wr:.1f}%`",
+        f"Gross PnL: `{gross:.4f}` (quote) | Sum R: `{rsum:.2f}`",
+        "— Top 5:",
+    ]
     sub = sub.sort_values("pnl_raw", ascending=False).head(5)
     for _, r in sub.iterrows():
-        lines.append(f"• `{r['symbol']}` {r['side']} tf=`{r['tf']}`  R=`{float(r['pnl_r']):.2f}`  PnL=`{float(r['pnl_raw']):.4f}`")
+        lines.append(
+            f"• `{r['symbol']}` {r['side']} tf=`{r['tf']}`  R=`{float(r['pnl_r']):.2f}`  PnL=`{float(r['pnl_raw']):.4f}`"
+        )
     return "\n".join(lines)
 
-def open_positions() -> List[Dict[str,Any]]:
+
+def open_positions() -> List[Dict[str, Any]]:
     _ensure_file()
     try:
         df = pd.read_csv(LEDGER)

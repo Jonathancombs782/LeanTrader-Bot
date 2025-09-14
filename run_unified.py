@@ -1,7 +1,10 @@
 # run_unified.py
 from __future__ import annotations
+
 import argparse
+
 from trader_core import TraderCore
+
 
 def main():
     ap = argparse.ArgumentParser()
@@ -16,15 +19,26 @@ def main():
     ap.add_argument("--bbw_th", type=float, default=0.02)
     args = ap.parse_args()
 
-    fx  = [s for s in args.fx.split(",") if s]
+    fx = [s for s in args.fx.split(",") if s]
     fxt = [s for s in args.fx_tfs.split(",") if s]
-    sp  = [s for s in args.spot.split(",") if s]
+    sp = [s for s in args.spot.split(",") if s]
     spt = [s for s in args.spot_tfs.split(",") if s]
-    fu  = [s for s in args.fut.split(",") if s]
+    fu = [s for s in args.fut.split(",") if s]
     fut = [s for s in args.fut_tfs.split(",") if s]
 
-    core = TraderCore(fx, fxt, sp, spt, fu, fut, loop_sec=args.loop, atr_th=args.atr_th, bbw_th=args.bbw_th)
+    core = TraderCore(
+        fx,
+        fxt,
+        sp,
+        spt,
+        fu,
+        fut,
+        loop_sec=args.loop,
+        atr_th=args.atr_th,
+        bbw_th=args.bbw_th,
+    )
     core.run_forever()
+
 
 if __name__ == "__main__":
     main()

@@ -1,6 +1,8 @@
 # paper_broker.py
-import time, random
-from typing import Dict, Any, List, Optional, Tuple
+import random
+import time
+from typing import Any, Dict, List, Optional, Tuple
+
 
 class PaperBroker:
     """
@@ -13,14 +15,16 @@ class PaperBroker:
     # ------------------ lifecycle / account / markets ------------------
     def __init__(self, start_cash: float = 5000.0):
         # account
-        self.cash: float = float(start_cash)      # free USDT
+        self.cash: float = float(start_cash)  # free USDT
         self.history: List[Dict[str, Any]] = []
 
         # spot holdings: base -> qty
         self.holdings: Dict[str, float] = {}
 
         # futures positions: sym -> {qty, entry, lev, mode}
-        self.fut_pos: Dict[str, Dict[str, float]] = {}   # qty (base), entry (USDT), lev (int)
+        self.fut_pos: Dict[str, Dict[str, float]] = (
+            {}
+        )  # qty (base), entry (USDT), lev (int)
 
         # simple universe + synthetic prices
         self._symbols = ["BTC/USDT", "ETH/USDT", "SOL/USDT", "XRP/USDT", "DOGE/USDT"]
@@ -47,18 +51,29 @@ class PaperBroker:
         last = self._price(symbol)
         return {"symbol": symbol, "last": last, "timestamp": int(time.time() * 1000)}
 
-    def fetch_ohlcv(self, symbol: str, timeframe: str = "1m", limit: int = 120) -> List[List[float]]:
+    def fetch_ohlcv(
+        self, symbol: str, timeframe: str = "1m", limit: int = 120
+    ) -> List[List[float]]:
         ms = 60_000
         now = int(time.time() // 60 * 60) * 1000
         out, p = [], self._px.get(symbol, 1.0)
         for i in range(limit):
             base = max(1e-8, p * (1 + random.uniform(-0.002, 0.002)))
             high = base * (1 + random.uniform(0, 0.001))
-            low  = base * (1 - random.uniform(0, 0.001))
+            low = base * (1 - random.uniform(0, 0.001))
             open_ = base * (1 + random.uniform(-0.0005, 0.0005))
             close = base * (1 + random.uniform(-0.0005, 0.0005))
             vol = abs(random.gauss(1.0, 0.25))
-            out.append([now - (limit - i) * ms, float(open_), float(high), float(low), float(close), float(vol)])
+            out.append(
+                [
+                    now - (limit - i) * ms,
+                    float(open_),
+                    float(high),
+                    float(low),
+                    float(close),
+                    float(vol),
+                ]
+            )
             p = close
         self._px[symbol] = p
         return out
@@ -109,10 +124,12 @@ class PaperBroker:
         for sym, pos in self.fut_pos.items():
             px = self._price(sym)
             used_margin += self._fut_used_margin(sym, px)
-            unreal      += self._fut_unrealized(sym, px)
+            unreal += self._fut_unrealized(sym, px)
 
         equity = self.cash + unreal
-        free_cash = max(0.0, self.cash - used_margin)  # cross: margin reserved from cash
+        free_cash = max(
+            0.0, self.cash - used_margin
+        )  # cross: margin reserved from cash
 
         return {
             "info": {},
@@ -129,31 +146,49 @@ class PaperBroker:
         out = []
         for sym, pos in self.fut_pos.items():
             px = self._price(sym)
-            out.append({
-                "symbol": sym,
-                "contracts": pos["qty"],
-                "entryPrice": pos["entry"],
-                "leverage": int(pos["lev"]),
-                "unrealizedPnl": self._fut_unrealized(sym, px),
-                "margin": self._fut_used_margin(sym, px),
-                "markPrice": px,
-            })
+            out.append(
+                {
+                    "symbol": sym,
+                    "contracts": pos["qty"],
+                    "entryPrice": pos["entry"],
+                    "leverage": int(pos["lev"]),
+                    "unrealizedPnl": self._fut_unrealized(sym, px),
+                    "margin": self._fut_used_margin(sym, px),
+                    "markPrice": px,
+                }
+            )
         return out
 
     # ------------------ trading ------------------
-    def create_order(self, symbol: str, type: str, side: str, amount: float,
-                     price: Optional[float] = None, params: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+    def create_order(
+        self,
+        symbol: str,
+        type: str,
+        side: str,
+        amount: float,
+        price: Optional[float] = None,
+        params: Optional[Dict[str, Any]] = None,
+    ) -> Dict[str, Any]:
         assert type == "market", "PaperBroker supports market orders only"
         params = params or {}
-        ts = int(time.time() * 1000)
+        int(time.time() * 1000)
         base, _ = self._split(symbol)
         px = self._price(symbol)
 
         # spot vs futures (by reduceOnly presence or active futures pos/lev)
         reduce_only = bool(params.get("reduceOnly"))
-        is_futures  = reduce_only or (symbol in self.fut_pos and self._fut(symbol)["lev"] >= 1 and self._fut(symbol)["qty"] != 0)
+        is_futures = reduce_only or (
+            symbol in self.fut_pos
+            and self._fut(symbol)["lev"] >= 1
+            and self._fut(symbol)["qty"] != 0
+        )
 
-        if not is_futures and symbol in self.fut_pos and self._fut(symbol)["lev"] >= 1 and params.get("futures", False):
+        if (
+            not is_futures
+            and symbol in self.fut_pos
+            and self._fut(symbol)["lev"] >= 1
+            and params.get("futures", False)
+        ):
             is_futures = True
 
         if not is_futures and "mode" in params and params["mode"] == "futures":
@@ -167,7 +202,9 @@ class PaperBroker:
         self.history.append(ord_obj)
         return ord_obj
 
-    def _exec_spot(self, symbol: str, base: str, side: str, amount: float, px: float) -> Dict[str, Any]:
+    def _exec_spot(
+        self, symbol: str, base: str, side: str, amount: float, px: float
+    ) -> Dict[str, Any]:
         if side == "buy":
             cost = amount * px
             if cost > self.cash + 1e-9:
@@ -192,7 +229,9 @@ class PaperBroker:
             "mode": "spot",
         }
 
-    def _exec_futures(self, symbol: str, side: str, amount: float, px: float, reduce_only: bool) -> Dict[str, Any]:
+    def _exec_futures(
+        self, symbol: str, side: str, amount: float, px: float, reduce_only: bool
+    ) -> Dict[str, Any]:
         pos = self._fut(symbol)
         q_old, e_old, lev = pos["qty"], pos["entry"], max(1, int(pos["lev"]))
         q_delta = amount if side == "buy" else -amount
@@ -215,11 +254,17 @@ class PaperBroker:
                 close_amt = min(abs(q_delta), abs(q_old))
                 realized += (px - e_old) * (close_amt if q_old > 0 else -close_amt)
                 q_old += close_amt if q_old < 0 else -close_amt
-                q_delta = (amount if side == "buy" else -amount) - (close_amt if (side == "buy" and q_old < 0) or (side == "sell" and q_old > 0) else -close_amt)
+                q_delta = (amount if side == "buy" else -amount) - (
+                    close_amt
+                    if (side == "buy" and q_old < 0) or (side == "sell" and q_old > 0)
+                    else -close_amt
+                )
 
             # opening remainder
             q_new = q_old + q_delta
-            if q_new != 0 and (q_new * q_old >= 0):  # same direction extend or fresh open
+            if q_new != 0 and (
+                q_new * q_old >= 0
+            ):  # same direction extend or fresh open
                 add = abs(q_delta)
                 if add > 0:
                     # margin required for the incremental size
@@ -230,7 +275,11 @@ class PaperBroker:
                     # avg entry if same side extend; if fresh open from 0 => entry=px
                     if q_old == 0 or (q_new * q_old > 0):
                         w_old = abs(q_old)
-                        pos["entry"] = (e_old * w_old + px * add) / (w_old + add) if w_old > 0 else px
+                        pos["entry"] = (
+                            (e_old * w_old + px * add) / (w_old + add)
+                            if w_old > 0
+                            else px
+                        )
 
         # update position
         pos["qty"] = q_new

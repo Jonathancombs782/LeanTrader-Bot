@@ -4,13 +4,16 @@ Download or scrape upcoming economic calendar events and save to data/calendar.c
 Supports: Investing.com (unofficial), FRED, or dummy fallback.
 """
 
-import os, csv, requests
+import csv
 from pathlib import Path
+
 import pandas as pd
+import requests
 
 DATA_DIR = Path("data")
 DATA_DIR.mkdir(exist_ok=True)
 OUT_FILE = DATA_DIR / "calendar.csv"
+
 
 def fetch_investing_calendar():
     """
@@ -22,15 +25,18 @@ def fetch_investing_calendar():
     events = r.json()
     rows = []
     for e in events:
-        rows.append({
-            "time": e.get("date", ""),
-            "currency": e.get("country", ""),
-            "impact": e.get("impact", ""),
-            "event": e.get("title", ""),
-            "forecast": e.get("forecast", ""),
-            "previous": e.get("previous", ""),
-        })
+        rows.append(
+            {
+                "time": e.get("date", ""),
+                "currency": e.get("country", ""),
+                "impact": e.get("impact", ""),
+                "event": e.get("title", ""),
+                "forecast": e.get("forecast", ""),
+                "previous": e.get("previous", ""),
+            }
+        )
     return pd.DataFrame(rows)
+
 
 def main():
     try:
@@ -42,9 +48,10 @@ def main():
         # fallback dummy
         with open(OUT_FILE, "w", newline="") as f:
             w = csv.writer(f)
-            w.writerow(["time","currency","impact","event","forecast","previous"])
-            w.writerow(["2099-01-01","USD","HIGH","Dummy Event","N/A","N/A"])
+            w.writerow(["time", "currency", "impact", "event", "forecast", "previous"])
+            w.writerow(["2099-01-01", "USD", "HIGH", "Dummy Event", "N/A", "N/A"])
         print(f"[calendar] wrote fallback to {OUT_FILE}")
+
 
 if __name__ == "__main__":
     main()

@@ -1,37 +1,46 @@
 # brain.py
 from __future__ import annotations
-import os, json, math, time
+
+import json
+import os  # noqa: F401
+import time
 from dataclasses import dataclass
-from typing import Optional, Dict, Any, List, Tuple
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timezone
+from typing import Optional, Tuple
 
 import numpy as np
 import pandas as pd
 
+
 # ---------- small utils ----------
 def envf(name: str, default: float) -> float:
-    try: return float(os.getenv(name, default))
-    except: return float(default)
+    try:
+        return float(os.getenv(name, default))
+    except Exception:
+        return float(default)
+
 
 def envs(name: str, default: str) -> str:
     return os.getenv(name, default)
 
+
 def now_utc() -> datetime:
     return datetime.now(timezone.utc)
+
 
 # ---------- features ----------
 def ema(series: pd.Series, n: int) -> pd.Series:
     return series.ewm(span=n, adjust=False).mean()
 
+
 def atr(df: pd.DataFrame, n: int = 14) -> pd.Series:
     h, l, c = df["high"], df["low"], df["close"]
     prev_c = c.shift(1)
-    tr = pd.concat([
-        (h - l),
-        (h - prev_c).abs(),
-        (l - prev_c).abs()
-    ], axis=1).max(axis=1)
+    tr = pd.concat([(h - l), (h - prev_c).abs(), (l - prev_c).abs()], axis=1).max(
+        axis=1
+    )
     return tr.rolling(n).mean()
+
 
 def regime(df: pd.DataFrame) -> str:
     """Very light regime tag: 'trend' vs 'range' + 'volatile' flag."""
@@ -39,41 +48,54 @@ def regime(df: pd.DataFrame) -> str:
     bbw = (df["close"].rolling(20).std() / df["close"].rolling(20).mean()).iloc[-1]
     trending = abs((e12 - e26).iloc[-1]) > df["close"].rolling(20).std().iloc[-1] * 0.15
     volatile = bbw is not None and bbw > 0.02
-    if trending and volatile: return "trend_volatile"
-    if trending: return "trend"
-    if volatile: return "range_volatile"
+    if trending and volatile:
+        return "trend_volatile"
+    if trending:
+        return "trend"
+    if volatile:
+        return "range_volatile"
     return "range"
+
 
 def session_weight(ts: datetime) -> float:
     # simple UTC windows; tweak per venue if you want
     hh = ts.hour
-    if 23 <= hh or hh < 7:   # Asia
+    if 23 <= hh or hh < 7:  # Asia
         return envf("SESSION_ASIA", 0.7)
-    if 7 <= hh < 13:         # London
+    if 7 <= hh < 13:  # London
         return envf("SESSION_LONDON", 1.0)
     return envf("SESSION_NEWYORK", 1.2)  # NY
+
 
 # ---------- memory (experience replay lite) ----------
 class Memory:
     PATH = "runtime/brain_mem.json"
+
     def __init__(self) -> None:
         os.makedirs("runtime", exist_ok=True)
         try:
-            with open(self.PATH, "r") as f: self.mem = json.load(f)
-        except: self.mem = {"trades": [], "pnl_day": {}, "losers": 0}
+            with open(self.PATH, "r") as f:
+                self.mem = json.load(f)
+        except Exception:
+            self.mem = {"trades": [], "pnl_day": {}, "losers": 0}
 
     def save(self) -> None:
-        with open(self.PATH, "w") as f: json.dump(self.mem, f, indent=2)
+        with open(self.PATH, "w") as f:
+            json.dump(self.mem, f, indent=2)
 
     def push_trade(self, sym: str, side: str, pnl: float) -> None:
-        self.mem["trades"].append({"t": time.time(), "sym": sym, "side": side, "pnl": pnl})
+        self.mem["trades"].append(
+            {"t": time.time(), "sym": sym, "side": side, "pnl": pnl}
+        )
         self.mem["trades"] = self.mem["trades"][-2000:]
         # daily pnl
         day = datetime.utcfromtimestamp(time.time()).strftime("%Y-%m-%d")
         self.mem["pnl_day"][day] = self.mem["pnl_day"].get(day, 0.0) + pnl
         # loser streak
-        if pnl < 0: self.mem["losers"] = int(self.mem.get("losers", 0)) + 1
-        else:       self.mem["losers"] = 0
+        if pnl < 0:
+            self.mem["losers"] = int(self.mem.get("losers", 0)) + 1
+        else:
+            self.mem["losers"] = 0
         self.save()
 
     def pnl_today(self) -> float:
@@ -82,6 +104,7 @@ class Memory:
 
     def losers(self) -> int:
         return int(self.mem.get("losers", 0))
+
 
 # ---------- sizing ----------
 class VolSizer:
@@ -106,13 +129,15 @@ class VolSizer:
             return self.vol_target_usd(df)
         return self.fixed_usd()
 
+
 # ---------- advice ----------
 @dataclass
 class Advice:
-    side: Optional[str]      # "buy" | "sell" | None
+    side: Optional[str]  # "buy" | "sell" | None
     sl: Optional[float]
     tp: Optional[float]
     reason: str
+
 
 class Brain:
     def __init__(self) -> None:
@@ -162,6 +187,7 @@ class Brain:
         else:
             return min(entry + self.slm * a, price + self.slm * a), price - self.tpm * a
 
+
 # ---------- guards ----------
 class Guards:
     def __init__(self, memory: Memory) -> None:
@@ -172,13 +198,20 @@ class Guards:
 
     def day_ok(self) -> Tuple[bool, str]:
         if self.mem.pnl_today() <= -abs(self.max_loss):
-            return False, f"daily_loss_guard hit ({self.mem.pnl_today():.2f} <= {-abs(self.max_loss):.2f})"
+            return (
+                False,
+                f"daily_loss_guard hit ({self.mem.pnl_today():.2f} <= {-abs(self.max_loss):.2f})",
+            )
         if self.mem.losers() >= self.max_losers:
-            return False, f"loser_streak_guard hit ({self.mem.losers()} >= {self.max_losers})"
+            return (
+                False,
+                f"loser_streak_guard hit ({self.mem.losers()} >= {self.max_losers})",
+            )
         return True, "ok"
 
     def funding_ok(self, funding: Optional[float]) -> Tuple[bool, str]:
-        if funding is None: return True, "no_funding_data"
+        if funding is None:
+            return True, "no_funding_data"
         if abs(funding) > self.max_abs_funding:
             return False, f"skip extreme funding {funding:.3f}"
         return True, "ok"

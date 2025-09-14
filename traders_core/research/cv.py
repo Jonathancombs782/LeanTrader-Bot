@@ -1,11 +1,15 @@
 from __future__ import annotations
-import numpy as np
+
 from typing import Iterator, Tuple
+
+import numpy as np
+
 
 class PurgedKFold:
     """
     Time-aware CV: no look-ahead, with 'embargo' bars after each test block.
     """
+
     def __init__(self, n_splits: int = 5, embargo: int = 10):
         self.n_splits = n_splits
         self.embargo = max(0, int(embargo))

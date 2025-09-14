@@ -1,16 +1,20 @@
 from __future__ import annotations
-import os
-from typing import Dict, Any
+
+import os  # noqa: F401  # intentionally kept
+from typing import Any, Dict  # noqa: F401  # intentionally kept
+
 from dotenv import load_dotenv
+
 load_dotenv()
 
-from traders_core.connectors.crypto_ccxt import _mk_exchange
-from traders_core.mt5_adapter import account_info
+from traders_core.connectors.crypto_ccxt import _mk_exchange  # noqa: E402
+from traders_core.mt5_adapter import account_info  # noqa: E402
+
 
 def crypto_wallet_usd(exchange_name: str, testnet: bool = True) -> float:
     ex = _mk_exchange(exchange_name, testnet)
     try:
-        if hasattr(ex, 'safe_fetch_balance'):
+        if hasattr(ex, "safe_fetch_balance"):
             bal = ex.safe_fetch_balance()
         else:
             try:
@@ -28,6 +32,7 @@ def crypto_wallet_usd(exchange_name: str, testnet: bool = True) -> float:
         except Exception:
             pass
     return free
+
 
 def mt5_equity_usd() -> float:
     try:

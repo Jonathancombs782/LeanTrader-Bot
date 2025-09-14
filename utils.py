@@ -4,10 +4,10 @@
 # `from utils import setup_logger, load_config, bps_to_frac, ensure_dir`
 # work from any of the runners.
 
+import logging
+import math  # noqa: F401  # intentionally kept
 import os
 import sys
-import math
-import logging
 from pathlib import Path
 from typing import Any, Dict
 
@@ -55,7 +55,6 @@ def setup_logger(name: str, level="INFO", log_dir="logs"):
 
     logger.propagate = False
     return logger
-
 
 
 # -------------------------

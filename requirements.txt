@@ -1,0 +1,6 @@
+ccxt
+pandas
+numpy
+python-dotenv
+flake8
+pytest

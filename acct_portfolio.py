@@ -1,9 +1,8 @@
 # portfolio.py
 from __future__ import annotations
 
-import os, math
-from pathlib import Path
-from typing import List, Optional, Dict, Any
+import os
+from typing import Dict, List, Optional
 
 from dotenv import load_dotenv
 
@@ -21,6 +20,8 @@ except Exception:
 
 
 load_dotenv()
+
+# local imports are used inside functions to avoid top-level runtime dependencies
 
 
 # ---------- helpers ----------
@@ -43,27 +44,38 @@ def _ensure_ccxt_exchange(exchange=None, exchange_id: Optional[str] = None):
     if exchange is not None:
         return exchange
 
-    if ccxt is None:
-        raise RuntimeError("ccxt not installed")
+    # Prefer returning the project's ExchangeRouter-backed exchange to ensure
+    # uniform safety checks (ALLOW_LIVE/LIVE_CONFIRM, notional caps, etc.).
+    try:
+        from router import ExchangeRouter  # noqa: E402
 
-    ex_id = (exchange_id or os.getenv("EXCHANGE_ID") or "").lower().strip()
-    if not ex_id:
-        raise RuntimeError("Missing EXCHANGE_ID (e.g. 'binanceus', 'bybit').")
-
-    api_key = os.getenv("API_KEY") or ""
-    api_secret = os.getenv("API_SECRET") or ""
-
-    klass = getattr(ccxt, ex_id)
-    ex = klass({
-        "apiKey": api_key,
-        "secret": api_secret,
-        "enableRateLimit": True,
-        # a short-ish timeout helps prevent blocking loops
-        "timeout": 15000,
-    })
-    # Some venues need apiKey even for public endpoints (BinanceUS quirks).
-    # If you have credentials, set them in .env to avoid “requires apiKey” noise.
-    return ex
+        router = ExchangeRouter()
+        # If caller requested a specific exchange_id, ensure router matches or fall back
+        if exchange_id:
+            ex_id = (exchange_id or os.getenv("EXCHANGE_ID") or "").lower().strip()
+            if ex_id and router.id != ex_id:
+                # request a specific ccxt exchange directly as fallback
+                raise RuntimeError("router backend mismatch")
+        return router.ex
+    except Exception:
+        # Fallback to direct ccxt construction for callers that expect a raw ccxt exchange
+        if ccxt is None:
+            raise RuntimeError("ccxt not installed")
+        ex_id = (exchange_id or os.getenv("EXCHANGE_ID") or "").lower().strip()
+        if not ex_id:
+            raise RuntimeError("Missing EXCHANGE_ID (e.g. 'binanceus', 'bybit').")
+        api_key = os.getenv("API_KEY") or ""
+        api_secret = os.getenv("API_SECRET") or ""
+        klass = getattr(ccxt, ex_id)
+        ex = klass(
+            {
+                "apiKey": api_key,
+                "secret": api_secret,
+                "enableRateLimit": True,
+                "timeout": 15000,
+            }
+        )
+        return ex
 
 
 def _estimate_in_quote(ex, asset: str, amount: float, quote: str = "USD") -> float:
@@ -81,25 +93,32 @@ def _estimate_in_quote(ex, asset: str, amount: float, quote: str = "USD") -> flo
 
     # Try A/QUOTE then A/USDT, then 0 if none
     symbols = [f"{a}/{q}", f"{a}/USDT"]
-    from router import ExchangeRouter
+    from router import ExchangeRouter  # noqa: E402
+
     router = ExchangeRouter()
     for s in symbols:
         try:
             # Prefer router safe wrapper, fall back to direct fetch with guarded logs
             # Prefer router safe wrapper and guard any adapter fallbacks
             try:
-                if hasattr(router, 'safe_fetch_ticker'):
+                if hasattr(router, "safe_fetch_ticker"):
                     ticker = router.safe_fetch_ticker(s)
                 else:
                     try:
-                        ticker = router.ex.fetch_ticker(s) if hasattr(router, 'ex') else {}
+                        ticker = (
+                            router.ex.fetch_ticker(s) if hasattr(router, "ex") else {}
+                        )
                     except Exception as e:
                         print(f"[acct_portfolio] fetch_ticker failed for {s}: {e}")
                         ticker = {}
             except Exception as e:
                 print(f"[acct_portfolio] safe_fetch_ticker outer failed for {s}: {e}")
                 ticker = {}
-            px = float((ticker.get("last") if isinstance(ticker, dict) else None) or (ticker.get("close") if isinstance(ticker, dict) else None) or 0)
+            px = float(
+                (ticker.get("last") if isinstance(ticker, dict) else None)
+                or (ticker.get("close") if isinstance(ticker, dict) else None)
+                or 0
+            )
             if px > 0:
                 return amount * px
         except Exception:
@@ -108,18 +127,25 @@ def _estimate_in_quote(ex, asset: str, amount: float, quote: str = "USD") -> flo
 
 
 # ---------- public: crypto balances ----------
-def ccxt_summary(exchange=None, exchange_id: Optional[str] = None, quote: str = "USD") -> List[str]:
+def ccxt_summary(
+    exchange=None, exchange_id: Optional[str] = None, quote: str = "USD"
+) -> List[str]:
     """
     Returns pretty lines with non-zero balances and totals.
     If you already created an exchange instance, pass it via 'exchange'.
     Otherwise we will build from ENV (EXCHANGE_ID/API_KEY/API_SECRET).
     """
     ex = _ensure_ccxt_exchange(exchange, exchange_id)
-    from router import ExchangeRouter
+    from router import ExchangeRouter  # noqa: E402
+
     router = ExchangeRouter()
     try:
         try:
-            bal = router.safe_fetch_balance() if hasattr(router, 'safe_fetch_balance') else router.account().get("balance", {})
+            bal = (
+                router.safe_fetch_balance()
+                if hasattr(router, "safe_fetch_balance")
+                else router.account().get("balance", {})
+            )
         except Exception as e:
             print(f"[acct_portfolio] safe_fetch_balance/account fetch failed: {e}")
             bal = router.account().get("balance", {})
@@ -166,7 +192,9 @@ def mt5_summary() -> List[str]:
         raise RuntimeError("MetaTrader5 package not installed")
 
     # Initialize if not already
-    path = os.getenv("MTS_PATH")  # e.g. C:\Program Files\OctaFX MetaTrader 5\terminal64.exe
+    path = os.getenv(
+        "MTS_PATH"
+    )  # e.g. C:\Program Files\OctaFX MetaTrader 5\terminal64.exe
     if not mt5.initialize(path=path):
         # capture last error
         code, desc = mt5.last_error()

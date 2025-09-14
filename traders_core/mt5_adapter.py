@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 import os
-from typing import Optional, Dict, Any, List
+from typing import Any, Dict, List, Optional
 
 from dotenv import load_dotenv
 
@@ -16,16 +16,18 @@ load_dotenv()
 
 # ------------------ .env helpers ------------------
 
+
 def _envs() -> Dict[str, str]:
     return {
-        "PATH":     (os.getenv("MT5_PATH") or "").strip(),
-        "LOGIN":    (os.getenv("MT5_LOGIN") or "").strip(),
+        "PATH": (os.getenv("MT5_PATH") or "").strip(),
+        "LOGIN": (os.getenv("MT5_LOGIN") or "").strip(),
         "PASSWORD": (os.getenv("MT5_PASSWORD") or "").strip(),
-        "SERVER":   (os.getenv("MT5_SERVER") or "").strip(),
+        "SERVER": (os.getenv("MT5_SERVER") or "").strip(),
     }
 
 
 # ------------------ init ------------------
+
 
 def mt5_init(path: Optional[str] = None):
     """
@@ -46,15 +48,20 @@ def mt5_init(path: Optional[str] = None):
 
     # Optional login (if you keep a logged-in terminal, this can be omitted)
     if env["LOGIN"] and env["PASSWORD"] and env["SERVER"]:
-        if not mt5.login(int(env["LOGIN"]), password=env["PASSWORD"], server=env["SERVER"]):
+        if not mt5.login(
+            int(env["LOGIN"]), password=env["PASSWORD"], server=env["SERVER"]
+        ):
             code, desc = mt5.last_error()
             mt5.shutdown()
-            raise RuntimeError(f"mt5.login failed: ({code}) {desc} (server={env['SERVER']})")
+            raise RuntimeError(
+                f"mt5.login failed: ({code}) {desc} (server={env['SERVER']})"
+            )
 
     return mt5
 
 
 # ------------------ symbol helpers ------------------
+
 
 def ensure_symbol(symbol: str) -> None:
     info = mt5.symbol_info(symbol)
@@ -97,21 +104,28 @@ def min_stop_distance_points(symbol: str) -> int:
 
 # ------------------ data: robust bars_df ------------------
 
+
 def bars_df(symbol: str, timeframe_str: str, limit: int = 200):
     """
     Return a DataFrame of bars with stable columns:
     time, open, high, low, close, tick_volume, spread, real_volume
     Fixes the 'KeyError: time' by constructing from dtype names when needed.
     """
-    import pandas as pd
-    import numpy as np
+    import numpy as np  # noqa: F401  # intentionally kept  # noqa: E402
+    import pandas as pd  # noqa: E402
 
     ensure_symbol(symbol)
 
     tf_map = {
-        "M1": mt5.TIMEFRAME_M1, "M5": mt5.TIMEFRAME_M5, "M15": mt5.TIMEFRAME_M15,
-        "M30": mt5.TIMEFRAME_M30, "H1": mt5.TIMEFRAME_H1, "H4": mt5.TIMEFRAME_H4,
-        "D1": mt5.TIMEFRAME_D1, "W1": mt5.TIMEFRAME_W1, "MN1": mt5.TIMEFRAME_MN1,
+        "M1": mt5.TIMEFRAME_M1,
+        "M5": mt5.TIMEFRAME_M5,
+        "M15": mt5.TIMEFRAME_M15,
+        "M30": mt5.TIMEFRAME_M30,
+        "H1": mt5.TIMEFRAME_H1,
+        "H4": mt5.TIMEFRAME_H4,
+        "D1": mt5.TIMEFRAME_D1,
+        "W1": mt5.TIMEFRAME_W1,
+        "MN1": mt5.TIMEFRAME_MN1,
     }
     tf = tf_map.get(timeframe_str.upper())
     if tf is None:
@@ -156,12 +170,25 @@ def bars_df(symbol: str, timeframe_str: str, limit: int = 200):
                     break
 
     # keep a stable view
-    keep = [c for c in ["time", "open", "high", "low", "close",
-                        "tick_volume", "spread", "real_volume"] if c in df.columns]
+    keep = [
+        c
+        for c in [
+            "time",
+            "open",
+            "high",
+            "low",
+            "close",
+            "tick_volume",
+            "spread",
+            "real_volume",
+        ]
+        if c in df.columns
+    ]
     return df[keep].copy()
 
 
 # ------------------ account summary ------------------
+
 
 def account_summary_lines() -> List[str]:
     info = mt5.account_info()
@@ -185,9 +212,15 @@ def account_summary_lines() -> List[str]:
 
 # ------------------ order helper ------------------
 
-def order_send_market(symbol: str, side: str, lots: float,
-                      sl: Optional[float] = None, tp: Optional[float] = None,
-                      deviation: int = 20) -> Dict[str, Any]:
+
+def order_send_market(
+    symbol: str,
+    side: str,
+    lots: float,
+    sl: Optional[float] = None,
+    tp: Optional[float] = None,
+    deviation: int = 20,
+) -> Dict[str, Any]:
     """
     Market order with optional SL/TP.
     Use keyword args when calling to avoid argument collision.
