@@ -1,0 +1,65 @@
+{
+  "telegram": {
+    "enabled": true,
+    "bot_token": "YOUR_BOT_TOKEN_HERE",
+    "channel_id": "@your_channel",
+    "vip_channel_id": "@your_vip_channel",
+    "admin_id": "YOUR_TELEGRAM_ID",
+    
+    "signal_settings": {
+      "min_confidence": 0.65,
+      "vip_min_confidence": 0.80,
+      "send_charts": true,
+      "chart_timeframe": "15m",
+      "max_signals_per_hour": 10,
+      "signal_expiry_minutes": 60
+    },
+    
+    "formatting": {
+      "use_emojis": true,
+      "show_analysis": true,
+      "show_risk_warning": true,
+      "show_performance": true,
+      "branding_text": "💎 Ultra Trading System 💎"
+    },
+    
+    "premium_features": {
+      "auto_trade_enabled": true,
+      "custom_sizing": true,
+      "priority_signals": true,
+      "whale_alerts": true,
+      "news_alerts": true
+    },
+    
+    "pricing": {
+      "monthly": 99,
+      "quarterly": 249,
+      "yearly": 799,
+      "lifetime": 1999,
+      "currency": "USD",
+      "payment_methods": ["crypto", "card", "paypal"]
+    },
+    
+    "channels": {
+      "main_signals": "@ultra_signals",
+      "vip_signals": "@ultra_vip",
+      "moon_shots": "@ultra_moons",
+      "forex_signals": "@ultra_forex",
+      "metals_signals": "@ultra_metals",
+      "performance": "@ultra_performance",
+      "community": "@ultra_traders"
+    },
+    
+    "auto_messages": {
+      "welcome": true,
+      "daily_report": true,
+      "weekly_summary": true,
+      "promotional": true
+    },
+    
+    "risk_disclaimers": {
+      "show_always": true,
+      "text": "⚠️ Trading involves risk. Past performance doesn't guarantee future results. Trade responsibly."
+    }
+  }
+}
