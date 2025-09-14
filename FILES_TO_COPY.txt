@@ -1,0 +1,27 @@
+# NEW FILES CREATED - Copy these to your Windows folder:
+
+## Python Modules (copy to root of your project):
+/workspace/ultra_ml_pipeline.py
+/workspace/ultra_launcher.py
+/workspace/ultra_god_mode.py
+/workspace/ultra_moon_spotter.py
+/workspace/ultra_forex_master.py
+/workspace/ultra_telegram_master.py
+
+## Tools Directory (copy to tools/ folder):
+/workspace/tools/market_data.py
+/workspace/tools/ultra_trainer.py
+
+## Configuration Files (copy to root):
+/workspace/requirements_ultra.txt
+/workspace/start_ultra.sh
+/workspace/telegram_config.json
+
+## Documentation (copy to root):
+/workspace/README_ULTRA.md
+/workspace/TELEGRAM_SETUP.md
+
+## MODIFIED FILES - Merge changes:
+/workspace/ultra_scout.py (extensive modifications - recommend replacing entire file)
+
+## TOTAL: 15 files to copy to your Windows folder
