@@ -23,15 +23,15 @@ def main(argv=None):
         from router import scan_full_project
 
         report["full_project"] = scan_full_project(args.root)
-    except Exception as e:
-        report["full_project_error"] = str(e)
+    except Exception as _e:
+        report["full_project_error"] = str(_e)
     # run strategy + model scan
     try:
         from strategy import scan_project_with_model
 
         report["strategy_scan"] = scan_project_with_model(args.root)
-    except Exception as e:
-        report["strategy_scan_error"] = str(e)
+    except Exception as _e:
+        report["strategy_scan_error"] = str(_e)
 
     # Detect requirements-like files in project root (catch misspellings like 'require,ents.fx.txt')
     try:

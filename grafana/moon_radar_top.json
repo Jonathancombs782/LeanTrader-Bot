@@ -1,0 +1,20 @@
+{
+  "type": "table",
+  "title": "Moon Radar Top Candidates",
+  "fieldConfig": {
+    "defaults": {
+      "custom": { "align": "auto" }
+    },
+    "overrides": []
+  },
+  "options": { "showHeader": true },
+  "targets": [
+    {
+      "refId": "A",
+      "expr": "topk(10, moon_radar_score)",
+      "legendFormat": "{{asset}} ({{category}})",
+      "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" }
+    }
+  ]
+}
+

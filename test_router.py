@@ -55,9 +55,7 @@ def main():
     # Futures demo if router supports it (linear USDT-perp)
     try:
         if mode == "linear" or hasattr(r, "place_futures_market"):
-            test_futures(
-                r, "BTC/USDT", qty=0.001, lev=int(os.getenv("FUT_LEVERAGE", "3"))
-            )
+            test_futures(r, "BTC/USDT", qty=0.001, lev=int(os.getenv("FUT_LEVERAGE", "3")))
     except Exception as e:
         banner("FUTURES TEST SKIPPED")
         print(str(e))

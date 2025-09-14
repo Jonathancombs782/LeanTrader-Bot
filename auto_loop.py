@@ -6,8 +6,11 @@ from typing import Any, Dict, Iterator
 
 from dotenv import load_dotenv
 
-from mt5_adapter import mt5_init, order_send_market
-from router import ExchangeRouter
+from router import ExchangeRouter  # noqa: E402
+
+# Avoid top-level import of mt5_adapter which can raise in environments
+# without MetaTrader5. Import lazily inside fx executor.
+
 
 load_dotenv()
 
@@ -71,8 +74,48 @@ def exec_crypto(sig: Dict[str, Any]) -> Dict[str, Any]:
         return r.place_futures_market(symbol, side, qty=qty, leverage=lev)
 
 
+def _import_mt5_helpers():
+    try:
+        import importlib
+
+        mod = importlib.import_module("mt5_adapter")
+        return getattr(mod, "mt5_init", lambda: None), getattr(
+            mod, "order_send_market", lambda *a, **k: {"ok": False, "comment": "mt5 unavailable"}
+        )
+    except Exception:
+        try:
+            import importlib.util
+            import sys
+            from pathlib import Path
+
+            repo_root = Path(__file__).resolve().parent
+            candidate = repo_root / "mt5_adapter.py"
+            if candidate.exists():
+                spec = importlib.util.spec_from_file_location("mt5_adapter", str(candidate))
+                mod = importlib.util.module_from_spec(spec)
+                sys.modules["mt5_adapter"] = mod
+                spec.loader.exec_module(mod)  # type: ignore
+                return getattr(mod, "mt5_init", lambda: None), getattr(
+                    mod, "order_send_market", lambda *a, **k: {"ok": False, "comment": "mt5 unavailable"}
+                )
+        except Exception:
+            pass
+
+    def mt5_init():
+        return None
+
+    def order_send_market(mt5mod, symbol, side, lots, sl=None, tp=None, deviation=20):
+        return {"ok": False, "comment": "mt5 unavailable"}
+
+    return mt5_init, order_send_market
+
+
 def exec_fx(sig: Dict[str, Any]) -> Dict[str, Any]:
-    mt5_init()
+    # lazy import to avoid import-time failure when mt5_adapter isn't present
+    mt5_init, order_send_market = _import_mt5_helpers()
+
+    # initialize mt5 context (noop for shim)
+    mt5ctx = mt5_init()
     lots = float(os.getenv("FX_DEFAULT_LOTS", "0.01"))
     if not EXECUTE:
         return {
@@ -82,7 +125,9 @@ def exec_fx(sig: Dict[str, Any]) -> Dict[str, Any]:
             "side": sig["side"],
             "lots": lots,
         }
-    return order_send_market(mt5_init(), sig["symbol"], sig["side"], lots)
+
+    # perform real order via adapter
+    return order_send_market(mt5ctx, sig["symbol"], sig["side"], lots)
 
 
 def main():

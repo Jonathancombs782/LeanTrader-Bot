@@ -1,0 +1,265 @@
+{
+  "pairs_examples": [
+    "EUR/USD",
+    "GBP/USD",
+    "USD/JPY",
+    "USD/CHF",
+    "AUD/USD",
+    "USD/CAD",
+    "NZD/USD",
+    "EUR/JPY",
+    "GBP/JPY",
+    "USD/NGN"
+  ],
+  "sessions": [
+    "Tokyo",
+    "London",
+    "New York",
+    "Sydney",
+    "Asia",
+    "NY",
+    "London fix"
+  ],
+  "orders": [
+    "market",
+    "limit",
+    "stop",
+    "oco",
+    "trailing stop",
+    "iceberg",
+    "post-only",
+    "fill-or-kill",
+    "ioc"
+  ],
+  "broker_types": [
+    "ecn",
+    "stp",
+    "market maker",
+    "prime broker",
+    "lp"
+  ],
+  "risk": [
+    "stop loss",
+    "take profit",
+    "breakeven",
+    "risk reward",
+    "position sizing",
+    "kelly criterion",
+    "drawdown",
+    "max dd",
+    "hedging",
+    "correlation"
+  ],
+  "indicators_trend": [
+    "sma",
+    "ema",
+    "wma",
+    "hull ma",
+    "macd",
+    "adx",
+    "parabolic sar",
+    "ichimoku",
+    "supertrend"
+  ],
+  "indicators_momentum": [
+    "rsi",
+    "stochastic",
+    "cci",
+    "roc",
+    "momentum",
+    "awesome oscillator"
+  ],
+  "indicators_volatility": [
+    "atr",
+    "bollinger bands",
+    "keltner channels",
+    "donchian"
+  ],
+  "indicators_volume": [
+    "obv",
+    "chaikin money flow",
+    "money flow index",
+    "volume profile"
+  ],
+  "fibonacci": [
+    "retracement",
+    "extension",
+    "expansion",
+    "golden ratio",
+    "fib confluence"
+  ],
+  "candles_single": [
+    "doji",
+    "hammer",
+    "inverted hammer",
+    "shooting star",
+    "spinning top",
+    "marubozu",
+    "long-legged doji",
+    "dragonfly doji",
+    "gravestone doji"
+  ],
+  "candles_double": [
+    "bullish engulfing",
+    "bearish engulfing",
+    "tweezer top",
+    "tweezer bottom",
+    "harami",
+    "piercing line",
+    "dark cloud cover"
+  ],
+  "candles_triple": [
+    "morning star",
+    "evening star",
+    "three white soldiers",
+    "three black crows",
+    "three inside up",
+    "three inside down"
+  ],
+  "patterns_continuation": [
+    "flag",
+    "pennant",
+    "rectangle",
+    "cup and handle",
+    "ascending triangle",
+    "descending triangle",
+    "symmetrical triangle"
+  ],
+  "patterns_reversal": [
+    "head and shoulders",
+    "inverse head and shoulders",
+    "double top",
+    "double bottom",
+    "triple top",
+    "triple bottom",
+    "rising wedge",
+    "falling wedge",
+    "broadening formation"
+  ],
+  "smc": [
+    "order block",
+    "breaker",
+    "fair value gap",
+    "liquidity sweep",
+    "liquidity grab",
+    "market structure shift",
+    "premium discount",
+    "mitigation",
+    "imbalance",
+    "inefficiency",
+    "pd array",
+    "ote"
+  ],
+  "wyckoff": [
+    "accumulation",
+    "distribution",
+    "spring",
+    "upthrust",
+    "sign of strength",
+    "sign of weakness",
+    "markup",
+    "markdown",
+    "test"
+  ],
+  "elliott": [
+    "impulse wave",
+    "corrective wave",
+    "wave 1",
+    "wave 2",
+    "wave 3",
+    "wave 4",
+    "wave 5",
+    "abc",
+    "flat",
+    "zigzag",
+    "triangle"
+  ],
+  "macro_news": [
+    "nfp",
+    "cpi",
+    "ppi",
+    "gdp",
+    "fomc",
+    "rate hike",
+    "rate cut",
+    "dot plot",
+    "qe",
+    "qt",
+    "hawkish",
+    "dovish",
+    "recession",
+    "inflation",
+    "stagflation"
+  ],
+  "sentiment_words": [
+    "panic",
+    "capitulation",
+    "risk-on",
+    "risk-off",
+    "flight to safety",
+    "liquidation cascade",
+    "short squeeze",
+    "long squeeze"
+  ],
+  "execution": [
+    "slippage",
+    "spread",
+    "latency",
+    "vwap",
+    "twap",
+    "pov",
+    "smart routing",
+    "liquidity fragmentation"
+  ],
+  "microstructure": [
+    "order flow",
+    "tape",
+    "footprint",
+    "delta",
+    "absorption",
+    "iceberg",
+    "spoofing",
+    "stop run",
+    "high volume node",
+    "low volume node"
+  ],
+  "regimes": [
+    "trend",
+    "range",
+    "chop",
+    "high vol",
+    "news-driven"
+  ],
+  "strategies": [
+    "trend following",
+    "breakout",
+    "mean reversion",
+    "divergence",
+    "pairs trading",
+    "stat arb",
+    "grid",
+    "martingale (avoid)",
+    "turtle trading",
+    "swing trading",
+    "scalping",
+    "position trading",
+    "news trading"
+  ],
+  "risk_events": [
+    "earnings",
+    "central bank speech",
+    "bond auction",
+    "flash crash",
+    "black swan",
+    "fat finger"
+  ],
+  "fx_cross_signals": [
+    "dxy",
+    "us10y",
+    "vix",
+    "gold",
+    "oil",
+    "sp500",
+    "nasdaq"
+  ]
+}

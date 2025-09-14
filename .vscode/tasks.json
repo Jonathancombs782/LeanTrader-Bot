@@ -1,0 +1,12 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "Auto-fix (ruff+isort+black)",
+			"type": "shell",
+			"command": "& \"${workspaceFolder}\\.venv\\Scripts\\python.exe\" -m pip install -q ruff black isort; & \"${workspaceFolder}\\.venv\\Scripts\\python.exe\" -m ruff check --fix .; & \"${workspaceFolder}\\.venv\\Scripts\\python.exe\" -m isort .; & \"${workspaceFolder}\\.venv\\Scripts\\python.exe\" -m black .; & \"${workspaceFolder}\\.venv\\Scripts\\python.exe\" tools/apply_prioritized_fixes.py",
+			"isBackground": false,
+			"problemMatcher": []
+		}
+	]
+}

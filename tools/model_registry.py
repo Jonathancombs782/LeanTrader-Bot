@@ -1,4 +1,5 @@
 """Simple model registry helpers: list models and read metadata."""
+
 from __future__ import annotations
 
 from pathlib import Path

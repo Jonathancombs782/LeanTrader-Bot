@@ -34,11 +34,9 @@ def ema(series: pd.Series, n: int) -> pd.Series:
 
 
 def atr(df: pd.DataFrame, n: int = 14) -> pd.Series:
-    h, l, c = df["high"], df["low"], df["close"]
+    h, low, c = df["high"], df["low"], df["close"]
     prev_c = c.shift(1)
-    tr = pd.concat([(h - l), (h - prev_c).abs(), (l - prev_c).abs()], axis=1).max(
-        axis=1
-    )
+    tr = pd.concat([(h - low), (h - prev_c).abs(), (low - prev_c).abs()], axis=1).max(axis=1)
     return tr.rolling(n).mean()
 
 
@@ -84,9 +82,7 @@ class Memory:
             json.dump(self.mem, f, indent=2)
 
     def push_trade(self, sym: str, side: str, pnl: float) -> None:
-        self.mem["trades"].append(
-            {"t": time.time(), "sym": sym, "side": side, "pnl": pnl}
-        )
+        self.mem["trades"].append({"t": time.time(), "sym": sym, "side": side, "pnl": pnl})
         self.mem["trades"] = self.mem["trades"][-2000:]
         # daily pnl
         day = datetime.utcfromtimestamp(time.time()).strftime("%Y-%m-%d")

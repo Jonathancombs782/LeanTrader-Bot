@@ -68,9 +68,7 @@ def run():
 
     acc_path = Path("accounts.yml")
     if not acc_path.exists():
-        raise SystemExit(
-            "accounts.yml missing (see sample text in this file’s docstring)."
-        )
+        raise SystemExit("accounts.yml missing (see sample text in this file’s docstring).")
 
     cfg = yaml.safe_load(acc_path.read_text(encoding="utf-8"))
     procs = []
@@ -78,36 +76,21 @@ def run():
     for acc in cfg.get("accounts", []):
         kind = acc.get("kind", "crypto")  # 'crypto' | 'meme' | 'fx'
         script = acc.get("script") or (
-            "run_live_meme.py"
-            if kind == "meme"
-            else "run_live_fx.py" if kind == "fx" else "run_live.py"
+            "run_live_meme.py" if kind == "meme" else "run_live_fx.py" if kind == "fx" else "run_live.py"
         )
         ex_id = _pick_exchange(acc, country)
 
         # symbols/pairs
         if kind == "fx":
-            pairs = (
-                acc.get("pairs")
-                or _read_json_list(acc.get("universe", ""))
-                or ["EURUSD", "GBPUSD"]
-            )
+            pairs = acc.get("pairs") or _read_json_list(acc.get("universe", "")) or ["EURUSD", "GBPUSD"]
             sym_arg = ["--pairs", ",".join(pairs)]
         else:
-            symbols = (
-                acc.get("symbols")
-                or _read_json_list(acc.get("universe", ""))
-                or ["BTC/USDT", "DOGE/USDT"]
-            )
+            symbols = acc.get("symbols") or _read_json_list(acc.get("universe", "")) or ["BTC/USDT", "DOGE/USDT"]
             sym_arg = ["--symbols", ",".join(symbols)]
 
         # shared args
         tf = acc.get("timeframe", "1m")
-        args = (
-            [PY, "-u", script]
-            + (["--exchange", ex_id] if kind != "fx" else [])
-            + sym_arg
-            + ["--timeframe", tf]
-        )
+        args = [PY, "-u", script] + (["--exchange", ex_id] if kind != "fx" else []) + sym_arg + ["--timeframe", tf]
 
         # optional cadence / balance ping
         if "balance_every" in acc:
@@ -141,9 +124,7 @@ def run():
             time.sleep(5)
             dead = [p for p in procs if p.poll() is not None]
             if dead:
-                print(
-                    f"[multi] {len(dead)} process(es) exited. Restart or exit manually."
-                )
+                print(f"[multi] {len(dead)} process(es) exited. Restart or exit manually.")
                 break
     except KeyboardInterrupt:
         print("[multi] stopping...")

@@ -119,15 +119,8 @@ def main():
 
     # Normalize
     df["timestamp"] = pd.to_datetime(df["timestamp"], utc=True)
-    df["impact"] = (
-        df["impact"]
-        .str.title()
-        .replace({"Medium": "Medium", "High": "High"})
-        .fillna("Low")
-    )
-    df = df.sort_values("timestamp").drop_duplicates(
-        subset=["timestamp", "event", "currency"]
-    )
+    df["impact"] = df["impact"].str.title().replace({"Medium": "Medium", "High": "High"}).fillna("Low")
+    df = df.sort_values("timestamp").drop_duplicates(subset=["timestamp", "event", "currency"])
 
     # Save high-impact only (what your filters expect)
     df_high = df[df["impact"] == "High"].copy()

@@ -1,28 +1,19 @@
 from __future__ import annotations
 
-from prometheus_client import (Counter,  # noqa: F401  # intentionally kept
-                               Gauge, Histogram)
+from prometheus_client import Counter, Gauge, Histogram  # noqa: F401  # intentionally kept
 
 
 class _M:
     def __init__(self):
-        self.orders_total = Counter(
-            "orders_total", "Orders sent", ["venue", "symbol", "status"]
-        )
-        self.last_signal = Gauge(
-            "last_signal", "Last signal (1=long,0=flat)", ["venue", "symbol"]
-        )
-        self.latest_prob = Gauge(
-            "latest_prob", "Latest model long probability", ["venue", "symbol"]
-        )
+        self.orders_total = Counter("orders_total", "Orders sent", ["venue", "symbol", "status"])
+        self.last_signal = Gauge("last_signal", "Last signal (1=long,0=flat)", ["venue", "symbol"])
+        self.latest_prob = Gauge("latest_prob", "Latest model long probability", ["venue", "symbol"])
         self.realized_pnl = Counter(
             "realized_pnl",
             "Realized PnL (quote currency units, summed)",
             ["venue", "symbol"],
         )
-        self.research_runs_total = Counter(
-            "research_runs_total", "Research loop runs", ["venue", "symbol"]
-        )
+        self.research_runs_total = Counter("research_runs_total", "Research loop runs", ["venue", "symbol"])
         self.regime_flag = Gauge(
             "regime_flag",
             "1=storm,0=calm",

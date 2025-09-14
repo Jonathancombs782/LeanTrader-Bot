@@ -1,0 +1,27 @@
+{
+  "type": "timeseries",
+  "title": "Attribution",
+  "fieldConfig": {
+    "defaults": {
+      "custom": {
+        "drawStyle": "line",
+        "lineWidth": 2,
+        "spanNulls": true,
+        "stacking": { "mode": "normal" }
+      }
+    },
+    "overrides": []
+  },
+  "options": {
+    "legend": { "displayMode": "table", "showLegend": true },
+    "tooltip": { "mode": "multi" }
+  },
+  "targets": [
+    {
+      "refId": "A",
+      "expr": "sum by (component) (attribution_component)",
+      "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" }
+    }
+  ]
+}
+

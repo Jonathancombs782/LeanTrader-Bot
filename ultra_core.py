@@ -10,8 +10,7 @@ import random
 import threading
 import time
 from pathlib import Path
-from typing import (Any, Dict, List,  # noqa: F401  # intentionally kept
-                    Optional)
+from typing import Any, Dict, List, Optional  # noqa: F401  # intentionally kept
 
 import numpy as np
 import pandas as pd
@@ -55,20 +54,14 @@ class UltraCore:
 
             # Backtesting (quick sample run)
             try:
-                self.knowledge_base["backtest"] = self.scout.run_backtest(
-                    "trend", {"ema_fast": 20, "ema_slow": 50}
-                )
+                self.knowledge_base["backtest"] = self.scout.run_backtest("trend", {"ema_fast": 20, "ema_slow": 50})
             except Exception:
                 self.knowledge_base["backtest"] = None
 
             # Swarm intelligence and risk alerts
             signals = self.knowledge_base.get("last_signals", []) or []
-            self.knowledge_base["swarm"] = (
-                self.scout.swarm_collaboration(signals) if signals else {}
-            )
-            self.knowledge_base["risk_alerts"] = (
-                self.scout.detect_risk_alerts(signals) if signals else []
-            )
+            self.knowledge_base["swarm"] = self.scout.swarm_collaboration(signals) if signals else {}
+            self.knowledge_base["risk_alerts"] = self.scout.detect_risk_alerts(signals) if signals else []
 
             # Broker API / RL / Dashboard / Voice are non-critical stubs
             for key, fn, arg in (
@@ -122,8 +115,7 @@ class UltraCore:
             self.gnn_model = None
         self.anomaly_detector = None  # Will be set in scout_all if available
         try:
-            from qiskit import (Aer,  # noqa: F401  # intentionally kept
-                                QuantumCircuit, execute)
+            from qiskit import Aer, QuantumCircuit, execute  # noqa: F401  # intentionally kept
 
             self.quantum_backend = Aer.get_backend("qasm_simulator")
         except ImportError:
@@ -183,47 +175,27 @@ class UltraCore:
         """Advanced reasoning: pattern recognition, anomaly detection, regime analysis."""
         # Enhanced: LSTM-based regime prediction
         try:
-            prices = np.array(
-                [x[4] for x in ohlcv if isinstance(x, (list, tuple)) and len(x) > 4]
-            )
-            highs = np.array(
-                [x[2] for x in ohlcv if isinstance(x, (list, tuple)) and len(x) > 2]
-            )
-            lows = np.array(
-                [x[3] for x in ohlcv if isinstance(x, (list, tuple)) and len(x) > 3]
-            )
+            prices = np.array([x[4] for x in ohlcv if isinstance(x, (list, tuple)) and len(x) > 4])
+            highs = np.array([x[2] for x in ohlcv if isinstance(x, (list, tuple)) and len(x) > 2])
+            lows = np.array([x[3] for x in ohlcv if isinstance(x, (list, tuple)) and len(x) > 3])
             if len(prices) < 14:
                 return None
             if self.lstm_model:
                 X = prices[-10:].reshape(1, 10, 1)
                 pred = self.lstm_model.predict(X)[0][0]
-                regime = (
-                    "bull"
-                    if pred > np.mean(prices)
-                    else "bear" if pred < np.mean(prices) else "neutral"
-                )
+                regime = "bull" if pred > np.mean(prices) else "bear" if pred < np.mean(prices) else "neutral"
             else:
                 # Fallback to existing
                 mean = float(np.mean(prices))
                 std = float(np.std(prices))
-                regime = (
-                    "bull"
-                    if prices[-1] > mean + std
-                    else "bear" if prices[-1] < mean - std else "neutral"
-                )
-            atr = (
-                float(np.mean(np.abs(highs - lows)))
-                if len(highs) and len(lows)
-                else float(std)
-            )
+                regime = "bull" if prices[-1] > mean + std else "bear" if prices[-1] < mean - std else "neutral"
+            atr = float(np.mean(np.abs(highs - lows))) if len(highs) and len(lows) else float(std)
         except Exception:
             regime, atr = "neutral", 0.0
 
         # Enhanced: Add Ichimoku Cloud and adaptive RSI
         try:
-            df = pd.DataFrame(
-                ohlcv, columns=["timestamp", "open", "high", "low", "close", "volume"]
-            )
+            df = pd.DataFrame(ohlcv, columns=["timestamp", "open", "high", "low", "close", "volume"])
             # Ichimoku
             high_9 = df["high"].rolling(9).max()
             low_9 = df["low"].rolling(9).min()
@@ -236,14 +208,8 @@ class UltraCore:
             rs = gain / loss
             df["rsi"] = 100 - (100 / (1 + rs))
             # Fuse with sentiment/on-chain
-            sentiment_score = self.scout.analyze_sentiment(
-                [f"Market {df['close'].iloc[-1]}"]
-            )  # Placeholder
-            regime = (
-                "bull"
-                if df["tenkan"].iloc[-1] > df["close"].iloc[-1] and sentiment_score > 0
-                else "bear"
-            )
+            sentiment_score = self.scout.analyze_sentiment([f"Market {df['close'].iloc[-1]}"])  # Placeholder
+            regime = "bull" if df["tenkan"].iloc[-1] > df["close"].iloc[-1] and sentiment_score > 0 else "bear"
         except Exception:
             regime = "neutral"
 
@@ -293,20 +259,13 @@ class UltraCore:
                         tk = self.router.safe_fetch_ticker(market) or {}
                     except Exception:
                         tk = {}
-                    last = float(
-                        tk.get("last") or tk.get("price") or tk.get("close") or 0.0
-                    )
+                    last = float(tk.get("last") or tk.get("price") or tk.get("close") or 0.0)
                     if last and last > 0.0:
                         entry = last
                     else:
                         # fallback to ohlcv last close
                         try:
-                            ohlcv = (
-                                self.router.safe_fetch_ohlcv(
-                                    market, timeframe="5m", limit=20
-                                )
-                                or []
-                            )
+                            ohlcv = self.router.safe_fetch_ohlcv(market, timeframe="5m", limit=20) or []
                             if ohlcv and isinstance(ohlcv, list) and len(ohlcv[-1]) > 4:
                                 entry = float(ohlcv[-1][4])
                         except Exception:
@@ -325,12 +284,7 @@ class UltraCore:
                 try:
                     ana = None
                     try:
-                        ohlcv = (
-                            self.router.safe_fetch_ohlcv(
-                                market, timeframe="5m", limit=50
-                            )
-                            or []
-                        )
+                        ohlcv = self.router.safe_fetch_ohlcv(market, timeframe="5m", limit=50) or []
                         ana = self.analyze_market(ohlcv) if ohlcv else None
                     except Exception:
                         ana = None
@@ -420,11 +374,7 @@ class UltraCore:
             win_rate = float(self.knowledge_base.get("win_rate", 0.5))
             avg_win = float(self.knowledge_base.get("avg_win", 1.0))
             avg_loss = float(self.knowledge_base.get("avg_loss", 1.0))
-            kelly = (
-                (win_rate * avg_win - (1 - win_rate) * avg_loss) / avg_win
-                if avg_win > 0
-                else 0.1
-            )
+            kelly = (win_rate * avg_win - (1 - win_rate) * avg_loss) / avg_win if avg_win > 0 else 0.1
             base_usd = 50.0
             stake = base_usd * max(0.01, min(0.5, kelly))
             return max(1.0, stake)
@@ -441,10 +391,7 @@ class UltraCore:
                     # simulated log for dry-run
                     px = 0.0
                     try:
-                        px = float(
-                            self.router.safe_fetch_ticker(plan["market"]).get("last")
-                            or 0.0
-                        )
+                        px = float(self.router.safe_fetch_ticker(plan["market"]).get("last") or 0.0)
                     except Exception:
                         px = 0.0
                     qty = float(plan.get("size") or 0.0)
@@ -488,21 +435,15 @@ class UltraCore:
                             "size_usd": plan.get("size_usd"),
                             "context": "UltraCore dry-run",
                         }
-                        with open(
-                            runtime / "price_fill_debug.ndjson", "a", encoding="utf-8"
-                        ) as f:
+                        with open(runtime / "price_fill_debug.ndjson", "a", encoding="utf-8") as f:
                             f.write(json.dumps(dbg) + "\n")
                     except Exception:
                         pass
                 else:
-                    result = self.router.safe_place_order(
-                        plan["market"], plan["action"], plan["size"]
-                    )
+                    result = self.router.safe_place_order(plan["market"], plan["action"], plan["size"])
                     results.append(result)
             except Exception as e:
-                results.append(
-                    {"ok": False, "error": str(e), "market": plan.get("market")}
-                )
+                results.append({"ok": False, "error": str(e), "market": plan.get("market")})
         return results
 
     def close_trades(self):
@@ -515,9 +456,7 @@ class UltraCore:
             else:
                 # if universe doesn't provide, ask ledger/open positions via knowledge base
                 open_positions = [
-                    o.get("symbol")
-                    for o in (self.knowledge_base.get("open_positions") or [])
-                    if o.get("symbol")
+                    o.get("symbol") for o in (self.knowledge_base.get("open_positions") or []) if o.get("symbol")
                 ]
 
             if self.anomaly_detector:
@@ -591,28 +530,16 @@ class UltraCore:
         # Placeholder for more advanced learning
         # compute crude win_rate from recent performance_log (placeholder semantics)
         try:
-            wins = sum(
-                1 for p in self.performance_log[-50:] if p.get("result") == "win"
-            )
+            wins = sum(1 for p in self.performance_log[-50:] if p.get("result") == "win")
             total = max(1, len(self.performance_log[-50:]))
             self.knowledge_base["win_rate"] = wins / total
         except Exception:
             self.knowledge_base["win_rate"] = random.uniform(0.4, 0.7)
         try:
-            wins = [
-                p.get("result")
-                for p in self.performance_log[-50:]
-                if p.get("result") == "win"
-            ]
-            losses = [
-                p.get("result")
-                for p in self.performance_log[-50:]
-                if p.get("result") == "loss"
-            ]
+            wins = [p.get("result") for p in self.performance_log[-50:] if p.get("result") == "win"]
+            losses = [p.get("result") for p in self.performance_log[-50:] if p.get("result") == "loss"]
             self.knowledge_base["avg_win"] = np.mean([1.0] * len(wins)) if wins else 1.0
-            self.knowledge_base["avg_loss"] = (
-                np.mean([1.0] * len(losses)) if losses else 1.0
-            )
+            self.knowledge_base["avg_loss"] = np.mean([1.0] * len(losses)) if losses else 1.0
         except Exception:
             pass
 
@@ -672,9 +599,7 @@ class UltraCore:
         except Exception:
             return 0.0
 
-    def auto_healing_anomalies(
-        self, signals: List[Dict[str, Any]]
-    ) -> List[Dict[str, Any]]:
+    def auto_healing_anomalies(self, signals: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
         """Detect and heal anomalies in signals."""
         if not self.anomaly_detector:
             return signals
@@ -708,9 +633,7 @@ class UltraCore:
         self.quantum_optimize_params({"atr_mult": 1.5})
         self.self_adaptive_retrade(opportunities)
         if self.logger:
-            self.logger.info(
-                f"God mode cycle complete. Knowledge base: {self.knowledge_base}"
-            )
+            self.logger.info(f"God mode cycle complete. Knowledge base: {self.knowledge_base}")
 
 
 # Ultra feature suggestions for future upgrades:

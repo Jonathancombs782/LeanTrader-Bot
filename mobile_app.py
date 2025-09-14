@@ -5,6 +5,7 @@ lightweight TradingAppBase. The real Kivy app is only created when the module
 is executed as __main__.
 """
 
+
 class TradingAppBase:
     """Lightweight base class used when Kivy isn't available (import-safe)."""
 
@@ -16,6 +17,7 @@ TradingApp = TradingAppBase
 
 
 if __name__ == "__main__":
+
     def _run_kivy_app():
         # runtime imports kept inside this function to keep module import-safe
         try:
@@ -49,16 +51,16 @@ if __name__ == "__main__":
                     try:
                         resp = requests.get("http://localhost:5000/signals")
                         self.label.text = str(resp.json())
-                    except Exception as e:
-                        self.label.text = f"Error: {e}"
+                    except Exception as _e:
+                        self.label.text = f"Error: {_e}"
 
                 def execute_trade(self, instance):
                     data = {"market": "BTC/USDT", "action": "buy", "size": 0.01}
                     try:
                         resp = requests.post("http://localhost:5000/trade", json=data)
                         self.label.text = str(resp.json())
-                    except Exception as e:
-                        self.label.text = f"Error: {e}"
+                    except Exception as _e:
+                        self.label.text = f"Error: {_e}"
 
             TradingApp().run()
         except Exception:

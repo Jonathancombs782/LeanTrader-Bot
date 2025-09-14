@@ -8,11 +8,47 @@ import time
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
-from mt5_adapter import bars_df as mt5_bars
-from mt5_adapter import mt5_init
-from router import ExchangeRouter
-from signals_hub import analyze_symbol_ccxt, analyze_symbol_mt5, mtf_confirm
-from signals_publisher import publish_batch
+
+def _lazy_mt5_helpers():
+    try:
+        import importlib
+
+        mod = importlib.import_module("mt5_adapter")
+        return getattr(mod, "bars_df", None), getattr(mod, "mt5_init", None)
+    except Exception:
+        try:
+            import importlib.util
+            import sys
+            from pathlib import Path
+
+            repo_root = Path(__file__).resolve().parent
+            candidate = repo_root / "mt5_adapter.py"
+            if candidate.exists():
+                spec = importlib.util.spec_from_file_location("mt5_adapter", str(candidate))
+                mod = importlib.util.module_from_spec(spec)
+                sys.modules["mt5_adapter"] = mod
+                spec.loader.exec_module(mod)  # type: ignore
+                return getattr(mod, "bars_df", None), getattr(mod, "mt5_init", None)
+        except Exception:
+            pass
+
+    def mt5_bars(symbol, timeframe, limit=300):
+        import pandas as _pd
+
+        return _pd.DataFrame()
+
+    def mt5_init():
+        return None
+
+    return mt5_bars, mt5_init
+
+
+# Do NOT call _lazy_mt5_helpers() at module import time; call inside worker
+# functions to avoid import-time failures when mt5_adapter is missing or
+# partially initialized by another process.
+from router import ExchangeRouter  # noqa: E402
+from signals_hub import analyze_symbol_ccxt, analyze_symbol_mt5, mtf_confirm  # noqa: E402
+from signals_publisher import publish_batch  # noqa: E402
 
 
 # ---------- env helpers ----------
@@ -47,9 +83,7 @@ def discover_spot_symbols(r: ExchangeRouter, quote="USDT") -> List[str]:
             [
                 s
                 for s, m in mkts.items()
-                if isinstance(s, str)
-                and s.endswith(f"/{quote}")
-                and (isinstance(m, dict) and m.get("spot"))
+                if isinstance(s, str) and s.endswith(f"/{quote}") and (isinstance(m, dict) and m.get("spot"))
             ]
         )
     except Exception:
@@ -63,9 +97,7 @@ def discover_linear_symbols(r: ExchangeRouter, quote="USDT") -> List[str]:
         for s, m in mkts.items():
             if not s.endswith(f"/{quote}"):
                 continue
-            if m.get("linear") or (
-                m.get("swap") and m.get("contract") and m.get("quote") == quote
-            ):
+            if m.get("linear") or (m.get("swap") and m.get("contract") and m.get("quote") == quote):
                 out.append(s)
         return sorted(out) or ["BTC/USDT", "ETH/USDT"]
     except Exception:
@@ -85,11 +117,7 @@ def check_spread(t: dict, max_bp: float) -> Tuple[bool, str]:
     try:
         bid = float(t.get("bid") or 0)
         ask = float(t.get("ask") or 0)
-        mid = (
-            (bid + ask) / 2
-            if bid and ask
-            else float(t.get("last") or t.get("close") or 0)
-        )
+        mid = (bid + ask) / 2 if bid and ask else float(t.get("last") or t.get("close") or 0)
         if mid <= 0:
             return (False, "mid<=0")
         bp = (ask - bid) / mid * 1e4 if bid and ask else 0.0
@@ -153,9 +181,7 @@ def scan_ccxt_symbol(
             _append(REJ_PATH, dict(meta, reason=why))
             return None
 
-        sig = analyze_symbol_ccxt(
-            bars, tf, sym, market=("linear" if market_kind == "linear" else "spot")
-        )
+        sig = analyze_symbol_ccxt(bars, tf, sym, market=("linear" if market_kind == "linear" else "spot"))
         if not sig:
             _append(REJ_PATH, dict(meta, reason="strategy_none"))
             return None
@@ -187,6 +213,7 @@ def scan_ccxt_symbol(
 def scan_fx_symbol(sym: str, tf: str, limit: int) -> Optional[Dict[str, Any]]:
     meta = {"market": "fx", "symbol": sym, "tf": tf}
     try:
+        mt5_bars, mt5_init = _lazy_mt5_helpers()
         bars = mt5_bars(sym, TF_MAP_MT5.get(tf, "M5"), limit=limit) or []
         if not bars:
             _append(REJ_PATH, dict(meta, reason="no_bars"))
@@ -268,6 +295,7 @@ def main():
 
     if env_bool("FX_ENABLE", True):
         try:
+            _, mt5_init = _lazy_mt5_helpers()
             mt5_init()
         except Exception as e:
             print("MT5 init warning:", e)
@@ -279,9 +307,7 @@ def main():
         else:
             for s in sigs:
                 q = float(s.get("confidence", s.get("quality", 0.0)))
-                print(
-                    f"[{s.get('market', '?')}] {s['symbol']} {s['side']} tf={s['tf']} q={q:.2f}"
-                )
+                print(f"[{s.get('market', '?')}] {s['symbol']} {s['side']} tf={s['tf']} q={q:.2f}")
             if args.publish:
                 publish_batch(sigs)
 

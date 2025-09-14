@@ -15,16 +15,12 @@ class LimitMakerExecutor:
         self.log = logger
         self.fee_frac = fee_frac
 
-    def limit_maker_buy(
-        self, symbol: str, price: float, amount: float
-    ) -> Dict[str, Any]:
+    def limit_maker_buy(self, symbol: str, price: float, amount: float) -> Dict[str, Any]:
         params = {"postOnly": True}
         try:
             # Prefer safe wrapper, then create_order, then router-level helpers
             if hasattr(self.ex, "safe_place_order"):
-                order = self.ex.safe_place_order(
-                    symbol, "buy", amount, price=price, params=params
-                )
+                order = self.ex.safe_place_order(symbol, "buy", amount, price=price, params=params)
             elif hasattr(self.ex, "place_spot_market"):
                 # ExchangeRouter-style helper: returns {ok: bool, result: ...}
                 res = self.ex.place_spot_market(symbol, "buy", qty=amount)
@@ -36,9 +32,7 @@ class LimitMakerExecutor:
                     order = None
             elif hasattr(self.ex, "create_order"):
                 try:
-                    order = safe_create_order(
-                        self.ex, "limit", symbol, "buy", amount, price, params=params
-                    )
+                    order = safe_create_order(self.ex, "limit", symbol, "buy", amount, price, params=params)
                 except Exception:
                     order = None
             else:
@@ -60,9 +54,7 @@ class LimitMakerExecutor:
                         pass
                 if hasattr(self.ex, "create_order"):
                     try:
-                        return safe_create_order(
-                            self.ex, "limit", symbol, "buy", amount, price
-                        )
+                        return safe_create_order(self.ex, "limit", symbol, "buy", amount, price)
                     except Exception:
                         pass
                 # last resort: place market using helper
@@ -71,15 +63,11 @@ class LimitMakerExecutor:
                 pass
             return {"ok": False, "error": "no order method available"}
 
-    def limit_maker_sell(
-        self, symbol: str, price: float, amount: float
-    ) -> Dict[str, Any]:
+    def limit_maker_sell(self, symbol: str, price: float, amount: float) -> Dict[str, Any]:
         params = {"postOnly": True}
         try:
             if hasattr(self.ex, "safe_place_order"):
-                order = self.ex.safe_place_order(
-                    symbol, "sell", amount, price=price, params=params
-                )
+                order = self.ex.safe_place_order(symbol, "sell", amount, price=price, params=params)
             elif hasattr(self.ex, "place_spot_market"):
                 res = self.ex.place_spot_market(symbol, "sell", qty=amount)
                 order = res.get("result") if isinstance(res, dict) else res
@@ -90,9 +78,7 @@ class LimitMakerExecutor:
                     order = None
             elif hasattr(self.ex, "create_order"):
                 try:
-                    order = safe_create_order(
-                        self.ex, "limit", symbol, "sell", amount, price, params=params
-                    )
+                    order = safe_create_order(self.ex, "limit", symbol, "sell", amount, price, params=params)
                 except Exception:
                     order = None
             else:
@@ -113,9 +99,7 @@ class LimitMakerExecutor:
                         pass
                 if hasattr(self.ex, "create_order"):
                     try:
-                        return safe_create_order(
-                            self.ex, "limit", symbol, "sell", amount, price
-                        )
+                        return safe_create_order(self.ex, "limit", symbol, "sell", amount, price)
                     except Exception:
                         pass
                 return place_market(self.ex, symbol, "sell", amount)
@@ -135,9 +119,7 @@ class LimitMakerExecutor:
                     self.ex.cancel_order(order_id, symbol)
                 except Exception as e:
                     print(f"[execution_adv] cancel_order failed: {e}")
-            elif hasattr(self.ex, "place_spot_market") and hasattr(
-                self.ex, "get_order_status"
-            ):
+            elif hasattr(self.ex, "place_spot_market") and hasattr(self.ex, "get_order_status"):
                 # last-resort: router-style exchange may provide a cancel helper
                 try:
                     self.ex.safe_cancel_order(order_id, symbol)
@@ -150,9 +132,7 @@ class LimitMakerExecutor:
             try:
                 self.log.error(f"Failed to cancel {symbol} order_id={order_id}: {e}")
             except Exception:
-                print(
-                    f"[execution_adv] Failed to cancel {symbol} order_id={order_id}: {e}"
-                )
+                print(f"[execution_adv] Failed to cancel {symbol} order_id={order_id}: {e}")
 
     def get_order_status(self, order_id: str, symbol: str) -> Dict[str, Any]:
         try:
@@ -180,17 +160,11 @@ class LimitMakerExecutor:
             try:
                 self.log.info(f"ORDER STATUS {symbol} order_id={order_id}: {status}")
             except Exception:
-                print(
-                    f"[execution_adv] ORDER STATUS {symbol} order_id={order_id}: {status}"
-                )
+                print(f"[execution_adv] ORDER STATUS {symbol} order_id={order_id}: {status}")
             return status or {}
         except Exception as e:
             try:
-                self.log.error(
-                    f"Failed to get {symbol} order_id={order_id} status: {e}"
-                )
+                self.log.error(f"Failed to get {symbol} order_id={order_id} status: {e}")
             except Exception:
-                print(
-                    f"[execution_adv] Failed to get {symbol} order_id={order_id} status: {e}"
-                )
+                print(f"[execution_adv] Failed to get {symbol} order_id={order_id} status: {e}")
             return {"error": str(e)}

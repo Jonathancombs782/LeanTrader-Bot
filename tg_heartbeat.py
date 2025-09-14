@@ -7,12 +7,11 @@ import json
 import os
 import pathlib
 import time
-from typing import Any, Dict, List
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, Dict, List
 
 if TYPE_CHECKING:
-    from router import ExchangeRouter
     from notifier import TelegramNotifier
+    from router import ExchangeRouter
 
 from dotenv import load_dotenv
 
@@ -63,18 +62,12 @@ def _open_pnl(router: ExchangeRouter, rows: List[Dict[str, Any]]) -> float:
                     tk = router.safe_fetch_ticker(t["symbol"])
                 else:
                     try:
-                        tk = (
-                            router.ex.fetch_ticker(t["symbol"])
-                            if hasattr(router, "ex")
-                            else {}
-                        )
+                        tk = router.ex.fetch_ticker(t["symbol"]) if hasattr(router, "ex") else {}
                     except Exception as e:
                         print(f"[tg_heartbeat] fetch_ticker fallback failed for {t['symbol']}: {e}")
                         tk = {}
             except Exception as e:
-                print(
-                    f"[tg_heartbeat] safe_fetch_ticker outer failed for {t['symbol']}: {e}"
-                )
+                print(f"[tg_heartbeat] safe_fetch_ticker outer failed for {t['symbol']}: {e}")
                 tk = {}
             last = float(
                 (tk.get("last") if isinstance(tk, dict) else None)
@@ -82,11 +75,7 @@ def _open_pnl(router: ExchangeRouter, rows: List[Dict[str, Any]]) -> float:
                 or 0
             )
             side = 1 if t["side"] == "buy" else -1
-            pnl += (
-                (last - float(t["entry"]))
-                * side
-                * (float(t["amount"]) if t.get("mode") == "spot" else 1.0)
-            )
+            pnl += (last - float(t["entry"])) * side * (float(t["amount"]) if t.get("mode") == "spot" else 1.0)
         except Exception:
             continue
     return pnl
@@ -104,9 +93,7 @@ def heartbeat_once(router: ExchangeRouter, notif: TelegramNotifier):
     ]
     if rows:
         for t in rows[:6]:
-            lines.append(
-                f"• `{t['symbol']}` {t['side']} qty={t['amount']} @ {t['entry']:.6f}"
-            )
+            lines.append(f"• `{t['symbol']}` {t['side']} qty={t['amount']} @ {t['entry']:.6f}")
         if len(rows) > 6:
             lines.append(f"… and {len(rows)-6} more")
     notif.note("\n".join(lines))
@@ -116,10 +103,9 @@ def main():
     load_dotenv()
     # local runtime imports
     from notifier import TelegramNotifier  # noqa: E402
+
     ap = argparse.ArgumentParser()
-    ap.add_argument(
-        "--interval", type=int, default=30, help="minutes between heartbeats"
-    )
+    ap.add_argument("--interval", type=int, default=30, help="minutes between heartbeats")
     ap.add_argument("--once", action="store_true")
     args = ap.parse_args()
 

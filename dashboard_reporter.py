@@ -52,14 +52,10 @@ class DashboardReporter:
         self._cache: Dict[str, Dict[str, TFView]] = {}  # symbol -> {tf -> TFView}
         self._tg = TelegramNotifier()
 
-    def update(
-        self, symbol: str, timeframe: str, prob: float, side: str | None, price: float
-    ):
+    def update(self, symbol: str, timeframe: str, prob: float, side: str | None, price: float):
         sym = symbol.upper()
         tf = timeframe.lower()
-        self._cache.setdefault(sym, {})[tf] = TFView(
-            prob=float(prob), side=side, price=float(price)
-        )
+        self._cache.setdefault(sym, {})[tf] = TFView(prob=float(prob), side=side, price=float(price))
 
     def _build_symbol_block(self, symbol: str, views: Dict[str, TFView]) -> str:
         # sort TFs by "importance" (short to long)

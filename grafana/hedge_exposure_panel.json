@@ -1,0 +1,33 @@
+{
+  "type": "timeseries",
+  "title": "Net Exposure vs Hedge",
+  "fieldConfig": {
+    "defaults": {
+      "custom": {
+        "drawStyle": "line",
+        "lineWidth": 2,
+        "spanNulls": true
+      }
+    },
+    "overrides": []
+  },
+  "options": {
+    "legend": { "displayMode": "table", "showLegend": true },
+    "tooltip": { "mode": "multi" }
+  },
+  "targets": [
+    {
+      "refId": "A",
+      "expr": "sum by (asset) (net_exposure_usd)",
+      "legendFormat": "exposure {{asset}}",
+      "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" }
+    },
+    {
+      "refId": "B",
+      "expr": "sum by (asset) (hedge_notional_usd)",
+      "legendFormat": "hedge {{asset}}",
+      "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" }
+    }
+  ]
+}
+

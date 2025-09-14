@@ -1,0 +1,38 @@
+\documentclass{article}
+\usepackage[margin=1in]{geometry}
+\usepackage{booktabs}
+\begin{document}
+\section*{Weekly Research Paper --- {{ week }}}
+
+\subsection*{KPIs}
+\begin{tabular}{ll}
+Total PnL & {{ '%.6f' % pnl.total }} \\
+Sharpe & {{ '%.3f' % pnl.sharpe }} \\
+Max Drawdown & {{ '%.6f' % pnl.max_drawdown }} \\
+Fallbacks & {{ fallbacks }} \\
+\end{tabular}
+
+\subsection*{Attribution (aggregated)}
+\begin{tabular}{lr}
+\toprule
+Component & Contribution \\
+\midrule
+{% for k, v in attribution_agg.items() %}
+{{ k }} & {{ '%.6f' % v }} \\
+{% endfor %}
+\bottomrule
+\end{tabular}
+
+\subsection*{Regime Distribution}
+\begin{tabular}{lr}
+\toprule
+Regime & Count \\
+\midrule
+{% for k, v in regimes.items() %}
+{{ k }} & {{ v }} \\
+{% endfor %}
+\bottomrule
+\end{tabular}
+
+\end{document}
+

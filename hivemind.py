@@ -41,9 +41,7 @@ class HiveCoordinator:
     """
 
     def __init__(self, timeframes: List[str]):
-        self.tfs = sorted(
-            [tf.strip().lower() for tf in timeframes if tf.strip()], key=_tf_sort_key
-        )
+        self.tfs = sorted([tf.strip().lower() for tf in timeframes if tf.strip()], key=_tf_sort_key)
         # one AlphaRouter per TF so they learn independently
         self.brains: Dict[str, AlphaRouter] = {tf: AlphaRouter() for tf in self.tfs}
         # default weights: longer TF weighs more
@@ -75,14 +73,8 @@ class HiveCoordinator:
         atr_abs = BaseStrategy._atr(df, 14).iloc[-1]
         atr_p = float(atr_abs / max(1e-9, price)) if pd.notna(atr_abs) else 0.0
         # news bullets once; only on shortest TF to avoid duplication
-        bullets = (
-            bullets_for(symbol, is_fx=is_fx, top_n=3)
-            if timeframe == self.tfs[0]
-            else []
-        )
-        dec = self.brains[timeframe].pick(
-            df, symbol=symbol, timeframe=timeframe, base_reasons=bullets
-        )
+        bullets = bullets_for(symbol, is_fx=is_fx, top_n=3) if timeframe == self.tfs[0] else []
+        dec = self.brains[timeframe].pick(df, symbol=symbol, timeframe=timeframe, base_reasons=bullets)
         return FrameDecision(timeframe, dec, price, atr_p, df)
 
     def _consensus(self, fds: List[FrameDecision]) -> Tuple[Decision, List[str]]:
@@ -120,16 +112,10 @@ class HiveCoordinator:
         # compute normalized probs centered at 0.5
         centered = [probs[fd.timeframe] - 0.5 for fd in fds]
         same_sign = all(x >= 0 for x in centered) or all(x <= 0 for x in centered)
-        var = (
-            statistics.pvariance([probs[fd.timeframe] for fd in fds])
-            if len(fds) > 1
-            else 0.0
-        )
+        var = statistics.pvariance([probs[fd.timeframe] for fd in fds]) if len(fds) > 1 else 0.0
         bss = 0.0
         if same_sign and p_w >= 0.55:
-            bss = _clip(
-                0.25 * (0.6 - var * 2.0), 0.0, 0.25
-            )  # lower variance = stronger boost
+            bss = _clip(0.25 * (0.6 - var * 2.0), 0.0, 0.25)  # lower variance = stronger boost
         # slight penalty if higher TF disagrees strongly
         ht = fds[-1].timeframe
         if probs.get(ht, 0.5) < 0.52 and p_w >= 0.6:

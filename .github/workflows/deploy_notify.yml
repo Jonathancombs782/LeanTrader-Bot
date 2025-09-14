@@ -1,0 +1,36 @@
+name: Deploy Complete Notify
+on:
+  push:
+    branches: [ "main" ]
+  workflow_dispatch: {}
+
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Post to Slack (deploy complete)
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          RUN_URL: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          set -e
+          MESSAGE=$(cat <<'EOF'
+{
+  "blocks": [
+    { "type": "header", "text": { "type": "plain_text", "text": "Deploy Complete ✅" } },
+    { "type": "section", "fields": [
+        { "type": "mrkdwn", "text": "*Repo:*\n${{ github.repository }}" },
+        { "type": "mrkdwn", "text": "*Branch:*\n${{ github.ref_name }}" },
+        { "type": "mrkdwn", "text": "*Commit:*\n${{ github.sha }}" }
+      ]
+    },
+    { "type": "actions", "elements": [
+        { "type": "button", "text": { "type": "plain_text", "text": "View Run" }, "url": "'"$RUN_URL"'", "style": "primary" }
+      ]
+    }
+  ]
+}
+EOF
+)
+          curl -sS -X POST -H 'Content-type: application/json' --data "$MESSAGE" "$SLACK_WEBHOOK_URL"
+

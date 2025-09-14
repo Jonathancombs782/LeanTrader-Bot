@@ -48,14 +48,10 @@ def mt5_init(path: Optional[str] = None):
 
     # Optional login (if you keep a logged-in terminal, this can be omitted)
     if env["LOGIN"] and env["PASSWORD"] and env["SERVER"]:
-        if not mt5.login(
-            int(env["LOGIN"]), password=env["PASSWORD"], server=env["SERVER"]
-        ):
+        if not mt5.login(int(env["LOGIN"]), password=env["PASSWORD"], server=env["SERVER"]):
             code, desc = mt5.last_error()
             mt5.shutdown()
-            raise RuntimeError(
-                f"mt5.login failed: ({code}) {desc} (server={env['SERVER']})"
-            )
+            raise RuntimeError(f"mt5.login failed: ({code}) {desc} (server={env['SERVER']})")
 
     return mt5
 

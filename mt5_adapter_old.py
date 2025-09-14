@@ -9,7 +9,7 @@ from dotenv import load_dotenv
 # MetaTrader5 binding (graceful message if missing)
 try:
     import MetaTrader5 as mt5  # type: ignore
-except Exception as _e:  # pragma: no cover
+except Exception:  # pragma: no cover
     mt5 = None
 
 load_dotenv()
@@ -39,9 +39,7 @@ def mt5_init(path: Optional[str] = None):
     Raises RuntimeError on failure with mt5.last_error() details.
     """
     if mt5 is None:
-        raise RuntimeError(
-            "MetaTrader5 package is not installed (pip install MetaTrader5)"
-        )
+        raise RuntimeError("MetaTrader5 package is not installed (pip install MetaTrader5)")
 
     env = _envs()
     use_path = path or (env["PATH"] if env["PATH"] else None)
@@ -54,14 +52,10 @@ def mt5_init(path: Optional[str] = None):
 
     # optional login if creds provided
     if env["LOGIN"] and env["PASSWORD"] and env["SERVER"]:
-        if not mt5.login(
-            int(env["LOGIN"]), password=env["PASSWORD"], server=env["SERVER"]
-        ):
+        if not mt5.login(int(env["LOGIN"]), password=env["PASSWORD"], server=env["SERVER"]):
             code, desc = mt5.last_error()
             mt5.shutdown()
-            raise RuntimeError(
-                f"mt5.login failed: ({code}) {desc} (server={env['SERVER']})"
-            )
+            raise RuntimeError(f"mt5.login failed: ({code}) {desc} (server={env['SERVER']})")
 
     return mt5
 

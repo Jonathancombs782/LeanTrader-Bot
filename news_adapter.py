@@ -6,8 +6,7 @@ import os
 import re
 import time
 from pathlib import Path
-from typing import (Any, Dict, List,  # noqa: F401  # intentionally kept
-                    Optional, Tuple)
+from typing import Any, Dict, List, Optional, Tuple  # noqa: F401  # intentionally kept
 
 import requests  # pip install requests
 
@@ -20,6 +19,7 @@ CACHE = Path("runtime")
 CACHE.mkdir(parents=True, exist_ok=True)
 CAL_PATH = CACHE / "calendar_cache.json"
 CRYPTO_PATH = CACHE / "crypto_news_cache.json"
+ONCHAIN_EVENTS_ENV = "ONCHAIN_EVENTS_PATH"  # optional path to JSON list of onchain events
 
 # -------- ForexFactory economic calendar (no key) --------
 FF_THISWEEK = "https://nfs.faireconomy.media/ff_calendar_thisweek.json"
@@ -91,9 +91,7 @@ def _fx_currencies_for_symbol(sym: str) -> Tuple[str, str]:
     return m.group(1), m.group(2)
 
 
-def fx_guard_for_symbol(
-    sym: str, hard_block_min: int = 10, soft_bias_min: int = 120
-) -> Dict[str, Any]:
+def fx_guard_for_symbol(sym: str, hard_block_min: int = 10, soft_bias_min: int = 120) -> Dict[str, Any]:
     """
     Return guard/bias dict:
       { 'avoid_until': epoch_sec or 0,
@@ -132,9 +130,7 @@ def fx_guard_for_symbol(
             continue
         ts = ts_ms // 1000
         # within hard-block window
-        if abs(ts - now) <= hard_block_min * 60 and str(
-            ev.get("impact", "")
-        ).lower().startswith("high"):
+        if abs(ts - now) <= hard_block_min * 60 and str(ev.get("impact", "")).lower().startswith("high"):
             avoid_until = max(avoid_until, ts + hard_block_min * 60)
             reasons.append(f"HARD {ccy}:{ev.get('title', '')}")
         # a soft bias if we have actual vs forecast and event is within last soft_bias_min
@@ -266,5 +262,69 @@ def fetch_crypto_sentiment(force: bool = False) -> Dict[str, int]:
     except Exception:
         pass
 
+    try:
+        bias = _merge_onchain_fusion(bias)
+    except Exception:
+        pass
+
     _save_json(CRYPTO_PATH, {"ts": now, "bias": bias})
     return bias
+
+
+def _merge_onchain_fusion(bias: Dict[str, int]) -> Dict[str, int]:
+    """Optional: augment bias with on-chain fusion results.
+
+    If env ONCHAIN_EVENTS_PATH points to a JSON file containing a list of
+    event dicts (compatible with signals.onchain_flows detectors), compute
+    fusion features and map to {-1,0,1} bias per symbol.
+    """
+    path = os.getenv(ONCHAIN_EVENTS_ENV, "").strip()
+    if not path:
+        return bias
+    try:
+        from signals.onchain_flows import sentiment_fusion  # type: ignore
+    except Exception:
+        return bias
+    try:
+        data = json.loads(Path(path).read_text(encoding="utf-8"))
+    except Exception:
+        return bias
+
+    feats = sentiment_fusion(data if isinstance(data, list) else [])
+
+    def _map_asset_to_symbols(asset: str) -> List[str]:
+        a = asset.upper()
+        out = []
+        # common majors
+        if a in ("BTC", "WBTC", "BTC-USD"):
+            out.append("BTC/USDT")
+        if a in ("ETH", "WETH", "ETH-USD"):
+            out.append("ETH/USDT")
+        if a in ("SOL", "SOL-USD"):
+            out.append("SOL/USDT")
+        if a in ("XRP",):
+            out.append("XRP/USDT")
+        if a in ("DOGE",):
+            out.append("DOGE/USDT")
+        # pool keys may include a pair name already
+        if "/" in a and a.endswith("USDT"):
+            out.append(a)
+        return out
+
+    merged = dict(bias)
+    for asset, vals in feats.items():
+        try:
+            s = float(vals.get("sentiment", 0.0) or 0.0)
+            if s >= 0.25:
+                delta = 1
+            elif s <= -0.25:
+                delta = -1
+            else:
+                delta = 0
+            if delta == 0:
+                continue
+            for sym in _map_asset_to_symbols(asset):
+                merged[sym] = max(min(int(merged.get(sym, 0)) + delta, 1), -1)
+        except Exception:
+            continue
+    return merged

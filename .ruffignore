@@ -1,0 +1,7 @@
+runtime/**
+_incoming/**
+build/**
+dist/**
+runtime/backups/**
+**/*.ipynb
+src/leantrader/**/notebooks/**

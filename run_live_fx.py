@@ -101,9 +101,7 @@ def make_signal(df: pd.DataFrame, atr_mult_stop: float = 2.0) -> Dict[str, Any]:
     d["ema_slow"] = ema(d["close"], 50)
     d["atr"] = atr(d, 14)
 
-    long_ok = (d["ema_fast"].iloc[-1] > d["ema_slow"].iloc[-1]) and (
-        d["close"].iloc[-1] > d["ema_fast"].iloc[-1]
-    )
+    long_ok = (d["ema_fast"].iloc[-1] > d["ema_slow"].iloc[-1]) and (d["close"].iloc[-1] > d["ema_fast"].iloc[-1])
     price = float(d["close"].iloc[-1])
     stop = price - atr_mult_stop * float(d["atr"].iloc[-1])
 
@@ -146,17 +144,15 @@ def main():
     ap.add_argument("--timeframe", default="5m")
     ap.add_argument("--lots", type=float, default=0.02)
     ap.add_argument("--stake_usd", type=float, default=0)  # for ccxt loops; unused here
-    ap.add_argument(
-        "--balance_every", type=int, default=60
-    )  # seconds between Telegram portfolio posts
+    ap.add_argument("--balance_every", type=int, default=60)  # seconds between Telegram portfolio posts
     ap.add_argument("--live", action="store_true", help="place real orders (MT5)")
     args = ap.parse_args()
 
     # localize heavy/runtime imports to avoid top-level side-effects and
     # satisfy flake8 undefined-name checks (import only when running main)
-    from notifier import TelegramNotifier
     import charting
     from loop_helpers import maybe_post_balance
+    from notifier import TelegramNotifier
 
     # init MT5 + Telegram
     mt5_init()
@@ -222,10 +218,7 @@ def main():
                                         df,
                                         entries=[
                                             {
-                                                "ts": int(
-                                                    df["timestamp"].iloc[-1].timestamp()
-                                                    * 1000
-                                                ),
+                                                "ts": int(df["timestamp"].iloc[-1].timestamp() * 1000),
                                                 "price": float(df["close"].iloc[-1]),
                                                 "side": "sell",
                                             }
@@ -272,10 +265,7 @@ def main():
                                     df,
                                     entries=[
                                         {
-                                            "ts": int(
-                                                df["timestamp"].iloc[-1].timestamp()
-                                                * 1000
-                                            ),
+                                            "ts": int(df["timestamp"].iloc[-1].timestamp() * 1000),
                                             "price": float(df["close"].iloc[-1]),
                                             "side": "buy",
                                         }
@@ -296,9 +286,7 @@ def main():
                 notif.note(f"FX loop error {sym}: {e}")
 
         # Throttled portfolio post (MT5)
-        state = maybe_post_balance(
-            notif, "mt5", seconds_every=args.balance_every, state=state, prefer="mt5"
-        )
+        state = maybe_post_balance(notif, "mt5", seconds_every=args.balance_every, state=state, prefer="mt5")
         time.sleep(5)
 
 

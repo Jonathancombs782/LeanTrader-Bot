@@ -82,9 +82,7 @@ def vote_long_signal(signals: Dict[str, pd.DataFrame]) -> pd.Series:
     # align on the smallest TF index
     base_tf = sorted(
         signals.keys(),
-        key=lambda x: {"1m": 1, "3m": 3, "5m": 5, "15m": 15, "30m": 30, "1h": 60}.get(
-            x, 999
-        ),
+        key=lambda x: {"1m": 1, "3m": 3, "5m": 5, "15m": 15, "30m": 30, "1h": 60}.get(x, 999),
     )[0]
     base = signals[base_tf].set_index("timestamp")
     votes = pd.DataFrame(index=base.index)
@@ -92,6 +90,4 @@ def vote_long_signal(signals: Dict[str, pd.DataFrame]) -> pd.Series:
         s = d.set_index("timestamp")["long_signal"].astype(int)
         s = s.reindex(votes.index, method="ffill").fillna(0)
         votes[tf] = s
-    return (votes.sum(axis=1) >= max(2, int(0.6 * len(signals)))).astype(
-        int
-    )  # majority (>=60%) vote
+    return (votes.sum(axis=1) >= max(2, int(0.6 * len(signals)))).astype(int)  # majority (>=60%) vote

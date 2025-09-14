@@ -10,8 +10,8 @@ try:
     if hasattr(m, "attach_plan"):
         src = inspect.getsource(m.attach_plan)
         print("attach_plan src first line:\n", src.splitlines()[0])
-except Exception as e:
+except Exception as _e:
     import traceback
 
-    print("ERROR", e)
+    print("ERROR", _e)
     traceback.print_exc()

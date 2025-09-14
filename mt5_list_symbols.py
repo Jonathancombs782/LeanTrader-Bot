@@ -46,9 +46,7 @@ def ensure_visible(names: List[str]) -> Tuple[List[str], List[str], List[str]]:
 
 
 def main():
-    ap = argparse.ArgumentParser(
-        description="List and (optionally) auto-show MT5 symbols."
-    )
+    ap = argparse.ArgumentParser(description="List and (optionally) auto-show MT5 symbols.")
     ap.add_argument(
         "--want",
         type=str,
@@ -90,12 +88,8 @@ def main():
             print("ℹ️ Already visible:", ", ".join(already))
         if missing:
             print("⚠️ Not found / broker naming differs:", ", ".join(missing))
-            print(
-                "   Tip: open MT5 → Market Watch (Ctrl+M) → right-click → Symbols (Ctrl+U),"
-            )
-            print(
-                "   search for each name; some brokers append suffixes like .i, .m, _pro, etc."
-            )
+            print("   Tip: open MT5 → Market Watch (Ctrl+M) → right-click → Symbols (Ctrl+U),")
+            print("   search for each name; some brokers append suffixes like .i, .m, _pro, etc.")
 
     print("\nDone.")
 

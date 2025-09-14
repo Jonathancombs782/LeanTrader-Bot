@@ -15,9 +15,13 @@ import optuna
 import pandas as pd
 from optuna.pruners import MedianPruner
 
-from data_sources import (EconomicCalendarSource, FundingRateSource,
-                          NewsSentimentSource, OnchainMetricSource,
-                          merge_externals)
+from data_sources import (
+    EconomicCalendarSource,
+    FundingRateSource,
+    NewsSentimentSource,
+    OnchainMetricSource,
+    merge_externals,
+)
 from strategy_zoo import REGISTRY, get_strategy
 
 REPORTS = Path("reports")
@@ -25,9 +29,7 @@ REPORTS.mkdir(exist_ok=True)
 
 
 # --------------------- data utils ---------------------
-def fetch_ohlcv_range(
-    ex, symbol: str, timeframe: str, start_ms: int, end_ms: int, limit=1000
-) -> pd.DataFrame:
+def fetch_ohlcv_range(ex, symbol: str, timeframe: str, start_ms: int, end_ms: int, limit=1000) -> pd.DataFrame:
     all_rows = []
     since = start_ms
     tf_sec = ex.parse_timeframe(timeframe)
@@ -43,9 +45,7 @@ def fetch_ohlcv_range(
                     rows = []
             else:
                 try:
-                    rows = ex.fetch_ohlcv(
-                        symbol, timeframe=timeframe, since=since, limit=limit
-                    )
+                    rows = ex.fetch_ohlcv(symbol, timeframe=timeframe, since=since, limit=limit)
                 except Exception as e:
                     print(f"[research] fetch_ohlcv failed for {symbol}: {e}")
                     # last resort: try router-style helper if present
@@ -64,9 +64,7 @@ def fetch_ohlcv_range(
             break
         since = last_ts + tf_sec * 1000
         time.sleep(getattr(ex, "rateLimit", 200) / 1000.0)
-    df = pd.DataFrame(
-        all_rows, columns=["ts", "open", "high", "low", "close", "vol"]
-    ).drop_duplicates("ts")
+    df = pd.DataFrame(all_rows, columns=["ts", "open", "high", "low", "close", "vol"]).drop_duplicates("ts")
     df["timestamp"] = pd.to_datetime(df["ts"], unit="ms", utc=True)
     return df
 
@@ -108,16 +106,12 @@ def add_regime_cols(df: pd.DataFrame, vol_n=60) -> pd.DataFrame:
     d = df.copy()
     ret = d["close"].pct_change()
     d["rv"] = (ret.rolling(vol_n).std(ddof=0) * np.sqrt(60)).fillna(0)
-    d["high_vol"] = (d["rv"] > d["rv"].rolling(1000, min_periods=10).median()).astype(
-        int
-    )
+    d["high_vol"] = (d["rv"] > d["rv"].rolling(1000, min_periods=10).median()).astype(int)
     return d
 
 
 # --------------------- guards / scoring ---------------------
-def simple_backtest_long_only(
-    d: pd.DataFrame, fee_bps=10, slip_bps=3, atr_stop_mult=2.0
-) -> Dict[str, float]:
+def simple_backtest_long_only(d: pd.DataFrame, fee_bps=10, slip_bps=3, atr_stop_mult=2.0) -> Dict[str, float]:
     fee = fee_bps / 10000.0
     slip = slip_bps / 10000.0
     c = d["close"].values
@@ -147,11 +141,7 @@ def simple_backtest_long_only(
     ret = pd.Series(np.zeros(len(c)), index=d.index)
     ret.iloc[1:] = np.diff(c) / np.maximum(c[:-1], 1e-12)
     max_dd = float((ret.cumsum().cummax() - ret.cumsum()).max())
-    sharpe = (
-        float((ret.mean() / (ret.std() + 1e-12)) * math.sqrt(365 * 24 * 60))
-        if ret.std() > 0
-        else 0.0
-    )
+    sharpe = float((ret.mean() / (ret.std() + 1e-12)) * math.sqrt(365 * 24 * 60)) if ret.std() > 0 else 0.0
     return {
         "trades": int(len(trade_pnls)),
         "pnl_sum": float(np.sum(trade_pnls) if trade_pnls else 0.0),
@@ -177,13 +167,9 @@ def make_objective(
     test_days: int,
     step_days: int,
 ):
-    windows = build_rolling_windows(
-        full_df, train_days=train_days, test_days=test_days, step_days=step_days
-    )
+    windows = build_rolling_windows(full_df, train_days=train_days, test_days=test_days, step_days=step_days)
     if not windows:
-        raise RuntimeError(
-            "Not enough data to build rolling windows. Increase date range or reduce windows."
-        )
+        raise RuntimeError("Not enough data to build rolling windows. Increase date range or reduce windows.")
 
     def sample_params(trial: optuna.Trial) -> Dict[str, Any]:
         if strategy_name == "ema_bb_squeeze":
@@ -239,15 +225,11 @@ def make_objective(
                     post_minutes=30,
                 ),
                 news=NewsSentimentSource(path="data/news_sentiment.csv", symbol=None),
-                onchain=OnchainMetricSource(
-                    path="data/onchain.csv", metric="active_addresses"
-                ),
+                onchain=OnchainMetricSource(path="data/onchain.csv", metric="active_addresses"),
                 funding=FundingRateSource(path="data/funding.csv", symbol=None),
             )
             if hasattr(strat, "entries_and_exits"):
-                d, _ = strat.entries_and_exits(
-                    dfX, atr_stop_mult=2.0, atr_trail_mult=1.3
-                )
+                d, _ = strat.entries_and_exits(dfX, atr_stop_mult=2.0, atr_trail_mult=1.3)
             else:
                 d = strat.apply(dfX, **params)
                 if "long_signal" not in d.columns:
@@ -268,12 +250,8 @@ def make_objective(
 
         scores = []
         for step_idx, (tr_s, tr_e, te_s, te_e) in enumerate(windows, start=1):
-            tr = full_df[
-                (full_df["timestamp"] >= tr_s) & (full_df["timestamp"] <= tr_e)
-            ].copy()
-            te = full_df[
-                (full_df["timestamp"] >= te_s) & (full_df["timestamp"] <= te_e)
-            ].copy()
+            tr = full_df[(full_df["timestamp"] >= tr_s) & (full_df["timestamp"] <= tr_e)].copy()
+            te = full_df[(full_df["timestamp"] >= te_s) & (full_df["timestamp"] <= te_e)].copy()
             if len(tr) < 200 or len(te) < 100:
                 continue
             d_tr = sig_fun(tr)
@@ -316,9 +294,7 @@ def optimize_symbol(
 
     best_overall = None
     for sname in REGISTRY.keys():
-        study = optuna.create_study(
-            direction="maximize", pruner=MedianPruner(n_warmup_steps=4)
-        )
+        study = optuna.create_study(direction="maximize", pruner=MedianPruner(n_warmup_steps=4))
         obj = make_objective(
             df,
             sname,
@@ -384,10 +360,7 @@ def main():
         from router import ExchangeRouter
 
         router = ExchangeRouter()
-        if (
-            getattr(router, "ex", None)
-            and getattr(router.ex, "id", "").lower() == args.exchange.lower()
-        ):
+        if getattr(router, "ex", None) and getattr(router.ex, "id", "").lower() == args.exchange.lower():
             ex = router
         else:
             raise Exception("router mismatch")

@@ -1,0 +1,17 @@
+version: "3.9"
+services:
+  redis:
+    image: redis:7
+    ports: ["6379:6379"]
+  api:
+    build: .
+    env_file: .env
+    ports: ["8000:8000"]
+    volumes: ["./data:/app/data"]
+    depends_on: [redis]
+  agents:
+    build: .
+    command: python -c "from leantrader.agents.market_scheduler import run_pairs; run_pairs({'XAUUSD':'data/ohlc/XAUUSD_M15.csv','EURUSD':'data/ohlc/EURUSD_M15.csv','BTCUSDT':'data/ohlc/BTCUSDT_M15.csv'}, sleep_s=30)"
+    env_file: .env
+    volumes: ["./data:/app/data"]
+    depends_on: [api, redis]

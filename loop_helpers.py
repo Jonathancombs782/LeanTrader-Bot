@@ -11,9 +11,7 @@ from notifier import TelegramNotifier
 
 
 def _has_api_keys() -> bool:
-    return bool((os.getenv("API_KEY") or "").strip()) and bool(
-        (os.getenv("API_SECRET") or "").strip()
-    )
+    return bool((os.getenv("API_KEY") or "").strip()) and bool((os.getenv("API_SECRET") or "").strip())
 
 
 def maybe_post_balance(
@@ -44,9 +42,7 @@ def maybe_post_balance(
             if _has_api_keys():
                 lines = ccxt_summary(exchange=exchange_or_kind)
             else:
-                notif.note(
-                    "portfolio unavailable: set API_KEY/API_SECRET to enable balance."
-                )
+                notif.note("portfolio unavailable: set API_KEY/API_SECRET to enable balance.")
                 state["last_balance_ts"] = now
                 return state
 

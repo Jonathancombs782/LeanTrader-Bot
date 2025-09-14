@@ -21,9 +21,7 @@ BEST_PATH.parent.mkdir(parents=True, exist_ok=True)
 
 
 # ------------ history helpers ------------
-def build_history_ccxt(
-    exchange_id: str, symbol: str, timeframe: str, lookback_days: int = 30
-) -> pd.DataFrame:
+def build_history_ccxt(exchange_id: str, symbol: str, timeframe: str, lookback_days: int = 30) -> pd.DataFrame:
     """
     Pull OHLCV from a CCXT crypto exchange and write data/history.csv with
     columns: timestamp,open,high,low,close,vol
@@ -71,14 +69,10 @@ def ensure_history() -> pd.DataFrame:
             return df
     # build if missing or too small
     ex_id = os.getenv("EXCHANGE_ID", "binanceus")
-    symbol = os.getenv(
-        "OPT_SYMBOL", os.getenv("SYMBOLS", "DOGE/USD").split(",")[0].strip()
-    )
+    symbol = os.getenv("OPT_SYMBOL", os.getenv("SYMBOLS", "DOGE/USD").split(",")[0].strip())
     timeframe = os.getenv("TIMEFRAME", "1m")
     lookback_days = int(os.getenv("OPT_LOOKBACK_DAYS", "30"))
-    print(
-        f"[optuna] building history via CCXT: {ex_id} {symbol} {timeframe} {lookback_days}d"
-    )
+    print(f"[optuna] building history via CCXT: {ex_id} {symbol} {timeframe} {lookback_days}d")
     return build_history_ccxt(ex_id, symbol, timeframe, lookback_days)
 
 
@@ -129,9 +123,7 @@ def make_strategy(trial):
 def objective(trial):
     df = ensure_history()
     choice, strat, params, risk = make_strategy(trial)
-    d, _ = strat.entries_and_exits(
-        df, atr_stop_mult=risk["atr_stop_mult"], atr_trail_mult=risk["atr_trail_mult"]
-    )
+    d, _ = strat.entries_and_exits(df, atr_stop_mult=risk["atr_stop_mult"], atr_trail_mult=risk["atr_trail_mult"])
     return score_equity(d)
 
 
@@ -142,9 +134,7 @@ def main():
 
     best = study.best_params
     strat_name = best.pop("strategy")
-    params = {
-        k: v for k, v in best.items() if k not in ("atr_stop_mult", "atr_trail_mult")
-    }
+    params = {k: v for k, v in best.items() if k not in ("atr_stop_mult", "atr_trail_mult")}
     risk = {k: best[k] for k in ("atr_stop_mult", "atr_trail_mult") if k in best}
 
     payload = {

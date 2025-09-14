@@ -15,9 +15,7 @@ class ExchangeRouter:
         self.live = os.getenv("ENABLE_LIVE", "false").lower() == "true"
         self.paper = os.getenv("EXCHANGE_ID", "paper").lower() == "paper"
         self.testnet = os.getenv("BYBIT_TESTNET", "false").lower() == "true"
-        self.quote_as_notional = (
-            os.getenv("CCXT_QUOTE_AS_NOTIONAL", "true").lower() == "true"
-        )
+        self.quote_as_notional = os.getenv("CCXT_QUOTE_AS_NOTIONAL", "true").lower() == "true"
 
         if self.paper:
             start_cash = float(os.getenv("PAPER_START_CASH", "5000"))
@@ -51,8 +49,8 @@ class ExchangeRouter:
                 self.markets = self.ex.fetch_markets()
             else:
                 self.markets = {}
-        except Exception as e:
-            print("[router] load_markets error:", e)
+        except Exception as _e:
+            print("[router] load_markets error:", _e)
             self.markets = {}
 
     # -------- info / account --------
@@ -78,8 +76,8 @@ class ExchangeRouter:
             except Exception:
                 # fallback to an empty balance instead of raising
                 return {"ok": True, "balance": {}}
-        except Exception as e:
-            return {"ok": False, "error": str(e)}
+        except Exception as _e:
+            return {"ok": False, "error": str(_e)}
 
     def sample_symbols(self) -> List[str]:
         seeds = [
@@ -107,15 +105,15 @@ class ExchangeRouter:
                     timeframe=tf,
                     limit=limit,
                 )
-            except Exception as e:
+            except Exception as _e:
                 print(
                     "[traders_core.router] fetch_ohlcv raw fetch failed for",
                     symbol,
-                    e,
+                    _e,
                 )
                 return []
-        except Exception as e:
-            print("[traders_core.router] fetch_ohlcv error for", symbol, e)
+        except Exception as _e:
+            print("[traders_core.router] fetch_ohlcv error for", symbol, _e)
             return []
 
     def last_price(self, symbol: str) -> float:
@@ -129,9 +127,7 @@ class ExchangeRouter:
             return 0.0
 
     # -------- spot --------
-    def place_spot_market(
-        self, symbol: str, side: str, qty: float = None, notional: float = None
-    ):
+    def place_spot_market(self, symbol: str, side: str, qty: float = None, notional: float = None):
         try:
             if notional and self.quote_as_notional:
                 px = self.last_price(symbol)
@@ -147,9 +143,13 @@ class ExchangeRouter:
             else:
                 # last-resort: use shared helper; it has internal fallbacks
                 order = place_market(self.ex, symbol, side, qty)
+
+            # Normalize result: if the underlying adapter returned an error dict
+            if isinstance(order, dict) and (order.get("ok") is False or order.get("error")):
+                return {"ok": False, "error": order.get("error") or order}
             return {"ok": True, "result": order}
-        except Exception as e:
-            return {"ok": False, "error": str(e)}
+        except Exception as _e:
+            return {"ok": False, "error": str(_e)}
 
     # -------- linear futures (USDT-perp) --------
     def place_futures_market(
@@ -192,9 +192,11 @@ class ExchangeRouter:
                     order = place_market(self.ex, symbol, side, qty)
             else:
                 order = place_market(self.ex, symbol, side, qty)
+            if isinstance(order, dict) and (order.get("ok") is False or order.get("error")):
+                return {"ok": False, "error": order.get("error") or order}
             return {"ok": True, "result": order}
-        except Exception as e:
-            return {"ok": False, "error": str(e)}
+        except Exception as _e:
+            return {"ok": False, "error": str(_e)}
 
     # -------- quick scanner --------
     def scan_top_movers(self, topn: int = 10, quote: str = "USDT", limit: int = 120):

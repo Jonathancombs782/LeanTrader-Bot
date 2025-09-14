@@ -39,8 +39,8 @@ def place_market(ex: Any, symbol: str, side: str, amount: float) -> Dict[str, An
                         return ex.create_order(symbol, "market", side, amount, None)
                     except Exception as e2:
                         return {"ok": False, "error": str(e2)}
-    except Exception as e:
-        return {"ok": False, "error": str(e)}
+    except Exception as _e:
+        return {"ok": False, "error": str(_e)}
     return {"ok": False, "error": "no order method"}
 
 
@@ -69,76 +69,56 @@ def place_oco_ccxt(
     if take_px is not None:
         try:
             if hasattr(ex, "safe_place_order"):
-                res["tp"] = ex.safe_place_order(
-                    symbol, opp_side, amount, price=take_px, params={}
-                )
+                res["tp"] = ex.safe_place_order(symbol, opp_side, amount, price=take_px, params={})
             elif hasattr(ex, "create_limit_order"):
                 try:
-                    res["tp"] = ex.create_limit_order(
-                        symbol, opp_side, amount, float(take_px)
-                    )
+                    res["tp"] = ex.create_limit_order(symbol, opp_side, amount, float(take_px))
                 except Exception:
                     # fall back to centralized safe_create_order
                     try:
-                        res["tp"] = safe_create_order(
-                            ex, "limit", symbol, opp_side, amount, float(take_px)
-                        )
+                        res["tp"] = safe_create_order(ex, "limit", symbol, opp_side, amount, float(take_px))
                     except Exception:
                         res["tp"] = {"ok": False, "error": "tp create failed"}
             elif hasattr(ex, "create_order"):
                 try:
-                    res["tp"] = safe_create_order(
-                        ex, "limit", symbol, opp_side, amount, float(take_px), params={}
-                    )
+                    res["tp"] = safe_create_order(ex, "limit", symbol, opp_side, amount, float(take_px), params={})
                 except Exception:
                     try:
-                        res["tp"] = safe_create_order(
-                            ex, "limit", symbol, opp_side, amount, float(take_px)
-                        )
+                        res["tp"] = safe_create_order(ex, "limit", symbol, opp_side, amount, float(take_px))
                     except Exception:
                         res["tp"] = {"ok": False, "error": "tp create failed"}
             else:
                 res["tp"] = {"ok": False, "error": "no tp order method"}
-        except Exception as e:
-            res["tp"] = {"ok": False, "error": str(e)}
+        except Exception as _e:
+            res["tp"] = {"ok": False, "error": str(_e)}
 
     # 3) SL
     if stop_px is not None:
         try:
             params = {"stopPrice": float(stop_px)}
             if hasattr(ex, "safe_place_order"):
-                res["sl"] = ex.safe_place_order(
-                    symbol, opp_side, amount, price=None, params=params
-                )
+                res["sl"] = ex.safe_place_order(symbol, opp_side, amount, price=None, params=params)
             elif hasattr(ex, "create_stop_order"):
                 try:
-                    res["sl"] = ex.create_stop_order(
-                        symbol, opp_side, amount, float(stop_px), params=params
-                    )
+                    res["sl"] = ex.create_stop_order(symbol, opp_side, amount, float(stop_px), params=params)
                 except Exception:
                     # fall back to centralized safe_create_order
                     try:
-                        res["sl"] = safe_create_order(
-                            ex, "stop", symbol, opp_side, amount, float(stop_px)
-                        )
+                        res["sl"] = safe_create_order(ex, "stop", symbol, opp_side, amount, float(stop_px))
                     except Exception:
                         res["sl"] = {"ok": False, "error": "sl create failed"}
             elif hasattr(ex, "create_order"):
                 try:
-                    res["sl"] = safe_create_order(
-                        ex, "stop", symbol, opp_side, amount, None, params=params
-                    )
+                    res["sl"] = safe_create_order(ex, "stop", symbol, opp_side, amount, None, params=params)
                 except Exception:
                     try:
-                        res["sl"] = safe_create_order(
-                            ex, "stop", symbol, opp_side, amount, float(stop_px)
-                        )
+                        res["sl"] = safe_create_order(ex, "stop", symbol, opp_side, amount, float(stop_px))
                     except Exception:
                         res["sl"] = {"ok": False, "error": "sl create failed"}
             else:
                 res["sl"] = {"ok": False, "error": "no sl order method"}
-        except Exception as e:
-            res["sl"] = {"ok": False, "error": str(e)}
+        except Exception as _e:
+            res["sl"] = {"ok": False, "error": str(_e)}
 
     return res
 
@@ -186,9 +166,7 @@ def safe_create_order(
                     pass
             if hasattr(ex, "create_order"):
                 try:
-                    return ex.create_order(
-                        symbol, "limit", side, amount, price, params or {}
-                    )
+                    return ex.create_order(symbol, "limit", side, amount, price, params or {})
                 except Exception:
                     try:
                         return ex.create_order(symbol, "limit", side, amount, price)
@@ -198,16 +176,12 @@ def safe_create_order(
         if typ in ("stop", "stop_market", "stop-limit"):
             if hasattr(ex, "create_stop_order"):
                 try:
-                    return ex.create_stop_order(
-                        symbol, side, amount, price, params=params
-                    )
+                    return ex.create_stop_order(symbol, side, amount, price, params=params)
                 except Exception:
                     pass
             if hasattr(ex, "create_order"):
                 try:
-                    return ex.create_order(
-                        symbol, "stop", side, amount, price, params or {}
-                    )
+                    return ex.create_order(symbol, "stop", side, amount, price, params or {})
                 except Exception:
                     try:
                         return ex.create_order(symbol, "stop", side, amount, price)
@@ -217,9 +191,7 @@ def safe_create_order(
         # last resort: try generic create_order if present
         if hasattr(ex, "create_order"):
             try:
-                return ex.create_order(
-                    symbol, typ or "market", side, amount, price, params or {}
-                )
+                return ex.create_order(symbol, typ or "market", side, amount, price, params or {})
             except Exception:
                 try:
                     return ex.create_order(symbol, typ or "market", side, amount)
@@ -232,5 +204,5 @@ def safe_create_order(
 
         # fall back to place_market helper for safety
         return place_market(ex, symbol, side, amount)
-    except Exception as e:
-        return {"ok": False, "error": str(e)}
+    except Exception as _e:
+        return {"ok": False, "error": str(_e)}

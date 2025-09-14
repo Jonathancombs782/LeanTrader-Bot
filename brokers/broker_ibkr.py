@@ -6,7 +6,6 @@ from ib_insync import IB, Forex, MarketOrder
 # time and math not used; keep imports lean
 
 
-
 class IBKRBroker:
     def __init__(self):
         load_dotenv()
@@ -76,11 +75,7 @@ class IBKRBroker:
         try:
             ticker = self.ib.reqMktData(contract, "", False, False)
             self.ib.sleep(1)
-            if (
-                getattr(ticker, "bid", None)
-                and getattr(ticker, "ask", None)
-                and ticker.bid > 0
-            ):
+            if getattr(ticker, "bid", None) and getattr(ticker, "ask", None) and ticker.bid > 0:
                 return ((ticker.ask - ticker.bid) / ticker.bid) * 10000.0
             return 0.0
         except Exception:

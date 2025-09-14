@@ -1,0 +1,20 @@
+name: Import smoke
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  import-smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.x'
+      - name: Install deps (optional)
+        run: |
+          if [ -f requirements.txt ]; then python -m pip install --upgrade pip; python -m pip install -r requirements.txt || true; fi
+      - name: Run import smoke (fail on any import error)
+        run: python .github/scripts/import_smoke.py

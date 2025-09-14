@@ -28,12 +28,10 @@ def paper_oanda(pairs: list, timeframe: str, fixed_risk_usd: float):
                     rows = brk.safe_fetch_ohlcv(sym, timeframe=timeframe, limit=400)
                 else:
                     rows = brk.fetch_ohlcv(sym, timeframe=timeframe, limit=400)
-            except Exception as e:
-                print(f"[paper_fx_oanda] fetch_ohlcv failed for {sym}: {e}")
+            except Exception as _e:
+                print(f"[paper_fx_oanda] fetch_ohlcv failed for {sym}: {_e}")
                 rows = []
-            df = pd.DataFrame(
-                rows, columns=["ts", "open", "high", "low", "close", "vol"]
-            )
+            df = pd.DataFrame(rows, columns=["ts", "open", "high", "low", "close", "vol"])
             d, _ = strat.entries_and_exits(df.rename(columns={"ts": "timestamp"}))
 
             price = float(d["close"].iloc[-1])
@@ -50,9 +48,7 @@ def paper_oanda(pairs: list, timeframe: str, fixed_risk_usd: float):
                     "units": units,
                     "stop": price - 2.0 * atr,
                 }
-                log.info(
-                    f"[PAPER OANDA] ENTER {sym} units={units:.0f} price={price:.5f} stop={price-2*atr:.5f}"
-                )
+                log.info(f"[PAPER OANDA] ENTER {sym} units={units:.0f} price={price:.5f} stop={price-2*atr:.5f}")
             elif sym in positions:
                 pos = positions[sym]
                 pos["stop"] = max(pos["stop"], price - 1.2 * atr)

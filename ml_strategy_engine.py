@@ -79,9 +79,7 @@ class MLStrategyEngine:
             results.append(pnl)
         return {
             "avg_pnl": np.mean(results),
-            "sharpe_ratio": (
-                np.mean(results) / np.std(results) if np.std(results) > 0 else 0
-            ),
+            "sharpe_ratio": (np.mean(results) / np.std(results) if np.std(results) > 0 else 0),
             "max_drawdown": min(results),
         }
 

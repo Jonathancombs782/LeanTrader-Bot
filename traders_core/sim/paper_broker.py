@@ -96,9 +96,7 @@ class PaperBroker:
             hit_sl = p["sl"] is not None and price <= p["sl"]
             hit_tp = p["tp"] is not None and price >= p["tp"]
             if hit_sl or hit_tp:
-                pnl = ((p["sl"] if hit_sl else p["tp"]) - p["entry"]) * p[
-                    "qty"
-                ] - p.get("fee", 0.0)
+                pnl = ((p["sl"] if hit_sl else p["tp"]) - p["entry"]) * p["qty"] - p.get("fee", 0.0)
                 rec = {
                     **p,
                     "exit": (p["sl"] if hit_sl else p["tp"]),

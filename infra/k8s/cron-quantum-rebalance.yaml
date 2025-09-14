@@ -1,0 +1,22 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: quantum-rebalance
+spec:
+  schedule: "10 0 * * *"
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+            - name: rebalance
+              image: python:3.11
+              command: ["bash","-lc","pip install -r requirements.txt && python -m cli.serverless_rebalance --budget 10 --regime calm --use-runtime"]
+              env:
+                - name: IBM_QUANTUM_API_KEY
+                  valueFrom:
+                    secretKeyRef:
+                      name: ibm-quantum-secret
+                      key: api-key
+          restartPolicy: OnFailure
+

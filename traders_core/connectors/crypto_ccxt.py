@@ -1,8 +1,7 @@
 from __future__ import annotations
 
 import os  # noqa: F401  # intentionally kept
-from typing import (Any, Dict, List,  # noqa: F401  # intentionally kept
-                    Optional)
+from typing import Any, Dict, List, Optional  # noqa: F401  # intentionally kept
 
 import pandas as pd
 from dotenv import load_dotenv
@@ -60,9 +59,7 @@ def _mk_exchange(name: str, testnet: bool) -> Any:
     return ex
 
 
-def ohlcv_df(
-    exchange: str, symbol: str, timeframe: str, lookback_days: int, testnet: bool
-) -> pd.DataFrame:
+def ohlcv_df(exchange: str, symbol: str, timeframe: str, lookback_days: int, testnet: bool) -> pd.DataFrame:
     ex = _mk_exchange(exchange, testnet)
     # ccxt timeframes like '5m','1m','1h'
     limit = min(5000, lookback_days * (24 * 60 // max(1, int(timeframe[:-1]))))
@@ -72,19 +69,17 @@ def ohlcv_df(
         if hasattr(ex, "safe_fetch_ohlcv"):
             try:
                 rows = ex.safe_fetch_ohlcv(symbol, timeframe=timeframe, limit=limit)
-            except Exception as e:
-                print(
-                    f"[traders_core.connectors.crypto_ccxt] safe_fetch_ohlcv failed: {e}"
-                )
+            except Exception as _e:
+                print(f"[traders_core.connectors.crypto_ccxt] safe_fetch_ohlcv failed: {_e}")
                 rows = []
         else:
             try:
                 rows = ex.fetch_ohlcv(symbol, timeframe=timeframe, limit=limit)
-            except Exception as e:
-                print(f"[traders_core.connectors.crypto_ccxt] fetch_ohlcv failed: {e}")
+            except Exception as _e:
+                print(f"[traders_core.connectors.crypto_ccxt] fetch_ohlcv failed: {_e}")
                 rows = []
-    except Exception as e:
-        print(f"[traders_core.connectors.crypto_ccxt] unexpected error: {e}")
+    except Exception as _e:
+        print(f"[traders_core.connectors.crypto_ccxt] unexpected error: {_e}")
         rows = []
     df = pd.DataFrame(rows, columns=["time", "open", "high", "low", "close", "volume"])
     df["time"] = pd.to_datetime(df["time"], unit="ms", utc=True)
@@ -98,16 +93,14 @@ def ticker_price(exchange: str, symbol: str, testnet: bool) -> float:
         if hasattr(ex, "safe_fetch_ticker"):
             try:
                 t = ex.safe_fetch_ticker(symbol)
-            except Exception as e:
-                print(
-                    f"[traders_core.connectors.crypto_ccxt] safe_fetch_ticker failed: {e}"
-                )
+            except Exception as _e:
+                print(f"[traders_core.connectors.crypto_ccxt] safe_fetch_ticker failed: {_e}")
                 t = {}
         else:
             try:
                 t = ex.fetch_ticker(symbol)
-            except Exception as e:
-                print(f"[traders_core.connectors.crypto_ccxt] fetch_ticker failed: {e}")
+            except Exception as _e:
+                print(f"[traders_core.connectors.crypto_ccxt] fetch_ticker failed: {_e}")
                 t = {}
         try:
             return float(
@@ -121,9 +114,7 @@ def ticker_price(exchange: str, symbol: str, testnet: bool) -> float:
         return 0.0
 
 
-def market_buy(
-    exchange: str, symbol: str, amount: float, testnet: bool
-) -> Dict[str, Any]:
+def market_buy(exchange: str, symbol: str, amount: float, testnet: bool) -> Dict[str, Any]:
     ex = _mk_exchange(exchange, testnet)
     try:
         if hasattr(ex, "safe_place_order"):
@@ -136,18 +127,14 @@ def market_buy(
         if hasattr(ex, "create_order"):
             try:
                 return safe_create_order(ex, "market", symbol, "buy", amount)
-            except Exception as e:
-                print(
-                    f"[traders_core.connectors.crypto_ccxt] safe_create_order buy failed: {e}"
-                )
+            except Exception as _e:
+                print(f"[traders_core.connectors.crypto_ccxt] safe_create_order buy failed: {_e}")
         return place_market(ex, symbol, "buy", amount)
     except Exception as e:
         return {"ok": False, "error": str(e)}
 
 
-def market_sell(
-    exchange: str, symbol: str, amount: float, testnet: bool
-) -> Dict[str, Any]:
+def market_sell(exchange: str, symbol: str, amount: float, testnet: bool) -> Dict[str, Any]:
     ex = _mk_exchange(exchange, testnet)
     try:
         if hasattr(ex, "safe_place_order"):
@@ -160,13 +147,11 @@ def market_sell(
         if hasattr(ex, "create_order"):
             try:
                 return safe_create_order(ex, "market", symbol, "sell", amount)
-            except Exception as e:
-                print(
-                    f"[traders_core.connectors.crypto_ccxt] safe_create_order sell failed: {e}"
-                )
+            except Exception as _e:
+                print(f"[traders_core.connectors.crypto_ccxt] safe_create_order sell failed: {_e}")
         return place_market(ex, symbol, "sell", amount)
-    except Exception as e:
-        return {"ok": False, "error": str(e)}
+    except Exception as _e:
+        return {"ok": False, "error": str(_e)}
 
 
 def market_info(exchange: str, symbol: str, testnet: bool) -> Dict[str, Any]:
@@ -178,13 +163,9 @@ def market_info(exchange: str, symbol: str, testnet: bool) -> Dict[str, Any]:
         pass
     m = getattr(ex, "markets", {}).get(symbol) or {}
     return {
-        "min_cost": float(
-            m.get("limits", {}).get("cost", {}).get("min", 5.0)
-        ),  # e.g., ~10 USDT on Binance
+        "min_cost": float(m.get("limits", {}).get("cost", {}).get("min", 5.0)),  # e.g., ~10 USDT on Binance
         "min_qty": float(m.get("limits", {}).get("amount", {}).get("min", 0.0001)),
-        "step_qty": float(
-            m.get("precision", {}).get("amount", 6)
-        ),  # we’ll round with precision decimals
+        "step_qty": float(m.get("precision", {}).get("amount", 6)),  # we’ll round with precision decimals
         "price_prec": int(m.get("precision", {}).get("price", 2)),
         "amount_prec": int(m.get("precision", {}).get("amount", 6)),
         "taker": float(m.get("taker", 0.001)),

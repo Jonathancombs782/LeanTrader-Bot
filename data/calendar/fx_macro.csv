@@ -1,0 +1,4 @@
+timestamp,severity,event
+2030-01-01T13:30:00Z,high,NFP
+2030-01-14T13:30:00Z,high,CPI
+

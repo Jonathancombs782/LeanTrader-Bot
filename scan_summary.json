@@ -1,0 +1,33 @@
+{
+  "meta": {
+    "root": "C:\\Users\\User\\Downloads\\LeanTrader_ForexPack",
+    "ts": "2025-09-05T11:39:53.138095Z"
+  },
+  "summary": {
+    "total_other_files": 13321,
+    "top_files_sample": [
+      {
+        "path": ".\\.venv\\Scripts\\ruff.exe",
+        "size": 38012416
+      },
+      {
+        "path": ".\\.venv\\Lib\\site-packages\\numpy.libs\\libscipy_openblas64_-860d95b1c38e637ce4509f5fa24fbf2a.dll",
+        "size": 20403712
+      },
+      {
+        "path": ".\\.venv\\Lib\\site-packages\\scipy.libs\\libscipy_openblas-6b2103f2ae4d8547998b5d188e9801fb.dll",
+        "size": 20155392
+      },
+      {
+        "path": ".\\runtime\\logs\\supervisor.log",
+        "size": 10827077
+      },
+      {
+        "path": ".\\logs\\live.log",
+        "size": 9738149
+      }
+    ],
+    "py_files": 8593,
+    "py_parse_errors": 1
+  }
+}

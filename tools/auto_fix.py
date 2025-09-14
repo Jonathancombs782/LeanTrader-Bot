@@ -129,18 +129,14 @@ def scan_and_fix(root: str, apply: bool = False) -> Dict[str, Dict]:
 
 
 def main(argv: List[str] = None):
-    p = argparse.ArgumentParser(
-        description="Conservative auto-fixer for common Python repo issues"
-    )
+    p = argparse.ArgumentParser(description="Conservative auto-fixer for common Python repo issues")
     p.add_argument("--root", "-r", default=".", help="Project root")
     p.add_argument(
         "--apply",
         action="store_true",
         help="Write fixes to files (only when parse succeeds)",
     )
-    p.add_argument(
-        "--out", "-o", default="tools/auto_fix_report.json", help="Report JSON path"
-    )
+    p.add_argument("--out", "-o", default="tools/auto_fix_report.json", help="Report JSON path")
     args = p.parse_args(argv)
     os.makedirs(os.path.dirname(args.out) or ".", exist_ok=True)
     report = scan_and_fix(args.root, apply=args.apply)
@@ -153,9 +149,7 @@ def main(argv: List[str] = None):
     written = sum(1 for v in report.values() if v.get("written"))
     parsed_fail_before = sum(1 for v in report.values() if not v.get("ok_before"))
     parsed_fail_after = sum(1 for v in report.values() if not v.get("ok_after"))
-    print(
-        f"Files scanned: {total}, files with attempted fixes: {fixes}, files written: {written}"
-    )
+    print(f"Files scanned: {total}, files with attempted fixes: {fixes}, files written: {written}")
     print(f"Parse failures before: {parsed_fail_before}, after: {parsed_fail_after}")
 
 

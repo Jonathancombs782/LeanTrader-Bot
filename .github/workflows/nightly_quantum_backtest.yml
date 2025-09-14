@@ -1,0 +1,29 @@
+name: Nightly Quantum Backtest
+on:
+  schedule:
+    - cron: "20 0 * * *"  # 00:20 UTC
+  workflow_dispatch: {}
+
+jobs:
+  backtest:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install deps
+        run: |
+          python -m pip install --upgrade pip
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+      - name: Run quantum A/B backtest (synthetic)
+        run: |
+          python -m cli.quantum_backtest --budget 6 --window 252 --seed 123 > backtest_result.json
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: quantum_ab_backtest
+          path: backtest_result.json
+

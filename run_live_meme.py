@@ -3,20 +3,27 @@ from __future__ import annotations
 
 import argparse
 import datetime as dt  # noqa: F401  # intentionally kept
+import json
 import os
 import sys
 import time
 from pathlib import Path
+from pprint import pformat  # noqa: F401
 
 import pandas as pd  # noqa: F401  # intentionally kept
 from dotenv import load_dotenv
+from traders_core.services.web3_bias_daemon import start as start_bias
+from traders_core.services.pnl_daemon import start as start_pnl
+try:
+    from traders_core.services.ratio_arb_daemon import start as start_ratio_arb
+except Exception:
+    start_ratio_arb = None
 
 PROJECT_ROOT = Path(__file__).resolve().parent
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.append(str(PROJECT_ROOT))
 
 # pformat intentionally kept for debug prints in some runtimes; keep noqa suppressed
-from pprint import pformat  # noqa: F401
 
 # imports used at runtime are moved into local scope to avoid E402 (imports after runtime init)
 # ...existing code...
@@ -66,10 +73,7 @@ def make_exchange(exchange_id: str, api_key=None, api_secret=None):
         from router import ExchangeRouter
 
         router = ExchangeRouter()
-        if (
-            getattr(router, "ex", None)
-            and getattr(router.ex, "id", "").lower() == exchange_id.lower()
-        ):
+        if getattr(router, "ex", None) and getattr(router.ex, "id", "").lower() == exchange_id.lower():
             return router
     except Exception:
         pass
@@ -77,9 +81,7 @@ def make_exchange(exchange_id: str, api_key=None, api_secret=None):
     import ccxt
 
     proxies = None
-    proxy_url = (
-        os.getenv("HTTP_PROXY") or os.getenv("HTTPS_PROXY") or os.getenv("PROXY_URL")
-    )
+    proxy_url = os.getenv("HTTP_PROXY") or os.getenv("HTTPS_PROXY") or os.getenv("PROXY_URL")
     if proxy_url:
         proxies = {"http": proxy_url, "https": proxy_url}
     ex = getattr(ccxt, exchange_id)(
@@ -119,14 +121,24 @@ def live_loop(
     report_hour: str | None = "21:00",
 ):
     load_dotenv()
+    # start lightweight background services
+    try:
+        run_daemons = os.getenv("RUN_DAEMONS", "true").strip().lower() in ("1", "true", "yes", "on")
+        if run_daemons:
+            start_bias()
+            start_pnl()
+            if os.getenv("RUN_RATIO_ARB", "false").lower() == "true" and start_ratio_arb:
+                start_ratio_arb()
+    except Exception:
+        pass
     # local imports to avoid top-level E402 issues
-    from utils import bps_to_frac, setup_logger  # noqa: F401
     from acct_portfolio import ccxt_summary  # noqa: F401
     from guardrails import GuardConfig, TradeGuard  # noqa: F401
     from ledger import daily_pnl_text, log_entry, log_exit  # noqa: F401
     from notifier import CMD_INBOX, TelegramNotifier  # noqa: F401
     from risk import RiskConfig  # noqa: F401
     from strategy import TrendBreakoutStrategy  # noqa: F401
+    from utils import bps_to_frac, setup_logger  # noqa: F401
 
     log = setup_logger(
         "live_meme",
@@ -176,9 +188,7 @@ def live_loop(
         # exchange connectivity
         try:
             info = router.info()
-            msgs.append(
-                f"Router info OK: {info.get('id') if isinstance(info, dict) else str(info)[:80]}"
-            )
+            msgs.append(f"Router info OK: {info.get('id') if isinstance(info, dict) else str(info)[:80]}")
         except Exception as e:
             msgs.append(f"Router connectivity FAILED: {e}")
             ok = False
@@ -194,16 +204,12 @@ def live_loop(
         if plans_file.exists():
             try:
                 plans = json.loads(plans_file.read_text(encoding="utf-8"))
-                bad = [
-                    p for p in plans if (not p.get("entry")) or (not p.get("size_usd"))
-                ]
+                bad = [p for p in plans if (not p.get("entry")) or (not p.get("size_usd"))]
                 msgs.append(f"Found {len(plans)} plans, {len(bad)} appear incomplete.")
             except Exception:
                 msgs.append("Could not parse runtime/ultra_plans.json")
         else:
-            msgs.append(
-                "No runtime/ultra_plans.json found (dry-run may not have produced plans yet)."
-            )
+            msgs.append("No runtime/ultra_plans.json found (dry-run may not have produced plans yet).")
         return ok, msgs
 
     # helper: summarize plan files and price debug entries
@@ -232,9 +238,7 @@ def live_loop(
                 if lines:
                     try:
                         js = json.loads(lines[-1])
-                        summary.append(
-                            f"Last debug: {js.get('market')} {js.get('entry')} qty={js.get('qty')}"
-                        )
+                        summary.append(f"Last debug: {js.get('market')} {js.get('entry')} qty={js.get('qty')}")
                     except Exception:
                         summary.append("Could not parse last debug row")
             else:
@@ -304,11 +308,7 @@ def live_loop(
                 resolved.append(s)
             else:
                 # try swapping USD/USDT
-                alt = (
-                    s.replace("/USDT", "/USD")
-                    if s.endswith("/USDT")
-                    else s.replace("/USD", "/USDT")
-                )
+                alt = s.replace("/USDT", "/USD") if s.endswith("/USDT") else s.replace("/USD", "/USDT")
                 if alt in ex.markets:
                     resolved.append(alt)
                 else:
@@ -385,9 +385,7 @@ def live_loop(
     open_pos: dict = {}
 
     day_tag = dt.datetime.utcnow().strftime("%Y-%m-%d")
-    next_bal_ts = (
-        time.time() + (balance_every_min or 0) * 60 if balance_every_min else None
-    )
+    next_bal_ts = time.time() + (balance_every_min or 0) * 60 if balance_every_min else None
 
     def maybe_daily_report(force=False):
         nonlocal day_tag
@@ -397,9 +395,7 @@ def live_loop(
             trigger = True
         elif report_hour:
             hh, mm = [int(x) for x in report_hour.split(":")]
-            trigger = (now.strftime("%Y-%m-%d") != day_tag) or (
-                now.hour == hh and now.minute == mm
-            )
+            trigger = (now.strftime("%Y-%m-%d") != day_tag) or (now.hour == hh and now.minute == mm)
         if trigger:
             # use daily_pnl_text from ledger for a compact report
             try:
@@ -429,9 +425,7 @@ def live_loop(
                     out = "\n".join(msgs)
                     nfy.note("Preflight self-check:\n" + out)
                     if not ok:
-                        log.warning(
-                            "Preflight reported critical failures; review before enabling live trading."
-                        )
+                        log.warning("Preflight reported critical failures; review before enabling live trading.")
                 except Exception as e:
                     log.exception("Selfcheck failed: %s", e)
                 continue
@@ -514,6 +508,7 @@ def main():
 
     # load_config is only needed here at startup; import locally to avoid module-level side-effects
     from utils import load_config
+
     cfg = load_config("config.yml")
 
     if args.symbols.strip():

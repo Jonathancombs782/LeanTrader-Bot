@@ -1,0 +1,32 @@
+meta:
+  name: smc_trend_breakout
+  version: "0.1"
+timeframes: ["D1","H4","H1","M15"]
+signals:
+  - name: long_trend_breakout
+    side: long
+    entry:
+      - {feature: "ema_close_50 > ema_close_200", timeframe: "H1"}
+      - {feature: "adx_14 > 20", timeframe: "H1"}
+      - {feature: "structure_hh_hl", timeframe: "H4"}
+    confirm_any:
+      - {feature: "fvg_score > 0", timeframe: "M15"}
+      - {feature: "rsi_14_div_bull", timeframe: "M15"}
+    exit:
+      - {feature: "rsi_14 > 70", timeframe: "M15"}
+    stop: "atr_14 * 1.5"
+    take: "R:2.0"
+
+  - name: short_reversal
+    side: short
+    entry:
+      - {feature: "ema_close_50 < ema_close_200", timeframe: "H1"}
+      - {feature: "adx_14 > 20", timeframe: "H1"}
+      - {feature: "structure_ll_lh", timeframe: "H4"}
+    confirm_any:
+      - {feature: "fvg_score < 0", timeframe: "M15"}
+      - {feature: "rsi_14_div_bear", timeframe: "M15"}
+    exit:
+      - {feature: "rsi_14 < 30", timeframe: "M15"}
+    stop: "atr_14 * 1.5"
+    take: "R:2.0"

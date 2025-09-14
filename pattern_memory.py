@@ -7,8 +7,7 @@ import math
 import time
 from collections import defaultdict
 from pathlib import Path
-from typing import (Any, Dict, List,  # noqa: F401  # intentionally kept
-                    Optional)
+from typing import Any, Dict, List, Optional  # noqa: F401  # intentionally kept
 
 import numpy as np
 import pandas as pd
@@ -115,9 +114,7 @@ def _load_memory() -> pd.DataFrame:
             if k in df.columns:
                 df[k] = pd.to_numeric(df[k], errors="coerce")
         if "ts" in df.columns:
-            df["ts"] = (
-                pd.to_numeric(df["ts"], errors="coerce").fillna(0).astype("int64")
-            )
+            df["ts"] = pd.to_numeric(df["ts"], errors="coerce").fillna(0).astype("int64")
         return df.fillna({"label": ""})
     except Exception:
         return pd.DataFrame(columns=HEAD)
@@ -272,11 +269,7 @@ def get_score(sig: Dict[str, Any]) -> Dict[str, Any]:
     Returns dict with winrate/avg_out/n; falls back to neutral priors.
     """
     # extract features from the signal
-    feats = (
-        sig.get("feats")
-        if isinstance(sig.get("feats"), dict)
-        else {k: sig[k] for k in FEATS if k in sig}
-    )
+    feats = sig.get("feats") if isinstance(sig.get("feats"), dict) else {k: sig[k] for k in FEATS if k in sig}
 
     if len(feats) != len(FEATS):
         return {"winrate": 0.5, "avg_out": 0.0, "n": 0}

@@ -15,10 +15,7 @@ def find_py_files(root: Path):
     out = []
     for p in root.rglob("*.py"):
         # skip virtualenv, runtime, .git, __pycache__
-        if any(
-            part in ("venv", ".venv", ".git", "runtime", "__pycache__", "tools")
-            for part in p.parts
-        ):
+        if any(part in ("venv", ".venv", ".git", "runtime", "__pycache__", "tools") for part in p.parts):
             continue
         out.append(p)
     return sorted(out)
@@ -51,10 +48,7 @@ def find_smike_script(root: Path):
     """Search for smike.py or smoke.py under root and return path or None."""
     for name in ("smike.py", "smoke.py"):
         for p in root.rglob(name):
-            if any(
-                part in ("venv", ".venv", ".git", "runtime", "__pycache__")
-                for part in p.parts
-            ):
+            if any(part in ("venv", ".venv", ".git", "runtime", "__pycache__") for part in p.parts):
                 continue
             return p
     return None
@@ -73,10 +67,7 @@ def scan_patterns(files):
     for f in files:
         txt = f.read_text(encoding="utf-8", errors="ignore")
         # look for direct router assignment (potential mismatch) and absence of RouterAdapter
-        if (
-            re.search(r"\bself\.router\s*=\s*router\b", txt)
-            and "RouterAdapter" not in txt
-        ):
+        if re.search(r"\bself\.router\s*=\s*router\b", txt) and "RouterAdapter" not in txt:
             issues.append(
                 {
                     "file": str(f),
@@ -93,9 +84,7 @@ def scan_patterns(files):
             )
         # suspicious identical SL==entry (quick heuristic)
         if re.search(r"sl\s*=\s*float\(entry\s*([\+\-])\s*0\)", txt):
-            issues.append(
-                {"file": str(f), "issue": "possible degenerate SL==entry pattern"}
-            )
+            issues.append({"file": str(f), "issue": "possible degenerate SL==entry pattern"})
     return issues
 
 
@@ -162,9 +151,7 @@ def apply_formatters(files, tools):
         rc, out = run_cmd(f"black {paths}")
         results["black"] = (rc, out)
     if tools.get("autoflake"):
-        rc, out = run_cmd(
-            f"autoflake --in-place --remove-all-unused-imports -r {paths}"
-        )
+        rc, out = run_cmd(f"autoflake --in-place --remove-all-unused-imports -r {paths}")
         results["autoflake"] = (rc, out)
     return results
 
@@ -221,9 +208,7 @@ def full_scan(files, tools, root: Path):
 
 
 def main():
-    ap = argparse.ArgumentParser(
-        description="Autofix / scan helper for LeanTrader_ForexPack"
-    )
+    ap = argparse.ArgumentParser(description="Autofix / scan helper for LeanTrader_ForexPack")
     ap.add_argument(
         "--apply",
         action="store_true",
@@ -244,9 +229,7 @@ def main():
         action="store_true",
         help="Run full static scan (syntax, optional linters, router interface checks)",
     )
-    ap.add_argument(
-        "--report-json", type=str, default="", help="Write json report to file"
-    )
+    ap.add_argument("--report-json", type=str, default="", help="Write json report to file")
     args = ap.parse_args()
 
     files = find_py_files(ROOT)
@@ -321,15 +304,11 @@ def main():
             print(f"=== {k} rc={rc} ===")
             if out:
                 print(out[:2000])
-        report["format_results"] = {
-            k: {"rc": rc, "out": out} for k, (rc, out) in res.items()
-        }
+        report["format_results"] = {k: {"rc": rc, "out": out} for k, (rc, out) in res.items()}
 
     if args.report_json:
         try:
-            Path(args.report_json).write_text(
-                json.dumps(report, indent=2), encoding="utf-8"
-            )
+            Path(args.report_json).write_text(json.dumps(report, indent=2), encoding="utf-8")
             print("Wrote JSON report to", args.report_json)
         except Exception as e:
             print("Failed to write JSON report:", e, file=sys.stderr)

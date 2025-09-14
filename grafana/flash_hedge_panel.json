@@ -1,0 +1,26 @@
+{
+  "type": "timeseries",
+  "title": "Flash Hedge Count",
+  "fieldConfig": {
+    "defaults": {
+      "custom": {
+        "drawStyle": "line",
+        "lineWidth": 2,
+        "spanNulls": true
+      }
+    },
+    "overrides": []
+  },
+  "options": {
+    "legend": { "displayMode": "list", "showLegend": true },
+    "tooltip": { "mode": "single" }
+  },
+  "targets": [
+    {
+      "refId": "A",
+      "expr": "sum by (reason, symbol) (rate(flash_hedge_count_total[5m]))",
+      "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" }
+    }
+  ]
+}
+

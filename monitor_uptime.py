@@ -6,9 +6,7 @@ import psutil
 
 def check_bot():
     for proc in psutil.process_iter(["pid", "name"]):
-        if "python" in proc.info["name"] and "brain_loop.py" in " ".join(
-            proc.cmdline()
-        ):
+        if "python" in proc.info["name"] and "brain_loop.py" in " ".join(proc.cmdline()):
             return True
     return False
 

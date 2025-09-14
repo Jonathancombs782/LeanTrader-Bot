@@ -6,8 +6,7 @@ import os
 import textwrap
 import time
 from pathlib import Path
-from typing import (Any, Dict, List,  # noqa: F401  # intentionally kept
-                    Optional)
+from typing import Any, Dict, List, Optional  # noqa: F401  # intentionally kept
 
 import requests
 
@@ -64,10 +63,7 @@ class TelegramNotifier:
     def hello(self, venue: str, symbols: List[str] | str, tf: str):
         if isinstance(symbols, list):
             symbols = ", ".join(symbols)
-        self._send(
-            f"✅ Hello! Your trading bot is alive.\n"
-            f"*Live {venue}* tf=`{tf}`\nSymbols: {symbols}"
-        )
+        self._send(f"✅ Hello! Your trading bot is alive.\n" f"*Live {venue}* tf=`{tf}`\nSymbols: {symbols}")
 
     def signal(
         self,
@@ -94,11 +90,7 @@ class TelegramNotifier:
             lines.append("*Context*")
             for b in reasons[:3]:
                 lines.append(f"• {b}")
-        lines.append(
-            "\nTap: `/buy {s} <qty>` `/sell {s} <qty>` `/flat {s}` `/balance`".replace(
-                "{s}", symbol
-            )
-        )
+        lines.append("\nTap: `/buy {s} <qty>` `/sell {s} <qty>` `/flat {s}` `/balance`".replace("{s}", symbol))
         self._send("\n".join(lines))
 
     def send_photo(self, photo_path: str, caption: Optional[str] = None):

@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import os  # noqa: F401
 import time
-from typing import Any, Dict, List, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, Dict, List
 
 if TYPE_CHECKING:
     # avoid runtime import cycles; used only for type checking / annotations
@@ -47,8 +47,8 @@ def account_balance_usd(r: ExchangeRouter) -> float:
 
 
 def main() -> None:
-    from router import ExchangeRouter
     from brain import Brain, Guards, Memory, VolSizer
+    from router import ExchangeRouter
 
     r = ExchangeRouter()
     b = Brain()
@@ -57,9 +57,7 @@ def main() -> None:
 
     tf = os.getenv("BRAIN_TF", "1m")
     mode = r.mode
-    print(
-        f"router={{'paper': {r.paper}, 'testnet': {r.testnet}, 'mode': '{mode}', 'live': {r.live}}}"
-    )
+    print(f"router={{'paper': {r.paper}, 'testnet': {r.testnet}, 'mode': '{mode}', 'live': {r.live}}}")
 
     # choose symbols (USDT majors)
     symbols = ["BTC/USDT", "ETH/USDT", "SOL/USDT", "XRP/USDT", "DOGE/USDT"]
@@ -95,11 +93,7 @@ def main() -> None:
                 try:
                     if hasattr(r.ex, "fetch_funding_rate"):
                         fr = r.ex.fetch_funding_rate(sym)
-                        f = (
-                            float(fr.get("fundingRate", 0))
-                            if isinstance(fr, dict)
-                            else None
-                        )
+                        f = float(fr.get("fundingRate", 0)) if isinstance(fr, dict) else None
                 except Exception:
                     f = None
                 okf, whyf = guards.funding_ok(f)
@@ -139,9 +133,7 @@ def main() -> None:
                         "tp": adv.tp,
                         "notional": notional,
                     }
-                    print(
-                        f"[open] spot {sym} {side} ${notional:.2f} @ {price:.4f} | {adv.reason}"
-                    )
+                    print(f"[open] spot {sym} {side} ${notional:.2f} @ {price:.4f} | {adv.reason}")
                 else:
                     print(f"[fail] spot {sym} {res}")
             else:
@@ -158,32 +150,24 @@ def main() -> None:
                         "tp": adv.tp,
                         "qty": qty,
                     }
-                    print(
-                        f"[open] fut {sym} {side} {qty:.6f} @ {price:.4f} x{lev} | {adv.reason}"
-                    )
+                    print(f"[open] fut {sym} {side} {qty:.6f} @ {price:.4f} x{lev} | {adv.reason}")
                 else:
                     print(f"[fail] fut {sym} {res}")
 
         time.sleep(20)
 
 
-def _close(
-    r: ExchangeRouter, sym: str, st: Dict[str, Any], price_now: float
-) -> Dict[str, Any]:
+def _close(r: ExchangeRouter, sym: str, st: Dict[str, Any], price_now: float) -> Dict[str, Any]:
     side = st["side"]
     entry = st["entry"]
     pnl = (price_now - entry) if side == "buy" else (entry - price_now)
     if r.mode == "spot":
         # simulate: opposite side notional
         notional = st["notional"]
-        res = r.place_spot_market(
-            sym, "sell" if side == "buy" else "buy", notional=notional
-        )
+        res = r.place_spot_market(sym, "sell" if side == "buy" else "buy", notional=notional)
     else:
         qty = st["qty"]
-        res = r.place_futures_market(
-            sym, "sell" if side == "buy" else "buy", qty=qty, close=True
-        )
+        res = r.place_futures_market(sym, "sell" if side == "buy" else "buy", qty=qty, close=True)
     res["pnl"] = float(pnl)
     print(f"[close] {sym} {side} pnl≈{pnl:.4f} @ {price_now:.4f}")
     return res

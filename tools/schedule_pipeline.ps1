@@ -3,8 +3,15 @@
 param(
     [string]$TaskName = 'LeanTrader_Pipeline'
 )
-$action = New-ScheduledTaskAction -Execute 'powershell.exe' -Argument "-NoProfile -WindowStyle Hidden -Command `"$env:VIRTUAL_ENV_ACTIVATE=''; $env:ENABLE_LEARNING='true'; python '$PWD\\tools\\pipeline.py'`""
-$trigger = New-ScheduledTaskTrigger -Daily -At (Get-Date).Date.AddHours((Get-Date).Hour + 1) -RepetitionInterval (New-TimeSpan -Minutes 60) -RepetitionDuration ([TimeSpan]::MaxValue)
-$principal = New-ScheduledTaskPrincipal -UserId "NT AUTHORITY\SYSTEM" -RunLevel Highest
+
+# Prefer repo venv python if present; fallback to python in PATH
+$python = "$PWD\.venv\\Scripts\\python.exe"
+if (-not (Test-Path $python)) { $python = 'python' }
+
+$cmd = "$env:ENABLE_LEARNING='true'; & `"$python`" `"$PWD\\tools\\pipeline.py`""
+$action = New-ScheduledTaskAction -Execute 'powershell.exe' -Argument ("-NoProfile -WindowStyle Hidden -Command " + $cmd)
+$trigger = New-ScheduledTaskTrigger -Once -At ((Get-Date).AddMinutes(2)) -RepetitionInterval (New-TimeSpan -Minutes 60) -RepetitionDuration ([TimeSpan]::MaxValue)
+$currentUser = [System.Security.Principal.WindowsIdentity]::GetCurrent().Name
+$principal = New-ScheduledTaskPrincipal -UserId $currentUser -RunLevel Highest
 Register-ScheduledTask -TaskName $TaskName -Action $action -Trigger $trigger -Principal $principal -Force
 Write-Output "Scheduled task '$TaskName' registered to run hourly (opt-in)."

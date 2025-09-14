@@ -36,9 +36,7 @@ def regional_fx_feeds() -> list[str]:
     if r == "US":
         base.append("https://www.federalreserve.gov/feeds/press_all.xml")
     elif r in {"GB", "UK"}:
-        base.append(
-            "https://www.bankofengland.co.uk/boeapps/rss/Pages/RSS.aspx?TaxonomyID=4"
-        )
+        base.append("https://www.bankofengland.co.uk/boeapps/rss/Pages/RSS.aspx?TaxonomyID=4")
     elif r == "EU":
         base.append("https://www.ecb.europa.eu/press/govcdec/html/index.en.html")
     return base

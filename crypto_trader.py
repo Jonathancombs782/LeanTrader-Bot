@@ -35,9 +35,7 @@ def _close_list(ohlcv) -> List[float]:
     return [float(r[4]) for r in ohlcv]
 
 
-def trade_once(
-    r: ExchangeRouter, *, prefer_futures: bool, notional_spot: float = 5.0
-) -> Dict[str, Any]:
+def trade_once(r: ExchangeRouter, *, prefer_futures: bool, notional_spot: float = 5.0) -> Dict[str, Any]:
     syms = r.list_scan_symbols()
     if not syms:
         return {"ok": False, "error": "no symbols to scan"}
@@ -60,9 +58,7 @@ def trade_once(
         return {"ok": True, "note": "no action"}
 
     if prefer_futures:
-        linear = (
-            chosen.replace("/USDT", "/USDT:USDT") if ":USDT" not in chosen else chosen
-        )
+        linear = chosen.replace("/USDT", "/USDT:USDT") if ":USDT" not in chosen else chosen
         side = "buy" if sig == "buy" else "sell"
         res = r.place_futures_market(linear, side, qty=None, leverage=None)
         # ensure consistent dict shape
@@ -90,9 +86,7 @@ def main():
         choices=["spot", "futures"],
         default=os.getenv("EXCHANGE_MODE", "spot"),
     )
-    ap.add_argument(
-        "--notional", type=float, default=5.0, help="spot buy notional (USDT)"
-    )
+    ap.add_argument("--notional", type=float, default=5.0, help="spot buy notional (USDT)")
     ap.add_argument("--loop", action="store_true")
     ap.add_argument("--sleep", type=int, default=60)
     args = ap.parse_args()

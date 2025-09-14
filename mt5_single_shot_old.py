@@ -6,9 +6,7 @@ from typing import Any, Dict, Optional  # noqa: F401  # intentionally kept
 
 import numpy as np
 
-from mt5_adapter_old import (account_summary_lines, bars_df,
-                             min_stop_distance_points, mt5_init,
-                             order_send_market)
+from mt5_adapter_old import account_summary_lines, bars_df, min_stop_distance_points, mt5_init, order_send_market
 
 
 def atr(series: np.ndarray, n: int = 14) -> float:
@@ -40,9 +38,7 @@ def main() -> None:
         default=None,
         help="If set, use this many points for both SL/TP (symmetric).",
     )
-    ap.add_argument(
-        "--atr_mult", type=float, default=2.0, help="Used if sl_tp_pts not provided."
-    )
+    ap.add_argument("--atr_mult", type=float, default=2.0, help="Used if sl_tp_pts not provided.")
     args = ap.parse_args()
 
     mt5_init()
@@ -71,9 +67,7 @@ def main() -> None:
     else:
         # ATR-based distance converted to points
         a = atr(df[["high", "low", "close"]].to_records(index=False), 14)
-        pts = max(
-            float(round(a / (last * 0.0001))), float(pts_min)
-        )  # rough: convert price ATR to points
+        pts = max(float(round(a / (last * 0.0001))), float(pts_min))  # rough: convert price ATR to points
 
     # Convert points -> price
     pt_value = 0.0001  # for most FX majors; for metals/indices adjust if needed

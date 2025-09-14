@@ -135,10 +135,7 @@ def _features_from_df(df) -> Dict[str, float]:
         "atr": float((atr.iloc[-1] or 0.0) / max(1e-9, d["close"].iloc[-1])),
         "rsi": float(rsi.iloc[-1] if pd.notna(rsi.iloc[-1]) else 50.0),
         "bb_bw": float(bbw.iloc[-1]),
-        "ema_slope": float(
-            (ema.iloc[-1] or 0.0)
-            - (ema.iloc[-5] if len(ema) >= 5 else ema.iloc[-1] or 0.0)
-        ),
+        "ema_slope": float((ema.iloc[-1] or 0.0) - (ema.iloc[-5] if len(ema) >= 5 else ema.iloc[-1] or 0.0)),
     }
     for k, v in out.items():
         if v is None or math.isnan(v) or math.isinf(v):
@@ -204,12 +201,7 @@ class OutcomeLogger:
             "qty": float(qty or 0.0),
             "meta": meta or {},
         }
-        tid = _hash(
-            {
-                k: base[k]
-                for k in ("market", "venue", "symbol", "tf", "side", "entry", "ts")
-            }
-        )
+        tid = _hash({k: base[k] for k in ("market", "venue", "symbol", "tf", "side", "entry", "ts")})
         base["id"] = tid
 
         # optional: snapshot features + write a pending memory row
@@ -248,9 +240,7 @@ class OutcomeLogger:
         return tid
 
     # ---------- exit ----------
-    def mark_exit(
-        self, trade_id: str, exit_price: float, reason: str
-    ) -> Dict[str, Any]:
+    def mark_exit(self, trade_id: str, exit_price: float, reason: str) -> Dict[str, Any]:
         if trade_id not in self._open:
             return {"ok": False, "error": "unknown_trade_id"}
 
@@ -263,34 +253,16 @@ class OutcomeLogger:
         qty = float(o.get("qty", 0.0) or 0.0)
 
         # PnL absolute in quote currency (or account currency on MT5 if you pass that)
-        pnl = (
-            (exit_price - entry) * qty if side == "buy" else (entry - exit_price) * qty
-        )
+        pnl = (exit_price - entry) * qty if side == "buy" else (entry - exit_price) * qty
 
         # R-multiple (risk = |entry - sl|). If no SL, fall back to price percent.
         risk = abs(entry - sl) if sl > 0 else max(1e-9, entry * 0.002)  # 0.2% fallback
-        pnl_r = (
-            ((exit_price - entry) / risk)
-            if side == "buy"
-            else ((entry - exit_price) / risk)
-        )
+        pnl_r = ((exit_price - entry) / risk) if side == "buy" else ((entry - exit_price) / risk)
 
         # TP flags
-        tp1_hit = (
-            (exit_price >= float(o["tp1"]))
-            if (o.get("tp1") and o["tp1"] > 0)
-            else False
-        )
-        tp2_hit = (
-            (exit_price >= float(o["tp2"]))
-            if (o.get("tp2") and o["tp2"] > 0)
-            else False
-        )
-        tp3_hit = (
-            (exit_price >= float(o["tp3"]))
-            if (o.get("tp3") and o["tp3"] > 0)
-            else False
-        )
+        tp1_hit = (exit_price >= float(o["tp1"])) if (o.get("tp1") and o["tp1"] > 0) else False
+        tp2_hit = (exit_price >= float(o["tp2"])) if (o.get("tp2") and o["tp2"] > 0) else False
+        tp3_hit = (exit_price >= float(o["tp3"])) if (o.get("tp3") and o["tp3"] > 0) else False
         win = 1 if pnl > 0 else 0
 
         # NDJSON close event
@@ -364,9 +336,7 @@ class OutcomeLogger:
         }
 
     # ---------- memory updater ----------
-    def _update_memory_outcome(
-        self, symbol: str, tf: str, ts: int, outcome: float, label: str
-    ) -> None:
+    def _update_memory_outcome(self, symbol: str, tf: str, ts: int, outcome: float, label: str) -> None:
         try:
             # load all, update the matching row, rewrite
             rows: List[List[str]] = []
@@ -381,11 +351,7 @@ class OutcomeLogger:
             for r in rows:
                 if len(r) < len(header):  # skip malformed
                     continue
-                if (
-                    r[cols["symbol"]] == symbol
-                    and r[cols["tf"]] == tf
-                    and int(r[cols["ts"]]) == ts
-                ):
+                if r[cols["symbol"]] == symbol and r[cols["tf"]] == tf and int(r[cols["ts"]]) == ts:
                     r[cols["outcome"]] = f"{outcome:.6f}"
                     r[cols["label"]] = label
                     hit = True

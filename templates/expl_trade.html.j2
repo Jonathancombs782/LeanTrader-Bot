@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Trade Explanation — {{ symbol }} {{ side }}</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 16px; }
+    .kpi { display: flex; gap: 12px; }
+    .card { border: 1px solid #ddd; padding: 10px; border-radius: 6px; }
+    ul { margin-top: 4px; }
+  </style>
+</head>
+<body>
+  <h1>Trade Explanation — {{ symbol }} {{ side }}</h1>
+  <div class="kpi">
+    <div class="card"><b>ID</b><br/>{{ id }}</div>
+    <div class="card"><b>Route</b><br/>{{ route }}</div>
+    <div class="card"><b>Qty/Price</b><br/>{{ qty }} @ {{ price }}</div>
+    <div class="card"><b>Regime</b><br/>{{ regime }}</div>
+    <div class="card"><b>Slippage (exp. bps)</b><br/>{{ '%.2f' % expected_slippage_bps }}</div>
+  </div>
+
+  <h2>Selector</h2>
+  <p>{{ selector }}</p>
+
+  <h2>Key Signals</h2>
+  {% if key_signals %}
+    <ul>
+      {% for s in key_signals[:10] %}
+        <li>{{ s.name or s.id }}: {{ s.score }} {% if s.reason %}— {{ s.reason }}{% endif %}</li>
+      {% endfor %}
+    </ul>
+  {% else %}
+    <i>No signals recorded.</i>
+  {% endif %}
+
+  <h2>Sentiment Snapshot</h2>
+  <ul>
+    <li>News bias: {{ sentiment.news_bias }}</li>
+    <li>On-chain: {{ sentiment.onchain_sent }}</li>
+    <li>Hype score: {{ sentiment.hype_score }}</li>
+  </ul>
+
+  <h2>Risk Caps</h2>
+  <ul>
+    {% for k, v in risk_caps.items() %}
+      <li>{{ k }}: {{ v }}</li>
+    {% endfor %}
+  </ul>
+
+  {% if objective_value is not none %}
+  <h2>Objective (QAOA)</h2>
+  <p>{{ objective_value }}</p>
+  {% endif %}
+
+  {% if alternatives_rejected %}
+  <h2>Alternatives Rejected</h2>
+  <ul>
+    {% for e in alternatives_rejected[:10] %}
+      <li>{{ e }}</li>
+    {% endfor %}
+  </ul>
+  {% endif %}
+</body>
+</html>
+

@@ -75,9 +75,7 @@ def cross_examine(
     # SUI: 1 - normalized variance + sign-consistency bonus
     var = statistics.pvariance(probs) if len(probs) > 1 else 0.0
     sign = [1 if (p - 0.5) >= 0 else -1 for p in probs]
-    agree = sum(
-        1 for s in sign if s == (1 if (frame_probs[focus_tf] - 0.5) >= 0 else -1)
-    )
+    agree = sum(1 for s in sign if s == (1 if (frame_probs[focus_tf] - 0.5) >= 0 else -1))
     agree_frac = agree / len(sign)
     sui = _clip(1.0 - 2.0 * var, 0.0, 1.0) * (0.7 + 0.3 * agree_frac)
 

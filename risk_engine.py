@@ -6,8 +6,7 @@ from __future__ import annotations
 import os  # noqa: F401  # intentionally kept
 import time
 from dataclasses import dataclass
-from typing import (Any, Dict, Optional,  # noqa: F401  # intentionally kept
-                    Tuple)
+from typing import Any, Dict, Optional, Tuple  # noqa: F401  # intentionally kept
 
 
 # ---------- ENV ----------
@@ -100,9 +99,7 @@ def equity_from_router(router) -> Equity:
 
 
 # contract/qty sizing
-def size_crypto_from_risk(
-    entry: float, sl: float, equity_usd: float, risk_pct: float
-) -> float:
+def size_crypto_from_risk(entry: float, sl: float, equity_usd: float, risk_pct: float) -> float:
     risk_usd = max(0.0, equity_usd * (risk_pct / 100.0))
     dist = abs(entry - sl)
     if dist <= 0:
@@ -113,9 +110,7 @@ def size_crypto_from_risk(
 
 
 # very simplified FX lot sizing (USD quote; JPY pip fix handled)
-def lots_fx_from_risk(
-    entry: float, sl: float, equity_usd: float, risk_pct: float, symbol: str
-) -> float:
+def lots_fx_from_risk(entry: float, sl: float, equity_usd: float, risk_pct: float, symbol: str) -> float:
     risk_usd = max(0.0, equity_usd * (risk_pct / 100.0))
     dist = abs(entry - sl)
     if dist <= 0:
@@ -149,9 +144,7 @@ class ExposureBook:
             return False
         if self.total_pct + add_pct > RISK_PCT_TOTAL_MAX:
             return False
-        if self.blocks.get(block, 0.0) + add_pct > max(
-            RISK_PCT_TOTAL_MAX / 2.0, RISK_PCT_PER_TRADE * 2.0
-        ):
+        if self.blocks.get(block, 0.0) + add_pct > max(RISK_PCT_TOTAL_MAX / 2.0, RISK_PCT_PER_TRADE * 2.0):
             # don't let one block dominate
             return False
         return True

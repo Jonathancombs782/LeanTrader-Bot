@@ -95,17 +95,11 @@ def run_autofix(root: Path = ROOT):
                 # try one more pass: add missing colons on common keywords if they look missing
                 src_lines = new_src.splitlines()
                 for i, ln in enumerate(src_lines):
-                    if re.search(
-                        r"\b(for|if|while|def|class)\b.*\)\s*$", ln
-                    ) and not ln.rstrip().endswith(":"):
+                    if re.search(r"\b(for|if|while|def|class)\b.*\)\s*$", ln) and not ln.rstrip().endswith(":"):
                         src_lines[i] = ln + ":"
-                new_src2 = "\n".join(src_lines) + (
-                    "\n" if new_src.endswith("\n") else ""
-                )
+                new_src2 = "\n".join(src_lines) + ("\n" if new_src.endswith("\n") else "")
                 ok2, err2 = try_parse(new_src2)
-                entry["attempts"].append(
-                    {"second_pass_ok": ok2, "second_pass_err": err2}
-                )
+                entry["attempts"].append({"second_pass_ok": ok2, "second_pass_err": err2})
                 if ok2:
                     backup_and_write(p, new_src2)
                     entry["fixed"] = True
