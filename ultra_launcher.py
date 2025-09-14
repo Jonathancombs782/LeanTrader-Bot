@@ -27,6 +27,7 @@ from tools.market_data import get_market_data_manager
 from ultra_god_mode import integrate_god_mode, UltraGodMode
 from ultra_moon_spotter import integrate_moon_spotter, UltraMoonSystem
 from ultra_forex_master import integrate_forex_master, UltraForexMaster
+from ultra_telegram_master import integrate_telegram_signals
 
 # ASCII Art Banner
 BANNER = """
@@ -87,6 +88,10 @@ class UltraLauncher:
             'trade_forex': True,
             'trade_metals': True,
             'trade_commodities': True,
+            'telegram_enabled': False,  # Set to True when configured
+            'telegram_bot_token': '',  # Add your bot token
+            'telegram_channel': '',  # Add your channel
+            'telegram_vip_channel': '',  # Add VIP channel
             'model_update_interval': 86400,  # Daily
             'rebalance_interval': 3600,  # Hourly
             'initial_capital': 10000,
@@ -230,6 +235,33 @@ class UltraLauncher:
             self.config['symbols'].extend(forex_symbols)
             print(f"   Added Forex/Metals: {', '.join(forex_symbols)}")
         
+        # Activate TELEGRAM SIGNALS if configured
+        if self.config.get('telegram_enabled') and self.config.get('telegram_bot_token'):
+            print("\n📱 ACTIVATING TELEGRAM SIGNAL MASTER...")
+            try:
+                # Load Telegram config if exists
+                telegram_config_path = Path("telegram_config.json")
+                if telegram_config_path.exists():
+                    with open(telegram_config_path, 'r') as f:
+                        tg_config = json.load(f)
+                        if tg_config.get('telegram', {}).get('bot_token'):
+                            self.config['telegram_bot_token'] = tg_config['telegram']['bot_token']
+                            self.config['telegram_channel'] = tg_config['telegram']['channel_id']
+                            self.config['telegram_vip_channel'] = tg_config['telegram'].get('vip_channel_id')
+                
+                # Integrate Telegram
+                if self.config['telegram_bot_token'] and self.config['telegram_channel']:
+                    self.pipeline = await integrate_telegram_signals(
+                        self.pipeline,
+                        self.config['telegram_bot_token'],
+                        self.config['telegram_channel']
+                    )
+                    print("✅ TELEGRAM SIGNALS ACTIVATED - Sending beautiful signals with auto-trade buttons!")
+                else:
+                    print("⚠️ Telegram bot token or channel not configured")
+            except Exception as e:
+                print(f"⚠️ Telegram integration error: {e}")
+        
         # Run pipeline
         await self.pipeline.run_forever()
     
@@ -281,6 +313,33 @@ class UltraLauncher:
             # Add to trading symbols
             self.config['symbols'].extend(forex_symbols)
             print(f"   Added Forex/Metals: {', '.join(forex_symbols)}")
+        
+        # Activate TELEGRAM SIGNALS if configured
+        if self.config.get('telegram_enabled') and self.config.get('telegram_bot_token'):
+            print("\n📱 ACTIVATING TELEGRAM SIGNAL MASTER...")
+            try:
+                # Load Telegram config if exists
+                telegram_config_path = Path("telegram_config.json")
+                if telegram_config_path.exists():
+                    with open(telegram_config_path, 'r') as f:
+                        tg_config = json.load(f)
+                        if tg_config.get('telegram', {}).get('bot_token'):
+                            self.config['telegram_bot_token'] = tg_config['telegram']['bot_token']
+                            self.config['telegram_channel'] = tg_config['telegram']['channel_id']
+                            self.config['telegram_vip_channel'] = tg_config['telegram'].get('vip_channel_id')
+                
+                # Integrate Telegram
+                if self.config['telegram_bot_token'] and self.config['telegram_channel']:
+                    self.pipeline = await integrate_telegram_signals(
+                        self.pipeline,
+                        self.config['telegram_bot_token'],
+                        self.config['telegram_channel']
+                    )
+                    print("✅ TELEGRAM SIGNALS ACTIVATED - Sending beautiful signals with auto-trade buttons!")
+                else:
+                    print("⚠️ Telegram bot token or channel not configured")
+            except Exception as e:
+                print(f"⚠️ Telegram integration error: {e}")
         
         # Run pipeline
         await self.pipeline.run_forever()
@@ -474,6 +533,25 @@ def main():
         help='Trade commodities (Oil, Natural Gas)'
     )
     
+    parser.add_argument(
+        '--telegram',
+        action='store_true',
+        default=False,
+        help='Enable Telegram signal broadcasting'
+    )
+    
+    parser.add_argument(
+        '--telegram-token',
+        type=str,
+        help='Telegram bot token'
+    )
+    
+    parser.add_argument(
+        '--telegram-channel',
+        type=str,
+        help='Telegram channel ID (e.g., @your_channel)'
+    )
+    
     args = parser.parse_args()
     
     # Create launcher
@@ -493,6 +571,11 @@ def main():
     launcher.config['trade_metals'] = args.metals
     launcher.config['trade_forex'] = args.forex
     launcher.config['trade_commodities'] = args.commodities
+    launcher.config['telegram_enabled'] = args.telegram
+    if args.telegram_token:
+        launcher.config['telegram_bot_token'] = args.telegram_token
+    if args.telegram_channel:
+        launcher.config['telegram_channel'] = args.telegram_channel
     
     # Run async main
     async def async_main():
