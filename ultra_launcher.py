@@ -25,6 +25,7 @@ from ultra_ml_pipeline import get_ultra_pipeline, UltraMLPipeline
 from tools.ultra_trainer import train_ultra_model, get_ultra_prediction
 from tools.market_data import get_market_data_manager
 from ultra_god_mode import integrate_god_mode, UltraGodMode
+from ultra_moon_spotter import integrate_moon_spotter, UltraMoonSystem
 
 # ASCII Art Banner
 BANNER = """
@@ -78,6 +79,9 @@ class UltraLauncher:
             'swarm_agents': 100,
             'fractal_analysis': True,
             'smart_money_tracking': True,
+            'moon_spotter_enabled': True,  # MICRO MOON SPOTTER
+            'auto_snipe_enabled': True,
+            'max_snipe_amount': 100,  # USD per gem
             'model_update_interval': 86400,  # Daily
             'rebalance_interval': 3600,  # Hourly
             'initial_capital': 10000,
@@ -196,6 +200,12 @@ class UltraLauncher:
             self.pipeline = await integrate_god_mode(self.pipeline)
             print("✅ GOD MODE ACTIVATED - Quantum + Swarm + Fractals + Smart Money")
         
+        # Activate MOON SPOTTER if enabled
+        if self.config.get('moon_spotter_enabled', True):
+            print("\n🌙 ACTIVATING MOON SPOTTER...")
+            self.pipeline = await integrate_moon_spotter(self.pipeline)
+            print("✅ MOON SPOTTER ACTIVATED - Hunting 1000x micro caps!")
+        
         # Run pipeline
         await self.pipeline.run_forever()
     
@@ -222,6 +232,12 @@ class UltraLauncher:
             print("\n⚡ ACTIVATING ULTRA GOD MODE...")
             self.pipeline = await integrate_god_mode(self.pipeline)
             print("✅ GOD MODE ACTIVATED - Quantum + Swarm + Fractals + Smart Money")
+        
+        # Activate MOON SPOTTER if enabled
+        if self.config.get('moon_spotter_enabled', True):
+            print("\n🌙 ACTIVATING MOON SPOTTER...")
+            self.pipeline = await integrate_moon_spotter(self.pipeline)
+            print("✅ MOON SPOTTER ACTIVATED - Hunting 1000x micro caps!")
         
         # Run pipeline
         await self.pipeline.run_forever()
@@ -373,6 +389,27 @@ def main():
         help='Number of swarm agents for God Mode (default: 100)'
     )
     
+    parser.add_argument(
+        '--moon-spotter',
+        action='store_true',
+        default=True,
+        help='Enable Moon Spotter for finding micro cap gems'
+    )
+    
+    parser.add_argument(
+        '--auto-snipe',
+        action='store_true',
+        default=False,
+        help='Enable auto-sniping of high-score gems'
+    )
+    
+    parser.add_argument(
+        '--snipe-amount',
+        type=float,
+        default=100,
+        help='USD amount to snipe each gem with (default: $100)'
+    )
+    
     args = parser.parse_args()
     
     # Create launcher
@@ -385,6 +422,9 @@ def main():
     launcher.config['evolution_enabled'] = args.evolution
     launcher.config['god_mode_enabled'] = args.god_mode
     launcher.config['swarm_agents'] = args.swarm_agents
+    launcher.config['moon_spotter_enabled'] = args.moon_spotter
+    launcher.config['auto_snipe_enabled'] = args.auto_snipe
+    launcher.config['max_snipe_amount'] = args.snipe_amount
     
     # Run async main
     async def async_main():
