@@ -26,6 +26,7 @@ from tools.ultra_trainer import train_ultra_model, get_ultra_prediction
 from tools.market_data import get_market_data_manager
 from ultra_god_mode import integrate_god_mode, UltraGodMode
 from ultra_moon_spotter import integrate_moon_spotter, UltraMoonSystem
+from ultra_forex_master import integrate_forex_master, UltraForexMaster
 
 # ASCII Art Banner
 BANNER = """
@@ -82,6 +83,10 @@ class UltraLauncher:
             'moon_spotter_enabled': True,  # MICRO MOON SPOTTER
             'auto_snipe_enabled': True,
             'max_snipe_amount': 100,  # USD per gem
+            'forex_master_enabled': True,  # FOREX & METALS MASTER
+            'trade_forex': True,
+            'trade_metals': True,
+            'trade_commodities': True,
             'model_update_interval': 86400,  # Daily
             'rebalance_interval': 3600,  # Hourly
             'initial_capital': 10000,
@@ -206,6 +211,25 @@ class UltraLauncher:
             self.pipeline = await integrate_moon_spotter(self.pipeline)
             print("✅ MOON SPOTTER ACTIVATED - Hunting 1000x micro caps!")
         
+        # Activate FOREX MASTER if enabled
+        if self.config.get('forex_master_enabled', True):
+            print("\n💱 ACTIVATING FOREX & METALS MASTER...")
+            self.pipeline = await integrate_forex_master(self.pipeline)
+            print("✅ FOREX MASTER ACTIVATED - Trading XAUUSD, Forex pairs, Oil with precision!")
+            
+            # Add forex/metals to symbols if enabled
+            forex_symbols = []
+            if self.config.get('trade_metals', True):
+                forex_symbols.extend(['XAUUSD', 'XAGUSD'])
+            if self.config.get('trade_forex', True):
+                forex_symbols.extend(['EURUSD', 'GBPUSD', 'USDJPY'])
+            if self.config.get('trade_commodities', True):
+                forex_symbols.extend(['USOIL'])
+            
+            # Add to trading symbols
+            self.config['symbols'].extend(forex_symbols)
+            print(f"   Added Forex/Metals: {', '.join(forex_symbols)}")
+        
         # Run pipeline
         await self.pipeline.run_forever()
     
@@ -238,6 +262,25 @@ class UltraLauncher:
             print("\n🌙 ACTIVATING MOON SPOTTER...")
             self.pipeline = await integrate_moon_spotter(self.pipeline)
             print("✅ MOON SPOTTER ACTIVATED - Hunting 1000x micro caps!")
+        
+        # Activate FOREX MASTER if enabled
+        if self.config.get('forex_master_enabled', True):
+            print("\n💱 ACTIVATING FOREX & METALS MASTER...")
+            self.pipeline = await integrate_forex_master(self.pipeline)
+            print("✅ FOREX MASTER ACTIVATED - Trading XAUUSD, Forex pairs, Oil with precision!")
+            
+            # Add forex/metals to symbols if enabled
+            forex_symbols = []
+            if self.config.get('trade_metals', True):
+                forex_symbols.extend(['XAUUSD', 'XAGUSD'])
+            if self.config.get('trade_forex', True):
+                forex_symbols.extend(['EURUSD', 'GBPUSD', 'USDJPY'])
+            if self.config.get('trade_commodities', True):
+                forex_symbols.extend(['USOIL'])
+            
+            # Add to trading symbols
+            self.config['symbols'].extend(forex_symbols)
+            print(f"   Added Forex/Metals: {', '.join(forex_symbols)}")
         
         # Run pipeline
         await self.pipeline.run_forever()
@@ -410,6 +453,27 @@ def main():
         help='USD amount to snipe each gem with (default: $100)'
     )
     
+    parser.add_argument(
+        '--forex',
+        action='store_true',
+        default=True,
+        help='Enable Forex & Metals trading (XAUUSD, EURUSD, etc.)'
+    )
+    
+    parser.add_argument(
+        '--metals',
+        action='store_true',
+        default=True,
+        help='Trade precious metals (Gold, Silver)'
+    )
+    
+    parser.add_argument(
+        '--commodities',
+        action='store_true',
+        default=True,
+        help='Trade commodities (Oil, Natural Gas)'
+    )
+    
     args = parser.parse_args()
     
     # Create launcher
@@ -425,6 +489,10 @@ def main():
     launcher.config['moon_spotter_enabled'] = args.moon_spotter
     launcher.config['auto_snipe_enabled'] = args.auto_snipe
     launcher.config['max_snipe_amount'] = args.snipe_amount
+    launcher.config['forex_master_enabled'] = args.forex
+    launcher.config['trade_metals'] = args.metals
+    launcher.config['trade_forex'] = args.forex
+    launcher.config['trade_commodities'] = args.commodities
     
     # Run async main
     async def async_main():
