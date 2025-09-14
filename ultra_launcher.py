@@ -24,6 +24,7 @@ sys.path.append(str(Path(__file__).parent / "tools"))
 from ultra_ml_pipeline import get_ultra_pipeline, UltraMLPipeline
 from tools.ultra_trainer import train_ultra_model, get_ultra_prediction
 from tools.market_data import get_market_data_manager
+from ultra_god_mode import integrate_god_mode, UltraGodMode
 
 # ASCII Art Banner
 BANNER = """
@@ -72,6 +73,11 @@ class UltraLauncher:
             'multi_exchange': False,
             'use_news_sentiment': True,
             'use_onchain_data': True,
+            'god_mode_enabled': True,  # ULTRA GOD MODE
+            'quantum_prediction': True,
+            'swarm_agents': 100,
+            'fractal_analysis': True,
+            'smart_money_tracking': True,
             'model_update_interval': 86400,  # Daily
             'rebalance_interval': 3600,  # Hourly
             'initial_capital': 10000,
@@ -184,6 +190,12 @@ class UltraLauncher:
         # Initialize pipeline
         self.pipeline = get_ultra_pipeline(self.config)
         
+        # Activate GOD MODE if enabled
+        if self.config.get('god_mode_enabled', True):
+            print("\n⚡ ACTIVATING ULTRA GOD MODE...")
+            self.pipeline = await integrate_god_mode(self.pipeline)
+            print("✅ GOD MODE ACTIVATED - Quantum + Swarm + Fractals + Smart Money")
+        
         # Run pipeline
         await self.pipeline.run_forever()
     
@@ -204,6 +216,12 @@ class UltraLauncher:
         
         # Initialize pipeline
         self.pipeline = get_ultra_pipeline(self.config)
+        
+        # Activate GOD MODE if enabled
+        if self.config.get('god_mode_enabled', True):
+            print("\n⚡ ACTIVATING ULTRA GOD MODE...")
+            self.pipeline = await integrate_god_mode(self.pipeline)
+            print("✅ GOD MODE ACTIVATED - Quantum + Swarm + Fractals + Smart Money")
         
         # Run pipeline
         await self.pipeline.run_forever()
@@ -341,6 +359,20 @@ def main():
         help='Enable evolution and adaptation'
     )
     
+    parser.add_argument(
+        '--god-mode',
+        action='store_true',
+        default=True,
+        help='Enable ULTRA GOD MODE (Quantum + Swarm + Fractals + Smart Money)'
+    )
+    
+    parser.add_argument(
+        '--swarm-agents',
+        type=int,
+        default=100,
+        help='Number of swarm agents for God Mode (default: 100)'
+    )
+    
     args = parser.parse_args()
     
     # Create launcher
@@ -351,6 +383,8 @@ def main():
         launcher.config['symbols'] = args.symbols
     launcher.config['risk_per_trade'] = args.risk
     launcher.config['evolution_enabled'] = args.evolution
+    launcher.config['god_mode_enabled'] = args.god_mode
+    launcher.config['swarm_agents'] = args.swarm_agents
     
     # Run async main
     async def async_main():

@@ -39,10 +39,15 @@ MODE=${1:-paper}
 # Check if first run
 if [ ! -f "runtime/models/latest" ]; then
     echo "🎯 First run detected - training initial models..."
-    python3 ultra_launcher.py --mode paper --train --symbols BTC/USDT ETH/USDT
+    echo "⚡ GOD MODE will be activated with:"
+    echo "  • 🔮 Quantum Price Prediction"
+    echo "  • 🧠 100 Neural Swarm Agents"
+    echo "  • 📐 Fractal Chaos Analysis"
+    echo "  • 🐋 Smart Money Tracking"
+    python3 ultra_launcher.py --mode paper --train --god-mode --swarm-agents 100 --symbols BTC/USDT ETH/USDT SOL/USDT
 else
-    echo "🚀 Starting Ultra Trading System in $MODE mode..."
-    python3 ultra_launcher.py --mode $MODE
+    echo "🚀 Starting Ultra Trading System in $MODE mode with GOD MODE..."
+    python3 ultra_launcher.py --mode $MODE --god-mode --swarm-agents 100
 fi
 
 echo ""
