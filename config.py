@@ -41,7 +41,7 @@ def _env_float(name: str, default: float) -> float:
     try:
         return float(os.getenv(name, str(default)).strip())
     except Exception:
-    return float(default)
+        return float(default)
 
 
 Q_ENABLE_QUANTUM: bool = _env_bool("Q_ENABLE_QUANTUM", False)
