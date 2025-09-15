@@ -174,3 +174,57 @@ def fetch_ohlcv_router(
     # If we reach here no route returned data; return empty list rather than raise so callers can handle gracefully
     print(f"[data_sources] fetch_ohlcv_router no data for {symbol}@{timeframe}; tried={tried}; last_err={last_err}")
     return []
+
+
+# Data source classes for external data integration
+class EconomicCalendarSource:
+    """Source for economic calendar data."""
+    
+    def __init__(self):
+        self.name = "economic_calendar"
+    
+    def fetch_events(self, start_date=None, end_date=None):
+        """Fetch economic calendar events."""
+        return []
+
+
+class FundingRateSource:
+    """Source for funding rate data."""
+    
+    def __init__(self):
+        self.name = "funding_rate"
+    
+    def fetch_rates(self, symbol=None):
+        """Fetch funding rates."""
+        return []
+
+
+class NewsSentimentSource:
+    """Source for news sentiment data."""
+    
+    def __init__(self):
+        self.name = "news_sentiment"
+    
+    def fetch_sentiment(self, symbol=None, limit=10):
+        """Fetch news sentiment data."""
+        return []
+
+
+class OnchainMetricSource:
+    """Source for on-chain metrics data."""
+    
+    def __init__(self):
+        self.name = "onchain_metrics"
+    
+    def fetch_metrics(self, symbol=None):
+        """Fetch on-chain metrics."""
+        return []
+
+
+def merge_externals(*sources):
+    """Merge data from multiple external sources."""
+    merged = []
+    for source in sources:
+        if hasattr(source, 'data'):
+            merged.extend(source.data)
+    return merged
