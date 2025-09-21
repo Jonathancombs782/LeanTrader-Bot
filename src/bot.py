@@ -95,12 +95,12 @@ class TradingBot:
         """Initialize exchange connections"""
         logger.info("🔌 Initializing exchange connections...")
         
-        # Binance
-        if os.getenv('BINANCE_API_KEY') and os.getenv('BINANCE_SECRET_KEY'):
-            self.exchanges['binance'] = ccxt.binance({
-                'apiKey': os.getenv('BINANCE_API_KEY'),
-                'secret': os.getenv('BINANCE_SECRET_KEY'),
-                'sandbox': os.getenv('BINANCE_SANDBOX', 'false').lower() == 'true',
+        # Bybit
+        if os.getenv('BYBIT_API_KEY') and os.getenv('BYBIT_SECRET_KEY'):
+            self.exchanges['bybit'] = ccxt.bybit({
+                'apiKey': os.getenv('BYBIT_API_KEY'),
+                'secret': os.getenv('BYBIT_SECRET_KEY'),
+                'sandbox': os.getenv('BYBIT_SANDBOX', 'false').lower() == 'true',
                 'enableRateLimit': True,
             })
             
@@ -114,9 +114,9 @@ class TradingBot:
                 'enableRateLimit': True,
             })
             
-        # Set active exchange (prefer Binance)
-        if 'binance' in self.exchanges:
-            self.active_exchange = self.exchanges['binance']
+        # Set active exchange (prefer Bybit)
+        if 'bybit' in self.exchanges:
+            self.active_exchange = self.exchanges['bybit']
         elif 'coinbase' in self.exchanges:
             self.active_exchange = self.exchanges['coinbase']
         else:

@@ -12,7 +12,7 @@ Advanced ML-powered trading bot with real-time learning, risk management, and co
 - **Ensemble predictions** combining multiple models
 
 ### 📊 Data Collection
-- **Multi-exchange support** (Binance, Coinbase Pro, Yahoo Finance)
+- **Multi-exchange support** (Bybit, Coinbase Pro, Yahoo Finance)
 - **Real-time WebSocket** data feeds
 - **Historical data collection** and storage
 - **Technical indicators** (RSI, MACD, Bollinger Bands, etc.)
@@ -48,30 +48,36 @@ Advanced ML-powered trading bot with real-time learning, risk management, and co
 - 2GB+ RAM
 - 20GB+ SSD storage
 
-### Quick Setup
+### Quick Setup (Automated)
 
+**Option 1: Complete Automated Setup**
+```bash
+# Run the complete setup script (recommended)
+./setup_bybit_bot.sh
+```
+
+**Option 2: Manual Setup**
 1. **Upload the bot to your VPS:**
 ```bash
 # On your local machine
-scp -r /workspace/* user@75.119.149.117:/home/user/trading-bot/
+./upload_to_vps.sh
 ```
 
 2. **SSH into your VPS:**
 ```bash
-ssh user@75.119.149.117
+ssh root@75.119.149.117
 ```
 
 3. **Run the deployment script:**
 ```bash
-cd /home/user/trading-bot
-chmod +x deploy.sh
+cd /home/root/trading-bot
 ./deploy.sh
 ```
 
-4. **Configure your API keys:**
+4. **Configure your Bybit API keys:**
 ```bash
 nano .env
-# Add your exchange API keys and notification settings
+# Add your Bybit API keys and notification settings
 ```
 
 5. **Start the bot:**
@@ -93,9 +99,9 @@ VERSION=1.0.0
 TRADING_ENABLED=true
 
 # Exchange APIs
-BINANCE_API_KEY=your_binance_api_key
-BINANCE_SECRET_KEY=your_binance_secret_key
-BINANCE_SANDBOX=false
+BYBIT_API_KEY=your_bybit_api_key
+BYBIT_SECRET_KEY=your_bybit_secret_key
+BYBIT_SANDBOX=false
 
 COINBASE_API_KEY=your_coinbase_api_key
 COINBASE_SECRET_KEY=your_coinbase_secret_key
@@ -238,7 +244,7 @@ python -c "import ccxt; print('CCXT OK')"
 # Check exchange connections
 python -c "
 import ccxt
-exchange = ccxt.binance()
+exchange = ccxt.bybit()
 print(exchange.fetch_ticker('BTC/USDT'))
 "
 ```

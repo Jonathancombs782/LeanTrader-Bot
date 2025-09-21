@@ -104,22 +104,22 @@ class DataCollector:
         """Initialize exchange connections"""
         logger.info("🔌 Initializing exchange connections...")
         
-        # Binance
+        # Bybit
         try:
-            self.exchanges['binance'] = ccxt.binance({
-                'apiKey': os.getenv('BINANCE_API_KEY', ''),
-                'secret': os.getenv('BINANCE_SECRET_KEY', ''),
-                'sandbox': os.getenv('BINANCE_SANDBOX', 'false').lower() == 'true',
+            self.exchanges['bybit'] = ccxt.bybit({
+                'apiKey': os.getenv('BYBIT_API_KEY', ''),
+                'secret': os.getenv('BYBIT_SECRET_KEY', ''),
+                'sandbox': os.getenv('BYBIT_SANDBOX', 'false').lower() == 'true',
                 'enableRateLimit': True,
                 'rateLimit': 1000
             })
             
             # Test connection
-            await self.exchanges['binance'].load_markets()
-            logger.info("✅ Binance connection established")
+            await self.exchanges['bybit'].load_markets()
+            logger.info("✅ Bybit connection established")
             
         except Exception as e:
-            logger.warning(f"⚠️ Binance connection failed: {e}")
+            logger.warning(f"⚠️ Bybit connection failed: {e}")
             
         # Coinbase Pro
         try:
@@ -138,6 +138,14 @@ class DataCollector:
             
         except Exception as e:
             logger.warning(f"⚠️ Coinbase Pro connection failed: {e}")
+            
+        # Set active exchange (prefer Bybit)
+        if 'bybit' in self.exchanges:
+            self.active_exchange = self.exchanges['bybit']
+        elif 'coinbase' in self.exchanges:
+            self.active_exchange = self.exchanges['coinbase']
+        else:
+            logger.warning("⚠️ No exchange configured - running in simulation mode")
             
         # Yahoo Finance (fallback)
         logger.info("✅ Yahoo Finance available as fallback")
@@ -172,10 +180,10 @@ class DataCollector:
         """Fetch historical data from exchanges"""
         for exchange_name, exchange in self.exchanges.items():
             try:
-                # Convert symbol format if needed
-                exchange_symbol = symbol
-                if exchange_name == 'binance' and '/' in symbol:
-                    exchange_symbol = symbol.replace('/', '')
+            # Convert symbol format if needed
+            exchange_symbol = symbol
+            if exchange_name == 'bybit' and '/' in symbol:
+                exchange_symbol = symbol.replace('/', '')
                     
                 # Fetch OHLCV data
                 ohlcv = await exchange.fetch_ohlcv(
@@ -315,20 +323,19 @@ class DataCollector:
     async def _initialize_websockets(self):
         """Initialize WebSocket connections for real-time data"""
         try:
-            # Binance WebSocket
-            if 'binance' in self.exchanges:
-                await self._connect_binance_websocket()
+            # Bybit WebSocket
+            if 'bybit' in self.exchanges:
+                await self._connect_bybit_websocket()
                 
         except Exception as e:
             logger.error(f"Error initializing websockets: {e}")
             
-    async def _connect_binance_websocket(self):
-        """Connect to Binance WebSocket"""
+    async def _connect_bybit_websocket(self):
+        """Connect to Bybit WebSocket"""
         try:
-            # Create WebSocket URL for multiple symbols
-            symbols = [symbol.replace('/', '').lower() for symbol in self.config['symbols']]
-            streams = [f"{symbol}@ticker" for symbol in symbols]
-            ws_url = f"wss://stream.binance.com:9443/stream?streams={'/'.join(streams)}"
+            # Create WebSocket URL for Bybit
+            # Bybit uses different WebSocket endpoints
+            ws_url = "wss://stream.bybit.com/v5/public/spot"
             
             def on_message(ws, message):
                 try:
@@ -362,7 +369,7 @@ class DataCollector:
                 logger.warning("WebSocket connection closed")
                 
             def on_open(ws):
-                logger.info("✅ Binance WebSocket connected")
+                logger.info("✅ Bybit WebSocket connected")
                 
             # Create WebSocket connection
             ws = websocket.WebSocketApp(
@@ -373,13 +380,13 @@ class DataCollector:
                 on_open=on_open
             )
             
-            self.websocket_connections['binance'] = ws
+            self.websocket_connections['bybit'] = ws
             
             # Start WebSocket in background
             asyncio.create_task(self._run_websocket(ws))
             
         except Exception as e:
-            logger.error(f"Error connecting to Binance WebSocket: {e}")
+            logger.error(f"Error connecting to Bybit WebSocket: {e}")
             
     async def _run_websocket(self, ws):
         """Run WebSocket connection"""
