@@ -65,9 +65,9 @@ DATABASE_URL=sqlite:///data/trading_bot.db
 REDIS_URL=redis://localhost:6379
 
 # Exchange APIs (Add your keys here)
-BYBIT_API_KEY=your_bybit_api_key
-BYBIT_SECRET_KEY=your_bybit_secret_key
-BYBIT_SANDBOX=false
+BYBIT_API_KEY=***REDACTED***
+BYBIT_SECRET_KEY=***REDACTED***
+BYBIT_SANDBOX=true
 COINBASE_API_KEY=your_coinbase_api_key
 COINBASE_SECRET_KEY=your_coinbase_secret_key
 
