@@ -1,0 +1,58 @@
+# Complete Learntrader Bot Requirements
+# Professional Multi-Asset Trading System
+
+# Core ML and Data Processing
+numpy==1.24.3
+pandas==2.0.3
+scikit-learn==1.3.0
+tensorflow==2.13.0
+torch==2.0.1
+ta-lib==0.4.26
+yfinance==0.2.18
+
+# Trading APIs and Exchanges
+ccxt==4.0.77
+python-binance==1.0.19
+alpaca-trade-api==3.0.3
+websocket-client==1.6.3
+
+# MetaTrader 5 Integration
+MetaTrader5==5.0.45
+
+# Web Framework and Dashboard
+fastapi==0.103.1
+uvicorn==0.23.2
+streamlit==1.25.0
+plotly==5.15.0
+dash==2.13.0
+
+# Database and Caching
+sqlite3
+sqlalchemy==2.0.19
+redis==4.6.0
+
+# Utilities and Async
+python-dotenv==1.0.0
+schedule==1.2.0
+loguru==0.7.0
+requests==2.31.0
+aiohttp==3.8.5
+concurrent.futures
+
+# Monitoring and Alerts
+telegram-bot==0.0.1
+smtplib
+twilio==8.5.0
+
+# Security
+cryptography==41.0.3
+bcrypt==4.0.1
+
+# Performance and ML
+joblib==1.3.2
+asyncio
+
+# Additional for arbitrage and micro moon detection
+beautifulsoup4==4.12.2
+lxml==4.9.3
+selenium==4.15.0
