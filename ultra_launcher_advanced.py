@@ -26,6 +26,8 @@ from ultra_core import integrate_ultra_scalping_engine, integrate_ultra_arbitrag
 from risk_engine import RiskEngine
 from pattern_memory import PatternMemory
 from brain import Brain
+from ultra_swarm_consciousness import integrate_swarm_consciousness
+from ultra_testnet_trader import integrate_testnet_trader
 
 class UltraLauncherAdvanced:
     """
@@ -59,6 +61,10 @@ class UltraLauncherAdvanced:
         self.arbitrage_engine = None
         self.continuous_trading = None
         self.november_growth = None
+        
+        # Initialize swarm consciousness system
+        self.swarm_consciousness = None
+        self.testnet_trader = None
 
         # System state
         self.is_running = False
@@ -106,8 +112,14 @@ class UltraLauncherAdvanced:
             self.arbitrage_engine = integrate_ultra_arbitrage_engine(self.ultra_core, self.risk_engine)
             self.continuous_trading = integrate_ultra_continuous_trading(self.ultra_core, self.risk_engine)
             self.november_growth = integrate_november_growth_strategy(self.ultra_core, self.risk_engine)
+            
+            # Initialize swarm consciousness system
+            self.swarm_consciousness = integrate_swarm_consciousness(self.ultra_core, self.risk_engine)
+            self.testnet_trader = integrate_testnet_trader(self.ultra_core, self.risk_engine, self.swarm_consciousness)
 
             self.logger.info("✅ All trading engines initialized successfully")
+            self.logger.info("🧠 Swarm Consciousness System activated")
+            self.logger.info("🚀 Testnet Trading System ready")
 
         except Exception as e:
             self.logger.error(f"❌ Error initializing system: {e}")
@@ -138,6 +150,10 @@ class UltraLauncherAdvanced:
             tasks.append(asyncio.create_task(self.arbitrage_engine.start_arbitrage_scanning()))
             tasks.append(asyncio.create_task(self.continuous_trading.start_continuous_trading()))
             tasks.append(asyncio.create_task(self.november_growth.start_november_growth()))
+            
+            # Start swarm consciousness system
+            tasks.append(asyncio.create_task(self.swarm_consciousness.start_swarm_consciousness()))
+            tasks.append(asyncio.create_task(self.testnet_trader.start_testnet_trading()))
 
             # Start system monitoring
             tasks.append(asyncio.create_task(self._monitor_system()))
@@ -324,6 +340,20 @@ class UltraLauncherAdvanced:
                 self.logger.info(f"💰 Current Balance: ${48 + self.total_profit:.2f}")
                 self.logger.info("🎯 Target: $3000-5000 by November")
                 self.logger.info(f"📈 Progress: {self.performance_metrics['target_progress']:.1f}%")
+                
+                # Log swarm consciousness status
+                if self.swarm_consciousness:
+                    swarm_status = self.swarm_consciousness.get_swarm_status()
+                    self.logger.info(f"🧠 Swarm: {swarm_status['active_agents']}/{swarm_status['agent_count']} agents active")
+                    self.logger.info(f"🎯 Market State: {swarm_status['market_state']}")
+                    self.logger.info(f"⚡ Opportunity Score: {swarm_status['opportunity_score']:.2f}")
+                    self.logger.info(f"🚨 Black Swan Events: {swarm_status['black_swan_events']}")
+                
+                # Log testnet trading status
+                if self.testnet_trader:
+                    testnet_status = self.testnet_trader.get_testnet_status()
+                    self.logger.info(f"🚀 Testnet Trades: {testnet_status['active_trades']} active, {testnet_status['total_trades']} total")
+                    self.logger.info(f"📊 Testnet Win Rate: {testnet_status['performance_metrics']['win_rate']:.1%}")
 
                 await asyncio.sleep(3600)  # Log every hour
 
