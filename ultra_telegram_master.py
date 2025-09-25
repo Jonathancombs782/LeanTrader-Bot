@@ -14,8 +14,9 @@ from collections import deque, defaultdict
 import aiohttp
 from telegram import (
     Bot, Update, InlineKeyboardButton, InlineKeyboardMarkup,
-    ParseMode, InputMediaPhoto
+    InputMediaPhoto
 )
+from telegram.constants import ParseMode
 from telegram.ext import (
     Application, CommandHandler, CallbackQueryHandler,
     MessageHandler, filters, ContextTypes
