@@ -1,0 +1,52 @@
+[Unit]
+Description=Ultimate Ultra+ Trading Bot - Hedge Fund Grade
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=trader
+Group=trader
+WorkingDirectory=/opt/leantraderbot
+Environment="PYTHONPATH=/opt/leantraderbot"
+Environment="USE_TESTNET=true"
+Environment="FORCE_LIVE=0"
+Environment="ENABLE_MOON_SPOTTER=true"
+Environment="ENABLE_SCALPER=true"
+Environment="ENABLE_ARBITRAGE=true"
+Environment="ENABLE_FX_TRAINER=true"
+Environment="ENABLE_DL_STACK=false"
+Environment="ENABLE_WEB_CRAWLER=true"
+Environment="HEARTBEAT_INTERVAL=5"
+Environment="SCALPER_INTERVAL=5"
+Environment="MOON_INTERVAL=10"
+Environment="ARBITRAGE_INTERVAL=12"
+
+# Python virtual environment
+ExecStart=/opt/leantraderbot/venv/bin/python /opt/leantraderbot/ultimate_ultra_plus.py
+
+# Restart policy
+Restart=always
+RestartSec=10
+StartLimitInterval=60
+StartLimitBurst=3
+
+# Resource limits
+CPUQuota=500%
+MemoryLimit=10G
+TasksMax=100
+
+# Logging
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=ultra_plus
+
+# Security
+PrivateTmp=true
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/opt/leantraderbot
+
+[Install]
+WantedBy=multi-user.target
