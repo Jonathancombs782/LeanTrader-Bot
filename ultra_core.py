@@ -644,3 +644,45 @@ class UltraCore:
 # - Automated strategy backtesting and self-tuning
 # - Multi-agent collaboration (swarm intelligence)
 # - Real-time anomaly detection and risk alerts
+
+# Integration functions for all ultra modules
+def integrate_god_mode(ultra_core: UltraCore) -> UltraGodMode:
+    """Integrate God Mode with core system"""
+    from ultra_god_mode import UltraGodMode
+    return UltraGodMode(ultra_core)
+
+def integrate_moon_spotter(ultra_core: UltraCore) -> UltraMoonSpotter:
+    """Integrate Moon Spotter with core system"""
+    from ultra_moon_spotter import UltraMoonSpotter
+    return UltraMoonSpotter(ultra_core)
+
+def integrate_forex_master(ultra_core: UltraCore) -> UltraForexMaster:
+    """Integrate Forex Master with core system"""
+    from ultra_forex_master import UltraForexMaster
+    return UltraForexMaster(ultra_core)
+
+def integrate_telegram_master(ultra_core: UltraCore) -> UltraTelegramMaster:
+    """Integrate Telegram Master with core system"""
+    from ultra_telegram_master import UltraTelegramMaster
+    return UltraTelegramMaster(ultra_core)
+
+# New advanced trading engines
+def integrate_ultra_scalping_engine(ultra_core: UltraCore, risk_engine: RiskEngine) -> UltraScalpingEngine:
+    """Integrate Ultra Scalping Engine with core system"""
+    from ultra_scalping_engine import UltraScalpingEngine
+    return UltraScalpingEngine(ultra_core, risk_engine)
+
+def integrate_ultra_arbitrage_engine(ultra_core: UltraCore, risk_engine: RiskEngine) -> UltraArbitrageEngine:
+    """Integrate Ultra Arbitrage Engine with core system"""
+    from ultra_arbitrage_engine import UltraArbitrageEngine
+    return UltraArbitrageEngine(ultra_core, risk_engine)
+
+def integrate_ultra_continuous_trading(ultra_core: UltraCore, risk_engine: RiskEngine) -> UltraContinuousTradingOrchestrator:
+    """Integrate Ultra Continuous Trading Orchestrator with core system"""
+    from ultra_continuous_trading import UltraContinuousTradingOrchestrator
+    return UltraContinuousTradingOrchestrator(ultra_core, risk_engine)
+
+def integrate_november_growth_strategy(ultra_core: UltraCore, risk_engine: RiskEngine) -> NovemberGrowthStrategy:
+    """Integrate November Growth Strategy with core system"""
+    from november_growth_strategy import NovemberGrowthStrategy
+    return NovemberGrowthStrategy(ultra_core, risk_engine)
