@@ -29,6 +29,7 @@ from brain import Brain
 from ultra_swarm_consciousness import integrate_swarm_consciousness
 from ultra_testnet_trader import integrate_testnet_trader
 from ultra_fluid_mechanics import integrate_fluid_mechanics
+from ultra_backtest_engine import integrate_backtest_engine
 
 class UltraLauncherAdvanced:
     """
@@ -69,6 +70,9 @@ class UltraLauncherAdvanced:
         
         # Initialize fluid mechanics system
         self.fluid_mechanics = None
+        
+        # Initialize backtest engine
+        self.backtest_engine = None
 
         # System state
         self.is_running = False
@@ -123,12 +127,17 @@ class UltraLauncherAdvanced:
             
             # Initialize fluid mechanics system
             self.fluid_mechanics = integrate_fluid_mechanics(self.ultra_core, self.risk_engine)
+            
+            # Initialize backtest engine
+            self.backtest_engine = integrate_backtest_engine(self.ultra_core, self.risk_engine)
 
             self.logger.info("✅ All trading engines initialized successfully")
             self.logger.info("🧠 Swarm Consciousness System activated")
             self.logger.info("🚀 Testnet Trading System ready")
             self.logger.info("⚡ Fluid Mechanics Engine activated")
             self.logger.info("🎯 Sentinel Brilliance System ready")
+            self.logger.info("📊 Ultra Backtest Engine activated")
+            self.logger.info("🤖 Autonomous High-Breed Self-Aware Entity ready")
 
         except Exception as e:
             self.logger.error(f"❌ Error initializing system: {e}")
@@ -166,6 +175,9 @@ class UltraLauncherAdvanced:
             
             # Start fluid mechanics system
             tasks.append(asyncio.create_task(self.fluid_mechanics.start_sentinel_brilliance()))
+            
+            # Start backtest engine
+            tasks.append(asyncio.create_task(self._run_backtest_engine()))
 
             # Start system monitoring
             tasks.append(asyncio.create_task(self._monitor_system()))
@@ -219,6 +231,34 @@ class UltraLauncherAdvanced:
             except Exception as e:
                 self.logger.error(f"Error in Telegram Master: {e}")
                 await asyncio.sleep(60)
+    
+    async def _run_backtest_engine(self) -> None:
+        """Run Backtest Engine for continuous learning"""
+        while self.is_running:
+            try:
+                if self.backtest_engine:
+                    # Load historical data if not already loaded
+                    if not self.backtest_engine.historical_data:
+                        await self.backtest_engine.load_historical_data(
+                            ["BTC/USDT", "ETH/USDT"], years_back=5
+                        )
+                    
+                    # Learn from history
+                    learning_results = await self.backtest_engine.learn_from_history()
+                    
+                    # Make predictions
+                    prediction = await self.backtest_engine.predict_future(
+                        "BTC/USDT", "1h", 24
+                    )
+                    
+                    # Log significant learning progress
+                    if learning_results['self_awareness_level'] > 0.8:
+                        self.logger.info(f"🧠 Self-Awareness Level: {learning_results['self_awareness_level']:.2f}")
+                    
+                await asyncio.sleep(3600)  # Run every hour
+            except Exception as e:
+                self.logger.error(f"Error in Backtest Engine: {e}")
+                await asyncio.sleep(3600)
 
     async def _monitor_system(self) -> None:
         """Monitor system health and performance"""
@@ -373,6 +413,13 @@ class UltraLauncherAdvanced:
                     self.logger.info(f"⚡ Fluid Mechanics: Brilliance {fluid_status['brilliance_level']:.2f}, Quality: {fluid_status['analytics_quality']}")
                     self.logger.info(f"🎯 Sentinel Mode: {'SCARY GOOD' if fluid_status['scary_good_mode'] else 'ACTIVE'}, Streak: {fluid_status['unbeatable_streak']}")
                     self.logger.info(f"💫 Effortless Executions: {fluid_status['effortless_executions']}, Accuracy: {fluid_status['sentinel_accuracy']:.1%}")
+                
+                # Log backtest engine status
+                if self.backtest_engine:
+                    backtest_status = self.backtest_engine.get_backtest_status()
+                    self.logger.info(f"📊 Backtest Engine: Self-Awareness {backtest_status['self_awareness_level']:.2f}, Autonomous Confidence: {backtest_status['autonomous_confidence']:.2f}")
+                    self.logger.info(f"🧠 Knowledge Base: {backtest_status['knowledge_base_size']:,} data points, {backtest_status['historical_strategies']} strategies")
+                    self.logger.info(f"🎯 Predictions: {backtest_status['predictions_made']} made, Accuracy: {backtest_status['prediction_accuracy']:.1%}")
 
                 await asyncio.sleep(3600)  # Log every hour
 
