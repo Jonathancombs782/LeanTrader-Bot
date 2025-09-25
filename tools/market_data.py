@@ -332,8 +332,6 @@ persist to CSV under `runtime/data/`. It is intentionally conservative and
 does not perform any live trading.
 """
 
-from __future__ import annotations
-
 import csv
 import time
 from pathlib import Path
