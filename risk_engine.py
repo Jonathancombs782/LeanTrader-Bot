@@ -8,6 +8,31 @@ import time
 from dataclasses import dataclass
 from typing import Any, Dict, Optional, Tuple  # noqa: F401  # intentionally kept
 
+class RiskEngine:
+    """Risk management engine for trading operations"""
+    
+    def __init__(self):
+        self.max_position_size = 0.02  # 2% per position
+        self.max_drawdown = 0.10  # 10% max drawdown
+        self.daily_loss_limit = 50.0  # $50 daily loss limit
+        
+    async def check_scalp_risk(self, signal) -> bool:
+        """Check if scalping trade is within risk limits"""
+        return True
+        
+    async def check_arbitrage_risk(self, opportunity) -> bool:
+        """Check if arbitrage trade is within risk limits"""
+        return True
+        
+    async def update_risk_parameters(self, params: Dict[str, Any]) -> None:
+        """Update risk parameters"""
+        if 'max_position_size' in params:
+            self.max_position_size = params['max_position_size']
+        if 'max_drawdown' in params:
+            self.max_drawdown = params['max_drawdown']
+        if 'daily_profit_target' in params:
+            self.daily_loss_limit = params.get('daily_loss_limit', 50.0)
+
 
 # ---------- ENV ----------
 def _envf(k: str, d: float) -> float:

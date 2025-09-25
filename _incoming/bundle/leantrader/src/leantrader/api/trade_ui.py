@@ -110,28 +110,28 @@ async def confirm_trade(
     # Here: route to your execution layer or webhook
     user = "demo"
 
+    payload = {"user": user, "pair": pair, "side": side, "price": price, "qty": qty, "sl": sl, "tp": tp}
+    exec_res = None
+    if BROKER_MODE == "emu":
+        exec_res = BrokerEmulator().market(pair, side, float(qty), float(price or 0))
+        # For now, just echo JSON (you can forward to brokers from api/app.py)
+        user = "demo"
+    add_order(
+        user,
+        {
+            "time": __import__("datetime").datetime.utcnow().isoformat(timespec="seconds") + "Z",
+            **payload,
+            "status": "filled",
+        },
+    )
+    apply_fill(user, side, float(price), float(qty))
+    bal = get_balance(user)
+    import anyio
 
-payload = {"user": user, "pair": pair, "side": side, "price": price, "qty": qty, "sl": sl, "tp": tp}
-exec_res = None
-if BROKER_MODE == "emu":
-    exec_res = BrokerEmulator().market(pair, side, float(qty), float(price or 0))
-    # For now, just echo JSON (you can forward to brokers from api/app.py)
-    user = "demo"
-add_order(
-    user,
-    {
-        "time": __import__("datetime").datetime.utcnow().isoformat(timespec="seconds") + "Z",
-        **payload,
-        "status": "filled",
-    },
-)
-apply_fill(user, side, float(price), float(qty))
-bal = get_balance(user)
-import anyio
+    try:
+        anyio.from_thread.run(broadcast_order, user, payload)
+        anyio.from_thread.run(broadcast_balance, user, bal)
+    except Exception:
+        pass
 
-try:
-    anyio.from_thread.run(broadcast_order, user, payload)
-    anyio.from_thread.run(broadcast_balance, user, bal)
-except Exception:
-    pass
-return JSONResponse({"ok": True, "submitted": payload, "balance": bal, "exec": exec_res})
+    return JSONResponse({"ok": True, "submitted": payload, "balance": bal, "exec": exec_res})
