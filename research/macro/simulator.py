@@ -1,8 +1,7 @@
 from __future__ import annotations
 
 import math
-from dataclasses import dataclass
-from typing import Dict, List, Mapping, Optional, Sequence, Tuple
+from typing import Dict, List, Mapping, Optional, Sequence, Tuple, Any
 
 
 def _norm_inv(p: float) -> float:

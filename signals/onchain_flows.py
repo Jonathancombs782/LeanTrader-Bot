@@ -3,7 +3,7 @@ from __future__ import annotations
 import logging
 import math
 import statistics
-from typing import Any, Dict, Iterable, List, Mapping, MutableMapping, Optional, Sequence
+from typing import Any, Dict, List, Mapping, Sequence
 
 
 # Metrics: expose a Counter named ONCHAIN_SPIKES with a 'type' label.

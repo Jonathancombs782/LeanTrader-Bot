@@ -1,4 +1,5 @@
-import time, csv
+import time
+import csv
 from traders_core.execution.fills_adapter import record_fill
 from traders_core.services.pnl_daemon import start as start_pnl
 

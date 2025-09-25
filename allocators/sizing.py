@@ -51,7 +51,7 @@ def vol_scaled_weights(
             over = w > cap
             if not np.any(over):
                 break
-            excess = float(np.sum(w[over]) - np.sum(np.minimum(w[over], cap)))
+            float(np.sum(w[over]) - np.sum(np.minimum(w[over], cap)))
             w[over] = cap
             remain = np.sum(w[~over])
             if remain > 0:

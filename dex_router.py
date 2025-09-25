@@ -11,7 +11,7 @@ def _monitor_from_risk_json(path: str, symbol: str, timeframe: str) -> MempoolMo
     from pathlib import Path
 
     tune = get_mempool_tuning(symbol, timeframe)
-    mon = MempoolMonitor(symbol=symbol, timeframe=timeframe, window_ms=tune["window_ms"], drop_bps=tune["drop_bps"]) 
+    mon = MempoolMonitor(symbol=symbol, timeframe=timeframe, window_ms=tune["window_ms"], drop_bps=tune["drop_bps"])
     try:
         data = json.loads(Path(path).read_text(encoding="utf-8"))
         risk = float(data.get("risk", 0.0) or 0.0)

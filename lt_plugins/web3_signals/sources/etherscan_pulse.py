@@ -1,5 +1,6 @@
 from typing import List, Dict, Any
-import time, requests
+import time
+import requests
 TRANSFER_TOPIC = "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef"
 
 def fetch(api_key: str, contracts: List[str], blocks_lookback: int) -> List[Dict[str, Any]]:

@@ -29,7 +29,7 @@ def main() -> int:
     except Exception:
         pass
     tune = get_mempool_tuning(args.symbol, args.timeframe)
-    mon = MempoolMonitor(symbol=args.symbol, timeframe=args.timeframe, window_ms=tune["window_ms"], drop_bps=tune["drop_bps"]) 
+    mon = MempoolMonitor(symbol=args.symbol, timeframe=args.timeframe, window_ms=tune["window_ms"], drop_bps=tune["drop_bps"])
 
     out_path = Path(args.write_json).resolve()
     out_path.parent.mkdir(parents=True, exist_ok=True)

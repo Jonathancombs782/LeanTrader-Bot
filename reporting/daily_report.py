@@ -4,8 +4,7 @@ import base64
 import io
 import json
 import os
-from dataclasses import dataclass
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 from pathlib import Path
 
 

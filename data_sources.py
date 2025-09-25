@@ -179,10 +179,10 @@ def fetch_ohlcv_router(
 # Data source classes for external data integration
 class EconomicCalendarSource:
     """Source for economic calendar data."""
-    
+
     def __init__(self):
         self.name = "economic_calendar"
-    
+
     def fetch_events(self, start_date=None, end_date=None):
         """Fetch economic calendar events."""
         return []
@@ -190,10 +190,10 @@ class EconomicCalendarSource:
 
 class FundingRateSource:
     """Source for funding rate data."""
-    
+
     def __init__(self):
         self.name = "funding_rate"
-    
+
     def fetch_rates(self, symbol=None):
         """Fetch funding rates."""
         return []
@@ -201,10 +201,10 @@ class FundingRateSource:
 
 class NewsSentimentSource:
     """Source for news sentiment data."""
-    
+
     def __init__(self):
         self.name = "news_sentiment"
-    
+
     def fetch_sentiment(self, symbol=None, limit=10):
         """Fetch news sentiment data."""
         return []
@@ -212,10 +212,10 @@ class NewsSentimentSource:
 
 class OnchainMetricSource:
     """Source for on-chain metrics data."""
-    
+
     def __init__(self):
         self.name = "onchain_metrics"
-    
+
     def fetch_metrics(self, symbol=None):
         """Fetch on-chain metrics."""
         return []

@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 import os
 import sys
-from typing import Any, Dict, List
+from typing import Any, Dict
 
 from reporting.daily_report import build_report_payload, render_html, save_pdf
 
@@ -53,8 +53,8 @@ def main():
         )
         # Optional: compute attribution if summary provides series
         try:
-            pnl_series = summary.get("pnl_series")
-            components = summary.get("components")
+            pnl_series = js.get("pnl_series")
+            components = js.get("components")
             if pnl_series and components and isinstance(components, dict):
                 from analytics.attribution import write_daily_attribution  # type: ignore
 

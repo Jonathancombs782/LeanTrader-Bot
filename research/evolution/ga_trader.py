@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import json
 import math
 from dataclasses import dataclass, asdict
 from typing import Dict, List, Tuple
@@ -73,7 +72,7 @@ def _max_drawdown(equity: np.ndarray) -> float:
 
 
 def evaluate(g: StrategyGenome, prices_df: pd.DataFrame, seed: int = 123) -> Dict[str, float]:
-    rng = np.random.default_rng(seed)
+    np.random.default_rng(seed)
     # compute mu, Sigma
     mu, Sigma = compute_mu_cov(prices_df, window=int(g.lookback), min_history=int(g.min_history))
     if mu.size == 0 or Sigma.size == 0:

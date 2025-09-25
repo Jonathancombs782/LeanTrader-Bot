@@ -1,6 +1,7 @@
 from decimal import Decimal
 from typing import List, Dict, Any
-import time, requests
+import time
+import requests
 
 def fetch(chains: list[str], min_liq: Decimal, min_vol5m: Decimal, min_chg5m: Decimal) -> List[Dict[str, Any]]:
     signals = []

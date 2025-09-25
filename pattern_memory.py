@@ -14,23 +14,23 @@ import pandas as pd
 
 class PatternMemory:
     """Pattern memory system for storing and retrieving trading patterns"""
-    
+
     def __init__(self):
         self.patterns = {}
         self.scores = {}
-        
+
     def store_pattern(self, pattern_id: str, pattern_data: Dict[str, Any]) -> None:
         """Store a trading pattern"""
         self.patterns[pattern_id] = pattern_data
-        
+
     def get_pattern(self, pattern_id: str) -> Optional[Dict[str, Any]]:
         """Retrieve a trading pattern"""
         return self.patterns.get(pattern_id)
-        
+
     def update_score(self, pattern_id: str, score: float) -> None:
         """Update pattern score"""
         self.scores[pattern_id] = score
-        
+
     def get_score(self, pattern_id: str) -> float:
         """Get pattern score"""
         return self.scores.get(pattern_id, 0.0)

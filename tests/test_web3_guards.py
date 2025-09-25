@@ -30,5 +30,5 @@ def test_token_safety_flags_block():
     }
     res = token_safety_checks(meta)
     assert res["ok"] is False
-    assert any("flag:owner_can_mint" in r or "liquidity_usd_lt_min" in r for r in res["reasons"])  
+    assert any("flag:owner_can_mint" in r or "liquidity_usd_lt_min" in r for r in res["reasons"])
 

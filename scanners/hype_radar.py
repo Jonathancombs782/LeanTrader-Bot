@@ -2,13 +2,12 @@ from __future__ import annotations
 
 import argparse
 import json
-import math
 import os
 import statistics
 import time
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Dict, Iterable, List, Mapping, Optional, Sequence, Tuple
+from typing import Any, Dict, List, Mapping, Optional, Sequence
 
 
 # ---- Metrics ---------------------------------------------------------------
@@ -169,7 +168,7 @@ def hype_score(
     # Compose community by summing discord+telegram
     community: Dict[str, Dict[str, float]] = {a: {"value": 0.0, "ts": 0.0} for a in assets}
     for a in assets:
-        v1 = tw.get(a, {"value": 0.0, "ts": 0.0})
+        tw.get(a, {"value": 0.0, "ts": 0.0})
         v2 = dc.get(a, {"value": 0.0, "ts": 0.0})
         v3 = tg.get(a, {"value": 0.0, "ts": 0.0})
         community[a] = {"value": float(v2.get("value", 0.0)) + float(v3.get("value", 0.0)), "ts": max(float(v2.get("ts", 0.0)), float(v3.get("ts", 0.0)))}
