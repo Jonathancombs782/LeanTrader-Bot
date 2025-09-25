@@ -1,0 +1,49 @@
+#!/bin/bash
+
+echo "🚀 DIRECT DEPLOYMENT - NO PLACEHOLDERS!"
+
+# Commands to run on your VPS
+cat > direct_deployment_commands.txt << 'DIRECT_DEPLOY'
+# 1. Stop current bot
+systemctl stop real_trading_bot.service
+
+# 2. Navigate to bot directory
+cd /opt/leantraderbot
+
+# 3. Install dependencies
+echo "🚀 Installing AI/ML dependencies..."
+source venv/bin/activate
+pip install scikit-learn pandas numpy scipy
+
+# 4. Create FULL ULTRA ARSENAL BOT - DIRECT COPY
+cp /workspace/FIXED_FULL_ULTRA_ARSENAL.py REAL_TRADING_BOT.py
+
+# 5. Make executable
+chmod +x REAL_TRADING_BOT.py
+
+# 6. Test the bot
+echo "🧪 Testing FULL ULTRA ARSENAL bot..."
+source venv/bin/activate
+python3 -c "
+from REAL_TRADING_BOT import FULL_ULTRA_ARSENAL_BOT
+bot = FULL_ULTRA_ARSENAL_BOT()
+print('🚀 FULL ULTRA ARSENAL bot initialized successfully!')
+print(f'💰 Total Capital: \${bot.total_capital:.2f}')
+print(f'📊 Exchanges: {len(bot.exchanges)}')
+print(f'🎯 Pairs: {len(bot.all_pairs)}')
+print(f'🧠 AI Models: {len(bot.prediction_models)}')
+"
+
+# 7. Start the bot
+systemctl start real_trading_bot.service
+echo "🚀 FULL ULTRA ARSENAL Bot started!"
+
+# 8. Monitor the bot
+echo "📊 Monitoring FULL ULTRA ARSENAL bot..."
+journalctl -u real_trading_bot.service -f
+DIRECT_DEPLOY
+
+echo "✅ DIRECT DEPLOYMENT COMMANDS CREATED!"
+echo "📋 Copy and run these commands on your VPS:"
+echo ""
+cat direct_deployment_commands.txt
