@@ -3,7 +3,8 @@ from __future__ import annotations
 import os  # noqa: F401  # intentionally kept
 
 from dotenv import load_dotenv
-import subprocess, sys  # added for web3 publisher
+import subprocess
+import sys  # added for web3 publisher
 from traders_core.services.web3_bias_daemon import start as start_bias
 from traders_core.services.pnl_daemon import start as start_pnl
 try:

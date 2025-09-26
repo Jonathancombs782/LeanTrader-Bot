@@ -19,7 +19,7 @@ torchvision>=0.11.0
 # Trading & Market Data
 ccxt>=2.5.0
 yfinance>=0.2.0
-pandas-ta>=0.3.0
+pandas-ta>=0.4.67b0
 ta-lib  # Requires system libraries
 
 # Optimization

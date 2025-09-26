@@ -5,7 +5,7 @@ import os
 import time
 from collections import deque
 from pathlib import Path
-from typing import Any, Deque, Dict, Optional, Tuple
+from typing import Any, Deque, Dict, Tuple
 
 _ROOT = Path(os.getenv("STATE_DIR", ".state"))
 _ROOT.mkdir(parents=True, exist_ok=True)

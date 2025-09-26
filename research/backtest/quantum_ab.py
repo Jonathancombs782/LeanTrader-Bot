@@ -87,7 +87,7 @@ def run_ab_backtest(prices_df: pd.DataFrame, budget: int = 10, window: int = 252
     if prices_df is None or prices_df.empty:
         raise ValueError("prices_df is empty")
 
-    rng = np.random.default_rng(int(seed))
+    np.random.default_rng(int(seed))
     symbols = [str(c) for c in prices_df.columns]
     n_days = prices_df.shape[0]
     start = int(window)

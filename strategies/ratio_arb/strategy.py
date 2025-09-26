@@ -26,12 +26,14 @@ class SolBtcRatioArb:
         self._maybe_trade()
 
     def _maybe_trade(self):
-        if self.sol is None or self.btc is None: return
+        if self.sol is None or self.btc is None:
+            return
         ratio = (self.sol / self.btc).quantize(Decimal("0.00000001"))
         self.metrics.gauge("ratio.sol_btc", float(ratio))
 
         now = time.time()*1000
-        if now < self.cooldown_until: return
+        if now < self.cooldown_until:
+            return
 
         buy_trig  = Decimal(str(self.cfg["buy_trig"]))
         sell_trig = Decimal(str(self.cfg["sell_trig"]))

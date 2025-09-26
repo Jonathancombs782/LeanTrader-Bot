@@ -265,19 +265,7 @@ def decide_and_execute_crypto(
                     try:
                         market_sell(exchange, symbol, amount, CRYPTO_TESTNET)
                     except Exception:
-try:
-    from risk.flash_crash import FlashCrashGuard, FlashCrashParams, emergency_hedge
-    from observability.metrics import FLASH_HEDGE_COUNT
-    from ops.slack_notify import warn as slack_warn
-    _FLASH_GUARD = FlashCrashGuard(FlashCrashParams())
-except Exception:
-    _FLASH_GUARD = None
-    FLASH_HEDGE_COUNT = None
-    def slack_warn(title: str, reasons=None):
-        return False
                         pass
-                    return True
-                return False
 
             # quick loop (non-threaded): check once; orchestration calls this function every signal pass
             _live_close()
@@ -332,3 +320,14 @@ except Exception:
         METRICS.orders_total.labels(venue="crypto", symbol=symbol, status="live_error").inc()
         record_order_reject(1)
         return {"status": "live_error", "error": str(e), "regime": regime_now}
+
+try:
+    from risk.flash_crash import FlashCrashGuard, FlashCrashParams, emergency_hedge
+    from observability.metrics import FLASH_HEDGE_COUNT
+    from ops.slack_notify import warn as slack_warn
+    _FLASH_GUARD = FlashCrashGuard(FlashCrashParams())
+except Exception:
+    _FLASH_GUARD = None
+    FLASH_HEDGE_COUNT = None
+    def slack_warn(title: str, reasons=None):
+        return False

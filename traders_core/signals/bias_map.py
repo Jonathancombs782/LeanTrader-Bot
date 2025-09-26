@@ -13,7 +13,8 @@ class BiasMap:
         symbol = symbol.upper()
         now = int(time.time()*1000)
         b = self._map.get(symbol)
-        if not b: return 0.0
+        if not b:
+            return 0.0
         val, exp = b
         if now >= exp:
             self._map.pop(symbol, None)

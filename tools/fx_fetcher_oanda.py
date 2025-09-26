@@ -15,7 +15,7 @@ from __future__ import annotations
 import csv
 import os
 from pathlib import Path
-from typing import List
+from typing import List, Dict, Any
 
 import oandapyV20
 from oandapyV20.endpoints.instruments import InstrumentsCandles
@@ -52,7 +52,10 @@ def fetch_fx(symbol: str, tf: str, count: int = 400) -> List[List[float]]:
     for c in resp.get("candles", []):
         try:
             ts = c.get("time")
-            o = c["mid"]["o"]; h = c["mid"]["h"]; l = c["mid"]["l"]; cl = c["mid"]["c"]
+            o = c["mid"]["o"]
+            h = c["mid"]["h"]
+            l = c["mid"]["l"]
+            cl = c["mid"]["c"]
             v = c.get("volume", 0)
             # convert RFC3339 to ms
             import datetime as _dt

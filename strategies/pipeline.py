@@ -195,8 +195,8 @@ def daily_rebalance_job(market_df: pd.DataFrame, latest_regime: str | None = Non
         return arr / total if total > 0 else arr
 
     # selections lists
-    selected_q = [sym for sym, sel in zip(symbols, x) if int(sel) == 1]
-    selected_c = [sym for sym, sel in zip(symbols, x_classical) if int(sel) == 1]
+    [sym for sym, sel in zip(symbols, x) if int(sel) == 1]
+    [sym for sym, sel in zip(symbols, x_classical) if int(sel) == 1]
 
     # Volatility-scaled weights based on Sigma, then apply sector caps (if available)
     try:
@@ -227,7 +227,8 @@ def daily_rebalance_job(market_df: pd.DataFrame, latest_regime: str | None = Non
     lam = regime_weight_lambda(latest_regime)
     # Load optional evolved lambda bias from storage/strategies.json
     try:
-        import json, os
+        import json
+        import os
         with open(os.path.join("storage", "strategies.json"), "r", encoding="utf-8") as f:
             best = json.load(f).get("best", {})
             lb = float(best.get("lambda_bias", 1.0))

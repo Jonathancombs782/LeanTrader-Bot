@@ -6,10 +6,12 @@ bias_map = BiasMap()
 _thr = None
 
 def _on_msg(msg: dict):
-    if msg.get("type") != "web3.trending": return
+    if msg.get("type") != "web3.trending":
+        return
     sym = (msg.get("symbol") or "").upper()
     score = int(msg.get("score", 0))
-    if not sym: return
+    if not sym:
+        return
     bias_map.set(sym, min(1.0, score/100.0), ttl_ms=20*60*1000)
 
 def start():

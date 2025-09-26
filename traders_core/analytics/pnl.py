@@ -1,4 +1,6 @@
-import csv, time, threading
+import csv
+import time
+import threading
 from pathlib import Path
 from typing import Dict, Tuple
 
@@ -32,7 +34,8 @@ class PnLEngine:
             # BUY: new_avg = (q*a + qty*price + fee) / (q+qty)
             new_q = q + qty
             if new_q <= 1e-12:
-                a = 0.0; q = 0.0
+                a = 0.0
+                q = 0.0
             else:
                 a = (q*a + qty*price + fee) / new_q
                 q = new_q
@@ -42,7 +45,8 @@ class PnLEngine:
             realized += (price - a)*close_qty - fee
             q = q - qty
             if q <= 1e-12:
-                q = 0.0; a = 0.0  # flat resets avg
+                q = 0.0
+                a = 0.0  # flat resets avg
 
         self.pos[sym] = q
         self.avg[sym] = a
@@ -78,7 +82,8 @@ def tail_fills_and_update_pnl(stop_event, interval_sec=1.0):
             with open(FILLS_PATH, "r", encoding="utf-8") as f:
                 rows = list(csv.DictReader(f))
         except FileNotFoundError:
-            time.sleep(interval_sec); continue
+            time.sleep(interval_sec)
+            continue
 
         # Fast-forward engine to already processed fills
         if processed == 0:

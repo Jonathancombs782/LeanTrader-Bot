@@ -1,5 +1,6 @@
 from typing import List, Dict, Any
-import time, requests
+import time
+import requests
 
 def fetch(networks: list[str], min_score: int) -> List[Dict[str, Any]]:
     signals = []

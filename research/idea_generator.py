@@ -2,11 +2,9 @@ from __future__ import annotations
 
 import json
 import math
-import os
-import time
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Dict, List, Mapping, Optional, Sequence, Tuple
+from typing import Any, Dict, List, Mapping, Optional, Sequence
 
 
 @dataclass
@@ -124,7 +122,7 @@ def render_markdown_cards(cands: List[Candidate]) -> List[str]:
             f"- Evidence: {'; '.join(c.rationale)}",
             f"- Score: {c.score:.3f}  Risk: {c.expected_risk:.2f}",
             f"- Backtest: Sharpe={bt.get('sharpe',0):.2f}  Hitrate={bt.get('hitrate',0):.2%}  Days={bt.get('days',0)}",
-            f"- Required Changes: Update params or rules accordingly; run A/B in paper for a week.",
+            "- Required Changes: Update params or rules accordingly; run A/B in paper for a week.",
         ]
         cards.append("\n".join(lines))
     return cards

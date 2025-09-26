@@ -89,7 +89,7 @@ class _KV:
 
 
 try:
-    from prometheus_client import Gauge, CollectorRegistry, generate_latest  # type: ignore
+    from prometheus_client import Gauge, generate_latest  # type: ignore
 
     SUP_LEADER = Gauge("supervisor_leader", "1 if this node is leader", ["node", "namespace"])  # noqa: N816
 except Exception:  # pragma: no cover
