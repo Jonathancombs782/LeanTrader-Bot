@@ -109,17 +109,29 @@ class ExchangeManager:
                 if config.passphrase:
                     exchange_params['passphrase'] = config.passphrase
                 
-                if config.sandbox:
-                    exchange_params['sandbox'] = True
+                # Note: sandbox/testnet are set after exchange creation
                 
-                if config.testnet:
-                    exchange_params['testnet'] = True
+                exchange = exchange_class(exchange_params)
                 
-                self.exchanges[exchange_name] = exchange_class(exchange_params)
+                # Set sandbox/testnet mode after creation
+                if config.sandbox and hasattr(exchange, 'set_sandbox_mode'):
+                    exchange.set_sandbox_mode(True)
+                elif config.testnet and hasattr(exchange, 'set_testnet_mode'):
+                    exchange.set_testnet_mode(True)
+                
+                self.exchanges[exchange_name] = exchange
                 
                 # Initialize asynchronous exchange
                 async_exchange_class = getattr(ccxt_async, exchange_name)
-                self.async_exchanges[exchange_name] = async_exchange_class(exchange_params)
+                async_exchange = async_exchange_class(exchange_params)
+                
+                # Set sandbox/testnet mode for async exchange too
+                if config.sandbox and hasattr(async_exchange, 'set_sandbox_mode'):
+                    async_exchange.set_sandbox_mode(True)
+                elif config.testnet and hasattr(async_exchange, 'set_testnet_mode'):
+                    async_exchange.set_testnet_mode(True)
+                
+                self.async_exchanges[exchange_name] = async_exchange
                 
                 self.logger.info(f"Initialized {exchange_name} exchange")
                 
@@ -217,16 +229,32 @@ class ExchangeManager:
         
         return {}
     
-    async def create_order(self, symbol: str, order_type: str, side: str, amount: float, price: Optional[float] = None, exchange_name: str = 'binance') -> Dict[str, Any]:
-        """Create an order (paper trading only)"""
+    def _normalize_symbol(self, symbol: str, exchange_name: str) -> str:
+        """Normalize symbol format for specific exchange"""
+        base, sep, quote = symbol.replace("-", "/").upper().partition("/")
+        if not sep:
+            return symbol.upper()
+        
+        # Normalize USD to USDT for crypto exchanges
+        if exchange_name in ("bybit", "gateio", "binance", "binanceus", "okx", "kucoin"):
+            if quote == "USD":
+                return f"{base}/USDT"
+        return f"{base}/{quote}"
+
+    async def create_order(self, symbol: str, order_type: str, side: str, amount: float, price: Optional[float] = None, exchange_name: str = 'binance', live: bool = False) -> Dict[str, Any]:
+        """Create an order - paper trading by default, live if enabled"""
         try:
-            if exchange_name in self.async_exchanges:
-                exchange = self.async_exchanges[exchange_name]
-                
-                # For paper trading, we'll simulate the order
+            if exchange_name not in self.async_exchanges:
+                return {"ok": False, "error": f"Exchange {exchange_name} not available"}
+            
+            exchange = self.async_exchanges[exchange_name]
+            normalized_symbol = self._normalize_symbol(symbol, exchange_name)
+            
+            if not live:
+                # Paper trading simulation
                 order = {
                     'id': f"paper_{int(time.time() * 1000)}",
-                    'symbol': symbol,
+                    'symbol': normalized_symbol,
                     'type': order_type,
                     'side': side,
                     'amount': amount,
@@ -237,15 +265,124 @@ class ExchangeManager:
                     'filled': 0,
                     'remaining': amount,
                     'cost': amount * (price or 0),
-                    'exchange': exchange_name
+                    'exchange': exchange_name,
+                    'simulated': True
                 }
-                
                 self.logger.info(f"Paper order created: {order}")
-                return order
+                return {"ok": True, "order": order}
+            else:
+                # Live trading
+                if not self._has_live_credentials(exchange_name):
+                    return {"ok": False, "error": f"No live credentials for {exchange_name}"}
+                
+                order = await exchange.create_order(normalized_symbol, order_type, side, amount, price)
+                self.logger.info(f"Live order created: {order}")
+                return {"ok": True, "order": order}
+                
         except Exception as e:
             self.logger.error(f"Error creating order: {e}")
+            return {"ok": False, "error": str(e)}
+    
+    def _has_live_credentials(self, exchange_name: str) -> bool:
+        """Check if exchange has live trading credentials"""
+        config = self.configs.get(exchange_name)
+        if not config:
+            return False
+        return bool(config.api_key and config.secret and not config.sandbox and not config.testnet)
+    
+    async def fetch_trades(self, symbol: str, exchange_name: str, limit: int = 100) -> List[Dict[str, Any]]:
+        """Fetch recent trades/fills for a symbol"""
+        try:
+            if exchange_name not in self.async_exchanges:
+                return []
+            
+            exchange = self.async_exchanges[exchange_name]
+            normalized_symbol = self._normalize_symbol(symbol, exchange_name)
+            
+            if not self._has_live_credentials(exchange_name):
+                # Return mock data for paper trading
+                return self._get_mock_trades(normalized_symbol, limit)
+            
+            trades = await exchange.fetch_my_trades(normalized_symbol, limit=limit)
+            return trades
+            
+        except Exception as e:
+            self.logger.error(f"Error fetching trades from {exchange_name}: {e}")
+            return []
+    
+    async def fetch_orders(self, symbol: str, exchange_name: str, limit: int = 100) -> List[Dict[str, Any]]:
+        """Fetch recent orders for a symbol"""
+        try:
+            if exchange_name not in self.async_exchanges:
+                return []
+            
+            exchange = self.async_exchanges[exchange_name]
+            normalized_symbol = self._normalize_symbol(symbol, exchange_name)
+            
+            if not self._has_live_credentials(exchange_name):
+                # Return mock data for paper trading
+                return self._get_mock_orders(normalized_symbol, limit)
+            
+            orders = await exchange.fetch_open_orders(normalized_symbol, limit=limit)
+            return orders
+            
+        except Exception as e:
+            self.logger.error(f"Error fetching orders from {exchange_name}: {e}")
+            return []
+    
+    def _get_mock_trades(self, symbol: str, limit: int) -> List[Dict[str, Any]]:
+        """Generate mock trade data for testing"""
+        import random
+        trades = []
+        base_price = 50000 if 'BTC' in symbol else 3000 if 'ETH' in symbol else 500
         
-        return {}
+        for i in range(min(limit, 10)):
+            price = base_price * (1 + random.uniform(-0.05, 0.05))
+            amount = random.uniform(0.001, 0.1)
+            side = random.choice(['buy', 'sell'])
+            
+            trades.append({
+                'id': f"mock_trade_{int(time.time() * 1000)}_{i}",
+                'symbol': symbol,
+                'side': side,
+                'amount': amount,
+                'price': price,
+                'cost': amount * price,
+                'timestamp': int(time.time() * 1000) - i * 3600000,  # 1 hour apart
+                'datetime': time.strftime('%Y-%m-%d %H:%M:%S'),
+                'fee': {'cost': amount * price * 0.001, 'currency': 'USDT'},
+                'simulated': True
+            })
+        
+        return trades
+    
+    def _get_mock_orders(self, symbol: str, limit: int) -> List[Dict[str, Any]]:
+        """Generate mock order data for testing"""
+        import random
+        orders = []
+        base_price = 50000 if 'BTC' in symbol else 3000 if 'ETH' in symbol else 500
+        
+        for i in range(min(limit, 5)):
+            price = base_price * (1 + random.uniform(-0.05, 0.05))
+            amount = random.uniform(0.001, 0.1)
+            side = random.choice(['buy', 'sell'])
+            status = random.choice(['open', 'closed', 'canceled'])
+            
+            orders.append({
+                'id': f"mock_order_{int(time.time() * 1000)}_{i}",
+                'symbol': symbol,
+                'side': side,
+                'amount': amount,
+                'price': price,
+                'status': status,
+                'timestamp': int(time.time() * 1000) - i * 1800000,  # 30 min apart
+                'datetime': time.strftime('%Y-%m-%d %H:%M:%S'),
+                'filled': amount if status == 'closed' else 0,
+                'remaining': 0 if status == 'closed' else amount,
+                'simulated': True
+            })
+        
+        return orders
     
     def _get_mock_ticker(self, symbol: str) -> Dict[str, Any]:
         """Generate mock ticker data for testing"""
