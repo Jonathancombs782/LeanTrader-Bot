@@ -30,6 +30,7 @@ from ultra_swarm_consciousness import integrate_swarm_consciousness
 from ultra_testnet_trader import integrate_testnet_trader
 from ultra_fluid_mechanics import integrate_fluid_mechanics
 from ultra_backtest_engine import integrate_backtest_engine
+from ultra_multi_platform_scanner import integrate_multi_platform_scanner
 
 class UltraLauncherAdvanced:
     """
@@ -73,6 +74,9 @@ class UltraLauncherAdvanced:
         
         # Initialize backtest engine
         self.backtest_engine = None
+        
+        # Initialize multi-platform scanner
+        self.multi_platform_scanner = None
 
         # System state
         self.is_running = False
@@ -130,6 +134,9 @@ class UltraLauncherAdvanced:
             
             # Initialize backtest engine
             self.backtest_engine = integrate_backtest_engine(self.ultra_core, self.risk_engine)
+            
+            # Initialize multi-platform scanner
+            self.multi_platform_scanner = integrate_multi_platform_scanner(self.ultra_core, self.risk_engine)
 
             self.logger.info("✅ All trading engines initialized successfully")
             self.logger.info("🧠 Swarm Consciousness System activated")
@@ -137,6 +144,7 @@ class UltraLauncherAdvanced:
             self.logger.info("⚡ Fluid Mechanics Engine activated")
             self.logger.info("🎯 Sentinel Brilliance System ready")
             self.logger.info("📊 Ultra Backtest Engine activated")
+            self.logger.info("🔍 Multi-Platform Scanner activated")
             self.logger.info("🤖 Autonomous High-Breed Self-Aware Entity ready")
 
         except Exception as e:
@@ -178,6 +186,9 @@ class UltraLauncherAdvanced:
             
             # Start backtest engine
             tasks.append(asyncio.create_task(self._run_backtest_engine()))
+            
+            # Start multi-platform scanner
+            tasks.append(asyncio.create_task(self._run_multi_platform_scanner()))
 
             # Start system monitoring
             tasks.append(asyncio.create_task(self._monitor_system()))
@@ -259,6 +270,40 @@ class UltraLauncherAdvanced:
             except Exception as e:
                 self.logger.error(f"Error in Backtest Engine: {e}")
                 await asyncio.sleep(3600)
+    
+    async def _run_multi_platform_scanner(self) -> None:
+        """Run Multi-Platform Scanner for comprehensive opportunity detection"""
+        while self.is_running:
+            try:
+                if self.multi_platform_scanner:
+                    # Get best opportunities
+                    best_opportunities = await self.multi_platform_scanner.get_best_opportunities(limit=5)
+                    
+                    # Get arbitrage opportunities
+                    arbitrage_opportunities = await self.multi_platform_scanner.get_arbitrage_opportunities(min_profit=0.1)
+                    
+                    # Get yield opportunities
+                    yield_opportunities = await self.multi_platform_scanner.get_yield_opportunities(min_apy=10.0)
+                    
+                    # Log significant opportunities
+                    if best_opportunities:
+                        self.logger.info(f"🔍 Found {len(best_opportunities)} best opportunities across all platforms")
+                    
+                    if arbitrage_opportunities:
+                        self.logger.info(f"💰 Found {len(arbitrage_opportunities)} arbitrage opportunities")
+                    
+                    if yield_opportunities:
+                        self.logger.info(f"🌾 Found {len(yield_opportunities)} yield opportunities")
+                    
+                    # Log platform breakdown
+                    status = self.multi_platform_scanner.get_scanner_status()
+                    platforms = status['platforms_scanned']
+                    self.logger.info(f"📊 Platform Scan: DEX({platforms['dex']}) CEX({platforms['cex']}) DeFi({platforms['defi']}) Other({platforms['other']})")
+                    
+                await asyncio.sleep(30)  # Run every 30 seconds
+            except Exception as e:
+                self.logger.error(f"Error in Multi-Platform Scanner: {e}")
+                await asyncio.sleep(60)
 
     async def _monitor_system(self) -> None:
         """Monitor system health and performance"""
@@ -420,6 +465,15 @@ class UltraLauncherAdvanced:
                     self.logger.info(f"📊 Backtest Engine: Self-Awareness {backtest_status['self_awareness_level']:.2f}, Autonomous Confidence: {backtest_status['autonomous_confidence']:.2f}")
                     self.logger.info(f"🧠 Knowledge Base: {backtest_status['knowledge_base_size']:,} data points, {backtest_status['historical_strategies']} strategies")
                     self.logger.info(f"🎯 Predictions: {backtest_status['predictions_made']} made, Accuracy: {backtest_status['prediction_accuracy']:.1%}")
+                
+                # Log multi-platform scanner status
+                if self.multi_platform_scanner:
+                    scanner_status = self.multi_platform_scanner.get_scanner_status()
+                    self.logger.info(f"🔍 Multi-Platform Scanner: {scanner_status['total_opportunities']} total opportunities found")
+                    self.logger.info(f"💰 Arbitrage: {scanner_status['arbitrage_opportunities']}, Yield: {scanner_status['yield_opportunities']}")
+                    platforms = scanner_status['platforms_scanned']
+                    self.logger.info(f"📊 Platforms: DEX({platforms['dex']}) CEX({platforms['cex']}) DeFi({platforms['defi']}) Other({platforms['other']})")
+                    self.logger.info(f"⚡ Scan Frequency: {scanner_status['scan_metrics']['scan_frequency']:.2f} scans/sec")
 
                 await asyncio.sleep(3600)  # Log every hour
 
