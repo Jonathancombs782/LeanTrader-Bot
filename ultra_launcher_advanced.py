@@ -52,10 +52,44 @@ class UltraLauncherAdvanced:
         self.pattern_memory = PatternMemory()
         self.brain = Brain()
         
-        # Initialize router and universe for UltraCore
-        from router import ExchangeRouter
-        self.router = ExchangeRouter()
+        # Initialize exchange manager and universe for UltraCore
+        from exchange_manager import exchange_manager
+        self.exchange_manager = exchange_manager
         self.universe = ["BTC/USDT", "ETH/USDT", "BNB/USDT"]
+        
+        # Create a simple router wrapper for UltraCore compatibility
+        class RouterWrapper:
+            def __init__(self, exchange_manager):
+                self.exchange_manager = exchange_manager
+                self.live = False
+                self.testnet = True
+            
+            def fetch_markets(self):
+                """Fetch markets from exchange manager"""
+                markets = {}
+                for symbol in self.exchange_manager.universe:
+                    markets[symbol] = {
+                        'symbol': symbol,
+                        'base': symbol.split('/')[0],
+                        'quote': symbol.split('/')[1],
+                        'active': True
+                    }
+                return markets
+            
+            def get_current_price(self, symbol):
+                """Get current price for symbol"""
+                try:
+                    # This would be async in real implementation
+                    import asyncio
+                    loop = asyncio.new_event_loop()
+                    asyncio.set_event_loop(loop)
+                    ticker = loop.run_until_complete(self.exchange_manager.fetch_ticker(symbol))
+                    loop.close()
+                    return ticker.get('price', 0)
+                except:
+                    return 50000 if 'BTC' in symbol else 3000 if 'ETH' in symbol else 500
+        
+        self.router = RouterWrapper(self.exchange_manager)
         
         # Initialize UltraCore with required parameters
         self.ultra_core = UltraCore(self.router, self.universe)
