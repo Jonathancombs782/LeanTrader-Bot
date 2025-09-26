@@ -7,23 +7,13 @@ System updates go to admin only, VIP channel has trade buttons
 
 import asyncio
 import ccxt
-import pandas as pd
-import numpy as np
-from datetime import datetime, timedelta
+from datetime import datetime
 from loguru import logger
 import json
-import requests
-from typing import Dict, List, Optional, Tuple
 import time
-import threading
 from concurrent.futures import ThreadPoolExecutor
-import schedule
-from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
-from sklearn.preprocessing import StandardScaler
-import joblib
 import sqlite3
 from pathlib import Path
-from bs4 import BeautifulSoup
 import warnings
 warnings.filterwarnings('ignore')
 
@@ -38,14 +28,14 @@ except ImportError:
 
 class MultiChannelUltraTradingSystem:
     """ULTRA TRADING SYSTEM - MULTI-CHANNEL VERSION"""
-    
+
     def __init__(self):
         self.running = False
-        
+
         # Exchange configurations
         self.exchanges = {}
         self.active_exchanges = []
-        
+
         # MT5 Configuration (OctaFX Demo)
         self.mt5_config = {
             'broker': 'OctaFX',
@@ -54,24 +44,24 @@ class MultiChannelUltraTradingSystem:
             'server': 'OctaFX-Demo',
             'connected': False
         }
-        
+
         # Load API configuration
         with open('api_config.json', 'r') as f:
             self.api_config = json.load(f)
-        
+
         # Telegram Bot Configuration (using centralized config)
         telegram_config = self.api_config.get('telegram', {})
         self.telegram_bot = Bot(token=telegram_config.get('bot_token', "***REDACTED***"))
-        
+
         # Channel IDs (using centralized config)
         self.channels = {
             'admin': telegram_config.get('admin_id', '5329503447'),           # Your personal chat (system updates only)
             'free': telegram_config.get('free_channel', '-1002930953007'),        # Free signal channel
             'vip': telegram_config.get('vip_channel', '-1002983007302')          # VIP signal channel with trade buttons
         }
-        
+
         self.telegram_enabled = True
-        
+
         # Performance tracking
         self.performance = {
             'total_trades': 0,
@@ -86,50 +76,50 @@ class MultiChannelUltraTradingSystem:
             'vip_signals': 0,
             'admin_notifications': 0
         }
-        
+
         # Database
         self.db = None
-        
+
         # Thread pool
         self.executor = ThreadPoolExecutor(max_workers=10)
-        
+
         # Continuous training
         self.continuous_training = True
-        
+
     async def initialize(self):
         """Initialize ALL components"""
         logger.info("🚀 Initializing MULTI-CHANNEL ULTRA TRADING SYSTEM...")
-        
+
         try:
             # Initialize database
             await self.initialize_database()
-            
+
             # Initialize exchanges
             await self.initialize_exchanges()
-            
+
             # Initialize MT5 (simulated)
             await self.initialize_mt5()
-            
+
             logger.info("✅ MULTI-CHANNEL ULTRA TRADING SYSTEM initialized successfully!")
             return True
-            
+
         except Exception as e:
             logger.error(f"❌ Initialization failed: {e}")
             return False
-    
+
     async def initialize_database(self):
         """Initialize database"""
         logger.info("🗄️ Initializing database...")
-        
+
         # Create directories
         Path("models").mkdir(exist_ok=True)
         Path("data").mkdir(exist_ok=True)
         Path("logs").mkdir(exist_ok=True)
-        
+
         # SQLite database
         self.db = sqlite3.connect('multi_channel_trading_system.db', check_same_thread=False)
         cursor = self.db.cursor()
-        
+
         # Create tables
         cursor.execute('''
             CREATE TABLE IF NOT EXISTS telegram_messages (
@@ -141,7 +131,7 @@ class MultiChannelUltraTradingSystem:
                 sent BOOLEAN DEFAULT FALSE
             )
         ''')
-        
+
         cursor.execute('''
             CREATE TABLE IF NOT EXISTS arbitrage_opportunities (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -155,7 +145,7 @@ class MultiChannelUltraTradingSystem:
                 executed BOOLEAN DEFAULT FALSE
             )
         ''')
-        
+
         cursor.execute('''
             CREATE TABLE IF NOT EXISTS forex_signals (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -170,20 +160,20 @@ class MultiChannelUltraTradingSystem:
                 executed BOOLEAN DEFAULT FALSE
             )
         ''')
-        
+
         self.db.commit()
         logger.info("✅ Database initialized!")
-    
+
     async def initialize_exchanges(self):
         """Initialize all trading exchanges"""
         logger.info("🔌 Initializing exchanges...")
-        
+
         # OKX (most reliable)
         self.exchanges['okx'] = ccxt.okx({
             'sandbox': True,
             'enableRateLimit': True,
         })
-        
+
         # Test connections
         for name, exchange in self.exchanges.items():
             try:
@@ -192,33 +182,33 @@ class MultiChannelUltraTradingSystem:
                 self.active_exchanges.append(name)
             except Exception as e:
                 logger.warning(f"⚠️ {name.upper()} connection failed: {e}")
-    
+
     async def initialize_mt5(self):
         """Initialize MT5 connection (simulated for Linux)"""
         logger.info("📈 Initializing MT5 connection...")
-        
+
         try:
-            logger.info(f"✅ MT5 Simulated Connection Established")
+            logger.info("✅ MT5 Simulated Connection Established")
             logger.info(f"📊 Broker: {self.mt5_config['broker']}")
             logger.info(f"📊 Account: {self.mt5_config['account']}")
             logger.info(f"📊 Server: {self.mt5_config['server']}")
-            logger.info(f"💰 Demo Account Ready for Trading")
-            
+            logger.info("💰 Demo Account Ready for Trading")
+
             self.mt5_config['connected'] = True
-            
+
         except Exception as e:
             logger.warning(f"⚠️ MT5 simulation failed: {e}")
-    
+
     async def send_telegram_message(self, message: str, channel: str, reply_markup=None):
         """Send Telegram message to specific channel"""
         try:
             if self.telegram_enabled and TELEGRAM_AVAILABLE:
                 await self.telegram_bot.send_message(
-                    chat_id=self.channels[channel], 
+                    chat_id=self.channels[channel],
                     text=message,
                     reply_markup=reply_markup
                 )
-                
+
                 # Update performance tracking
                 if channel == 'admin':
                     self.performance['admin_notifications'] += 1
@@ -226,36 +216,36 @@ class MultiChannelUltraTradingSystem:
                     self.performance['free_signals'] += 1
                 elif channel == 'vip':
                     self.performance['vip_signals'] += 1
-                
+
                 self.performance['telegram_signals_sent'] += 1
                 logger.info(f"📱 ✅ Telegram message sent to {channel.upper()} channel!")
-                
+
                 # Save to database
                 cursor = self.db.cursor()
                 cursor.execute('''
-                    INSERT INTO telegram_messages 
+                    INSERT INTO telegram_messages
                     (channel, message_type, message_text, sent)
                     VALUES (?, ?, ?, ?)
                 ''', (channel, 'signal', message, True))
                 self.db.commit()
-                
+
         except TelegramError as e:
             logger.error(f"❌ Telegram error to {channel}: {e}")
         except Exception as e:
             logger.error(f"❌ Error sending Telegram message to {channel}: {e}")
-    
+
     async def send_admin_notification(self, message: str):
         """Send system update to admin only"""
         await self.send_telegram_message(message, 'admin')
-    
+
     async def send_free_signal(self, message: str):
         """Send signal to free channel"""
         await self.send_telegram_message(message, 'free')
-    
+
     async def send_vip_signal(self, message: str, trade_buttons=None):
         """Send signal to VIP channel with optional trade buttons"""
         await self.send_telegram_message(message, 'vip', reply_markup=trade_buttons)
-    
+
     def create_trade_buttons(self, signal_type: str, symbol: str, action: str, entry_price: float):
         """Create trade execution buttons for VIP channel"""
         try:
@@ -277,7 +267,7 @@ class MultiChannelUltraTradingSystem:
             elif signal_type == 'arbitrage':
                 buttons = [
                     [
-                        InlineKeyboardButton(f"💰 Execute Arbitrage", callback_data=f"arbitrage_{symbol}"),
+                        InlineKeyboardButton("💰 Execute Arbitrage", callback_data=f"arbitrage_{symbol}"),
                         InlineKeyboardButton("📊 View Spread", callback_data=f"spread_{symbol}")
                     ],
                     [
@@ -292,26 +282,26 @@ class MultiChannelUltraTradingSystem:
                         InlineKeyboardButton("📊 Analysis", callback_data=f"analysis_{symbol}")
                     ]
                 ]
-            
+
             return InlineKeyboardMarkup(buttons)
         except Exception as e:
             logger.error(f"Error creating trade buttons: {e}")
             return None
-    
+
     async def detect_arbitrage_opportunities(self):
         """Detect arbitrage opportunities"""
         arbitrage_ops = []
-        
+
         try:
             if not self.active_exchanges:
                 logger.warning("⚠️ No exchanges connected for arbitrage detection")
                 return arbitrage_ops
-            
+
             # Generate demo arbitrage data
             import random
             profit_pct = random.uniform(0.3, 1.2)
             base_price = random.uniform(40000, 45000)
-            
+
             demo_arbitrage = {
                 'symbol': 'BTC/USDT',
                 'buy_exchange': random.choice(['OKX', 'BINANCE', 'COINBASE']),
@@ -321,24 +311,24 @@ class MultiChannelUltraTradingSystem:
                 'profit_pct': profit_pct,
                 'timestamp': datetime.now()
             }
-            
+
             # Ensure different exchanges
             while demo_arbitrage['buy_exchange'] == demo_arbitrage['sell_exchange']:
                 demo_arbitrage['sell_exchange'] = random.choice(['BINANCE', 'OKX', 'KUCOIN'])
-            
+
             arbitrage_ops.append(demo_arbitrage)
-            
+
             # Save to database
             cursor = self.db.cursor()
             cursor.execute('''
-                INSERT INTO arbitrage_opportunities 
+                INSERT INTO arbitrage_opportunities
                 (symbol, buy_exchange, sell_exchange, buy_price, sell_price, profit_pct)
                 VALUES (?, ?, ?, ?, ?, ?)
-            ''', (demo_arbitrage['symbol'], demo_arbitrage['buy_exchange'], 
-                  demo_arbitrage['sell_exchange'], demo_arbitrage['buy_price'], 
+            ''', (demo_arbitrage['symbol'], demo_arbitrage['buy_exchange'],
+                  demo_arbitrage['sell_exchange'], demo_arbitrage['buy_price'],
                   demo_arbitrage['sell_price'], demo_arbitrage['profit_pct']))
             self.db.commit()
-            
+
             # Determine channel based on profit
             if profit_pct >= 0.8:  # VIP only for high profit
                 signal = f"""💰 VIP ARBITRAGE OPPORTUNITY
@@ -352,10 +342,10 @@ class MultiChannelUltraTradingSystem:
 🔥 HIGH PROFIT OPPORTUNITY - VIP EXCLUSIVE
 ⚠️ Execute quickly - opportunities expire fast!
 🚀 Generated by ULTRA TRADING SYSTEM"""
-                
+
                 trade_buttons = self.create_trade_buttons('arbitrage', demo_arbitrage['symbol'], 'BUY', demo_arbitrage['buy_price'])
                 await self.send_vip_signal(signal, trade_buttons)
-                
+
             else:  # Free channel for lower profit
                 signal = f"""💰 ARBITRAGE OPPORTUNITY
 
@@ -367,25 +357,25 @@ class MultiChannelUltraTradingSystem:
 
 ⚠️ Execute quickly - opportunities expire fast!
 🚀 Generated by ULTRA TRADING SYSTEM"""
-                
+
                 await self.send_free_signal(signal)
-            
+
             logger.info(f"💰 ARBITRAGE: {demo_arbitrage['symbol']} | Buy {demo_arbitrage['buy_exchange']} @ ${demo_arbitrage['buy_price']:.2f} | Sell {demo_arbitrage['sell_exchange']} @ ${demo_arbitrage['sell_price']:.2f} | Profit: {demo_arbitrage['profit_pct']:.2f}%")
-        
+
         except Exception as e:
             logger.error(f"Error detecting arbitrage: {e}")
-        
+
         return arbitrage_ops
-    
+
     async def spot_micro_moons(self):
         """Spot micro moons"""
         micro_moons = []
-        
+
         try:
             # Generate demo micro moon data
             import random
             change_24h = random.uniform(20, 80)
-            
+
             demo_micro_moon = {
                 'symbol': random.choice(['MOON', 'DOGE', 'SHIB', 'PEPE', 'FLOKI']),
                 'name': f'Token{random.choice(["Moon", "Star", "Diamond", "Gold", "Silver"])}',
@@ -395,9 +385,9 @@ class MultiChannelUltraTradingSystem:
                 'volume': random.uniform(50000, 500000),
                 'timestamp': datetime.now()
             }
-            
+
             micro_moons.append(demo_micro_moon)
-            
+
             # Determine channel based on potential
             if change_24h >= 50:  # VIP for high potential
                 signal = f"""🌙 VIP MICRO MOON DETECTED!
@@ -412,10 +402,10 @@ class MultiChannelUltraTradingSystem:
 🔥 EXCLUSIVE VIP OPPORTUNITY
 ⚠️ High risk, high reward opportunity!
 🔍 Spotted by ULTRA TRADING SYSTEM"""
-                
+
                 trade_buttons = self.create_trade_buttons('micro_moon', demo_micro_moon['symbol'], 'BUY', demo_micro_moon['price'])
                 await self.send_vip_signal(signal, trade_buttons)
-                
+
             else:  # Free channel for regular potential
                 signal = f"""🌙 MICRO MOON DETECTED!
 
@@ -428,24 +418,24 @@ class MultiChannelUltraTradingSystem:
 
 ⚠️ High risk, high reward opportunity!
 🔍 Spotted by ULTRA TRADING SYSTEM"""
-                
+
                 await self.send_free_signal(signal)
-            
+
             logger.info(f"🌙 MICRO MOON: {demo_micro_moon['name']} ({demo_micro_moon['symbol']}) - {demo_micro_moon['change_24h']:.1f}%")
             self.performance['micro_moons_found'] += 1
-        
+
         except Exception as e:
             logger.error(f"Error spotting micro moons: {e}")
-        
+
         return micro_moons
-    
+
     async def run_forex_analysis(self):
         """Run forex analysis with MT5"""
         forex_signals = []
-        
+
         try:
             logger.info("💱 Running forex analysis with MT5...")
-            
+
             # Forex pairs to analyze
             forex_pairs = [
                 {'pair': 'EUR/USD', 'action': 'BUY', 'entry': 1.0850, 'target': 1.0920, 'stop_loss': 1.0800, 'confidence': 85},
@@ -454,25 +444,25 @@ class MultiChannelUltraTradingSystem:
                 {'pair': 'AUD/USD', 'action': 'SELL', 'entry': 0.6580, 'target': 0.6520, 'stop_loss': 0.6620, 'confidence': 75},
                 {'pair': 'USD/CAD', 'action': 'BUY', 'entry': 1.3620, 'target': 1.3680, 'stop_loss': 1.3580, 'confidence': 80}
             ]
-            
+
             # Select 1-2 random signals per analysis
             import random
             selected_pairs = random.sample(forex_pairs, random.randint(1, 2))
-            
+
             for signal_data in selected_pairs:
                 forex_signals.append(signal_data)
-                
+
                 # Save to database
                 cursor = self.db.cursor()
                 cursor.execute('''
-                    INSERT INTO forex_signals 
+                    INSERT INTO forex_signals
                     (pair, action, entry_price, target_price, stop_loss, confidence, channel)
                     VALUES (?, ?, ?, ?, ?, ?, ?)
-                ''', (signal_data['pair'], signal_data['action'], signal_data['entry'], 
-                      signal_data['target'], signal_data['stop_loss'], signal_data['confidence'], 
+                ''', (signal_data['pair'], signal_data['action'], signal_data['entry'],
+                      signal_data['target'], signal_data['stop_loss'], signal_data['confidence'],
                       'vip' if signal_data['confidence'] >= 80 else 'free'))
                 self.db.commit()
-                
+
                 # Determine channel based on confidence
                 if signal_data['confidence'] >= 80:  # VIP for high confidence
                     signal = f"""💱 VIP FOREX SIGNAL - {signal_data['pair']}
@@ -490,10 +480,10 @@ class MultiChannelUltraTradingSystem:
 ⚠️ Risk Management: Always use stop loss!
 
 🚀 ULTRA TRADING SYSTEM"""
-                    
+
                     trade_buttons = self.create_trade_buttons('forex', signal_data['pair'], signal_data['action'], signal_data['entry'])
                     await self.send_vip_signal(signal, trade_buttons)
-                    
+
                 else:  # Free channel for lower confidence
                     signal = f"""💱 FOREX SIGNAL - {signal_data['pair']}
 
@@ -509,26 +499,26 @@ class MultiChannelUltraTradingSystem:
 ⚠️ Risk Management: Always use stop loss!
 
 🚀 ULTRA TRADING SYSTEM"""
-                    
+
                     await self.send_free_signal(signal)
-                
+
                 self.performance['forex_signals'] += 1
                 logger.info(f"💱 FOREX: {signal_data['pair']} {signal_data['action']} @ {signal_data['entry']} | Target: {signal_data['target']} | Confidence: {signal_data['confidence']}%")
-        
+
         except Exception as e:
             logger.error(f"Error in forex analysis: {e}")
-        
+
         return forex_signals
-    
+
     async def run_quantum_analysis(self):
         """Run quantum analysis (simulated)"""
         try:
             logger.info("⚛️ Running quantum analysis...")
-            
+
             # Simulate quantum analysis
             import random
             confidence = random.randint(80, 95)
-            
+
             signal = f"""⚛️ QUANTUM OPTIMIZATION SIGNAL
 
 🔬 Advanced portfolio optimization detected!
@@ -539,32 +529,32 @@ class MultiChannelUltraTradingSystem:
 
 🔥 VIP EXCLUSIVE SIGNAL
 🚀 ULTRA TRADING SYSTEM"""
-            
+
             trade_buttons = self.create_trade_buttons('quantum', 'PORTFOLIO', 'REBALANCE', 0)
             await self.send_vip_signal(signal, trade_buttons)
             self.performance['quantum_signals'] += 1
-            
+
         except Exception as e:
             logger.error(f"Error in quantum analysis: {e}")
-    
+
     async def run_web_crawling(self):
         """Run web crawling for news and strategies"""
         try:
             logger.info("🕷️ Running web crawling...")
-            
+
             # Simulate web crawling results
             news_items = [
                 "Bitcoin breaks $42,000 resistance level",
-                "Ethereum 2.0 upgrade shows promising results", 
+                "Ethereum 2.0 upgrade shows promising results",
                 "New DeFi protocol launches with 1000% APY",
                 "Federal Reserve hints at rate cuts",
                 "Major bank announces crypto custody services"
             ]
-            
+
             # Send 1-2 news items per analysis to free channel
             import random
             selected_news = random.sample(news_items, random.randint(1, 2))
-            
+
             for news in selected_news:
                 signal = f"""📰 MARKET NEWS ALERT!
 
@@ -575,17 +565,17 @@ class MultiChannelUltraTradingSystem:
 🔍 Source: Web Crawler Analysis
 
 🚀 ULTRA TRADING SYSTEM"""
-                
+
                 await self.send_free_signal(signal)
-        
+
         except Exception as e:
             logger.error(f"Error in web crawling: {e}")
-    
+
     async def run_continuous_training(self):
         """Run continuous model training - ADMIN ONLY"""
         try:
             logger.info("🧠 Running continuous model training...")
-            
+
             # Send training update to admin only
             signal = f"""🧠 MODEL TRAINING UPDATE (ADMIN)
 
@@ -597,18 +587,18 @@ class MultiChannelUltraTradingSystem:
 🔄 Training Cycle: #{self.performance.get('training_cycles', 0) + 1}
 
 🚀 ULTRA TRADING SYSTEM"""
-            
+
             await self.send_admin_notification(signal)
             self.performance['training_cycles'] = self.performance.get('training_cycles', 0) + 1
-        
+
         except Exception as e:
             logger.error(f"Error in continuous training: {e}")
-    
+
     async def send_system_status(self):
         """Send system status to admin only"""
         try:
             current_time = datetime.now().strftime('%H:%M:%S')
-            
+
             status_message = f"""📊 SYSTEM STATUS UPDATE (ADMIN)
 
 🕐 Time: {current_time}
@@ -627,18 +617,18 @@ class MultiChannelUltraTradingSystem:
 🖥️ Running on VPS
 
 🚀 ULTRA TRADING SYSTEM"""
-            
+
             await self.send_admin_notification(status_message)
-        
+
         except Exception as e:
             logger.error(f"Error sending system status: {e}")
-    
+
     async def trading_loop(self):
         """Main trading loop - MULTI-CHANNEL VERSION"""
         logger.info("🎯 Starting MULTI-CHANNEL ULTRA TRADING SYSTEM...")
-        
+
         loop_count = 0
-        
+
         # Send startup message to admin only
         startup_message = f"""🚀 MULTI-CHANNEL ULTRA TRADING SYSTEM STARTED!
 
@@ -667,59 +657,59 @@ class MultiChannelUltraTradingSystem:
 ✅ Admin Chat: 5329503447 (system updates only)
 
 Your professional trading system is now LIVE! 🚀📈"""
-        
+
         await self.send_admin_notification(startup_message)
-        
+
         while self.running:
             try:
                 current_time = datetime.now().strftime('%H:%M:%S')
                 loop_count += 1
                 logger.info(f"📊 MULTI-CHANNEL Analysis #{loop_count} - {current_time}")
-                
+
                 # 1. Arbitrage Detection
                 logger.info("💰 Scanning for arbitrage opportunities...")
                 arbitrage_ops = await self.detect_arbitrage_opportunities()
                 if arbitrage_ops:
                     logger.info(f"💰 Found {len(arbitrage_ops)} arbitrage opportunities!")
-                
+
                 # 2. Micro Moon Spotting
                 logger.info("🔍 Scanning for micro moons...")
                 micro_moons = await self.spot_micro_moons()
                 if micro_moons:
                     logger.info(f"🌙 Found {len(micro_moons)} potential micro moons!")
-                
+
                 # 3. Forex Analysis with MT5
                 logger.info("💱 Analyzing forex markets with MT5...")
                 forex_signals = await self.run_forex_analysis()
                 if forex_signals:
                     logger.info(f"💱 Generated {len(forex_signals)} forex signals!")
-                
+
                 # 4. Quantum Analysis (VIP only)
                 await self.run_quantum_analysis()
-                
+
                 # 5. Web Crawling (Free channel)
                 await self.run_web_crawling()
-                
+
                 # 6. Continuous Training (Admin only)
                 await self.run_continuous_training()
-                
+
                 # 7. Performance Summary
                 logger.info(f"📈 Performance: {self.performance['total_trades']} trades | "
                            f"{self.performance['free_signals']} free signals | "
                            f"{self.performance['vip_signals']} vip signals | "
                            f"{self.performance['admin_notifications']} admin notifications")
-                
+
                 # Send system status to admin every 20 loops
                 if loop_count % 20 == 0:
                     await self.send_system_status()
-                
+
                 # Wait before next analysis (2 minutes for continuous operation)
                 await asyncio.sleep(120)  # Analyze every 2 minutes
-                
+
             except Exception as e:
                 logger.error(f"Error in trading loop: {e}")
                 await asyncio.sleep(30)  # Wait 30 seconds on error
-    
+
     async def start(self):
         """Start the bot"""
         logger.info("🚀 Starting MULTI-CHANNEL ULTRA TRADING SYSTEM...")
@@ -728,19 +718,19 @@ Your professional trading system is now LIVE! 🚀📈"""
         logger.info(f"📈 MT5 Demo: {self.mt5_config['broker']} - {self.mt5_config['account']}")
         logger.info("🔄 RUNNING CONTINUOUSLY - Press Ctrl+C to stop")
         logger.info("=" * 70)
-        
+
         if await self.initialize():
             self.running = True
             await self.trading_loop()
         else:
             logger.error("❌ Failed to initialize MULTI-CHANNEL ULTRA TRADING SYSTEM")
-    
+
     async def stop(self):
         """Stop the bot"""
         logger.info("🛑 Stopping MULTI-CHANNEL ULTRA TRADING SYSTEM...")
         self.running = False
         self.continuous_training = False
-        
+
         # Send shutdown message to admin only
         shutdown_message = f"""🛑 MULTI-CHANNEL ULTRA TRADING SYSTEM SHUTTING DOWN
 
@@ -757,18 +747,18 @@ Your professional trading system is now LIVE! 🚀📈"""
 👋 Thank you for using Ultra Trading System!
 
 🚀 ULTRA TRADING SYSTEM"""
-        
+
         await self.send_admin_notification(shutdown_message)
-        
+
         if self.db:
             self.db.close()
-        
+
         self.executor.shutdown(wait=True)
 
 async def main():
     """Main entry point"""
     bot = MultiChannelUltraTradingSystem()
-    
+
     try:
         await bot.start()
     except KeyboardInterrupt:
@@ -795,5 +785,5 @@ if __name__ == "__main__":
     logger.info("=" * 70)
     logger.info("Starting in 3 seconds...")
     time.sleep(3)
-    
+
     asyncio.run(main())

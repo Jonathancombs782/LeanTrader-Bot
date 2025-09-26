@@ -17,19 +17,14 @@ import asyncio
 import ccxt
 import requests
 import json
-import numpy as np
-import pandas as pd
-from datetime import datetime, timedelta
+from datetime import datetime
 from loguru import logger
-import time
-import threading
 import sqlite3
 from pathlib import Path
 import warnings
-from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
+from sklearn.ensemble import RandomForestClassifier
 from sklearn.preprocessing import StandardScaler
 import joblib
-import schedule
 warnings.filterwarnings('ignore')
 
 class UltimateCompleteTradingBot:
@@ -37,15 +32,15 @@ class UltimateCompleteTradingBot:
         # Initialize all exchanges
         self.exchanges = {}
         self.initialize_all_exchanges()
-        
+
         # Load API configuration
         with open('api_config.json', 'r') as f:
             self.api_config = json.load(f)
-        
+
         # Initialize all exchanges
         self.exchanges = {}
         self.initialize_all_exchanges()
-        
+
         # Bybit configuration (using centralized config)
         bybit_config = self.api_config['exchanges']['bybit']
         self.bybit = ccxt.bybit({
@@ -54,14 +49,14 @@ class UltimateCompleteTradingBot:
             'sandbox': bybit_config.get('sandbox', False),
             'testnet': bybit_config.get('testnet', False),
         })
-        
+
         # Telegram configuration
         self.channels = {
             'admin': '5329503447',
             'free': '-1002930953007',
             'vip': '-1002983007302'
         }
-        
+
         # Trading pairs
         self.crypto_pairs = [
             'BTC/USDT', 'ETH/USDT', 'BNB/USDT', 'ADA/USDT', 'SOL/USDT',
@@ -69,36 +64,36 @@ class UltimateCompleteTradingBot:
             'LTC/USDT', 'LINK/USDT', 'UNI/USDT', 'ATOM/USDT', 'FIL/USDT',
             'SHIB/USDT', 'PEPE/USDT', 'FLOKI/USDT', 'BONK/USDT', 'WIF/USDT'
         ]
-        
+
         self.forex_pairs = ['EUR/USD', 'GBP/USD', 'USD/JPY', 'USD/CHF', 'AUD/USD', 'USD/CAD', 'NZD/USD']
         self.timeframes = ['1m', '5m', '15m', '1h', '4h', '1d']
-        
+
         # Database
         self.db = None
         self.initialize_database()
-        
+
         # AI Learning system
         self.ai_models = {}
         self.ml_models = {}
         self.scalers = {}
         self.learning_data = {}
         self.performance_history = []
-        
+
         # Risk management
         self.risk_manager = AdvancedRiskManager()
-        
+
         # Portfolio management
         self.portfolio = PortfolioManager()
-        
+
         # News sentiment
         self.news_analyzer = NewsSentimentAnalyzer()
-        
+
         # Social media monitoring
         self.social_monitor = SocialMediaMonitor()
-        
+
         # Backtesting
         self.backtester = AdvancedBacktester()
-        
+
         # Performance tracking
         self.stats = {
             'total_signals': 0,
@@ -112,10 +107,10 @@ class UltimateCompleteTradingBot:
             'social_signals': 0,
             'quantum_optimizations': 0
         }
-        
+
         # Initialize AI models
         self.initialize_ai_models()
-        
+
     def initialize_all_exchanges(self):
         """Initialize all available exchanges using centralized API config"""
         try:
@@ -123,7 +118,7 @@ class UltimateCompleteTradingBot:
             if not hasattr(self, 'api_config'):
                 with open('api_config.json', 'r') as f:
                     self.api_config = json.load(f)
-            
+
             # Initialize all configured exchanges
             for exchange_name, config in self.api_config['exchanges'].items():
                 if config.get('enabled', False):
@@ -181,43 +176,43 @@ class UltimateCompleteTradingBot:
                                 'sandbox': config.get('sandbox', False),
                                 'enableRateLimit': True
                             })
-                        
+
                         logger.info(f"✅ {exchange_name.upper()} exchange initialized successfully")
                     except Exception as e:
                         logger.error(f"❌ Failed to initialize {exchange_name}: {e}")
-            
+
             # Coinbase Pro (fallback)
             try:
                 self.exchanges['coinbase'] = ccxt.coinbasepro({'enableRateLimit': True})
-            except:
+            except Exception:
                 pass
-            
+
             # KuCoin
             try:
                 self.exchanges['kucoin'] = ccxt.kucoin({'enableRateLimit': True})
-            except:
+            except Exception:
                 pass
-            
+
             # Gate.io
             try:
                 self.exchanges['gateio'] = ccxt.gateio({'enableRateLimit': True})
-            except:
+            except Exception:
                 pass
-            
+
             logger.info(f"✅ {len(self.exchanges)} exchanges initialized")
         except Exception as e:
             logger.error(f"Exchange initialization error: {e}")
-    
+
     def initialize_database(self):
         """Initialize comprehensive database"""
         try:
             Path("data").mkdir(exist_ok=True)
             Path("models").mkdir(exist_ok=True)
             Path("backtests").mkdir(exist_ok=True)
-            
+
             self.db = sqlite3.connect('ultimate_complete_bot.db', check_same_thread=False)
             cursor = self.db.cursor()
-            
+
             # Market data
             cursor.execute('''
                 CREATE TABLE IF NOT EXISTS market_data (
@@ -232,7 +227,7 @@ class UltimateCompleteTradingBot:
                     timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
                 )
             ''')
-            
+
             # AI learning
             cursor.execute('''
                 CREATE TABLE IF NOT EXISTS ai_learning (
@@ -246,7 +241,7 @@ class UltimateCompleteTradingBot:
                     timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
                 )
             ''')
-            
+
             # Trading signals
             cursor.execute('''
                 CREATE TABLE IF NOT EXISTS trading_signals (
@@ -266,7 +261,7 @@ class UltimateCompleteTradingBot:
                     profit_loss REAL DEFAULT 0
                 )
             ''')
-            
+
             # Portfolio
             cursor.execute('''
                 CREATE TABLE IF NOT EXISTS portfolio (
@@ -280,7 +275,7 @@ class UltimateCompleteTradingBot:
                     timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
                 )
             ''')
-            
+
             # News sentiment
             cursor.execute('''
                 CREATE TABLE IF NOT EXISTS news_sentiment (
@@ -293,7 +288,7 @@ class UltimateCompleteTradingBot:
                     timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
                 )
             ''')
-            
+
             # Social media
             cursor.execute('''
                 CREATE TABLE IF NOT EXISTS social_sentiment (
@@ -305,18 +300,18 @@ class UltimateCompleteTradingBot:
                     timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
                 )
             ''')
-            
+
             self.db.commit()
             logger.info("✅ Comprehensive database initialized")
         except Exception as e:
             logger.error(f"Database error: {e}")
-    
+
     def initialize_ai_models(self):
         """Initialize all AI and ML models"""
         try:
             # Load existing models or create new ones
             model_types = ['trend_analysis', 'volume_analysis', 'technical_indicators', 'market_sentiment', 'news_sentiment', 'social_sentiment']
-            
+
             for model_type in model_types:
                 try:
                     model_path = f'models/{model_type}_model.pkl'
@@ -327,26 +322,26 @@ class UltimateCompleteTradingBot:
                         # Create new model
                         self.ml_models[model_type] = RandomForestClassifier(n_estimators=100, random_state=42)
                         logger.info(f"✅ Created new {model_type} model")
-                    
+
                     # Initialize scaler
                     scaler_path = f'models/{model_type}_scaler.pkl'
                     if Path(scaler_path).exists():
                         self.scalers[model_type] = joblib.load(scaler_path)
                     else:
                         self.scalers[model_type] = StandardScaler()
-                        
+
                 except Exception as e:
                     logger.error(f"Error initializing {model_type} model: {e}")
-            
+
             logger.info(f"✅ {len(self.ml_models)} AI/ML models initialized")
         except Exception as e:
             logger.error(f"AI model initialization error: {e}")
-    
+
     async def get_comprehensive_price_data(self, symbol):
         """Get comprehensive price data from all sources"""
         try:
             price_data = {}
-            
+
             # Try Bybit first
             try:
                 ticker = self.bybit.fetch_ticker(symbol)
@@ -359,9 +354,9 @@ class UltimateCompleteTradingBot:
                     'bid': float(ticker['bid']),
                     'ask': float(ticker['ask'])
                 }
-            except:
+            except Exception:
                 pass
-            
+
             # Try other exchanges
             for exchange_name, exchange in self.exchanges.items():
                 try:
@@ -375,19 +370,19 @@ class UltimateCompleteTradingBot:
                         'bid': float(ticker['bid']),
                         'ask': float(ticker['ask'])
                     }
-                except:
+                except Exception:
                     pass
-            
+
             # Fallback to CoinGecko
             if not price_data:
                 price_data['coingecko'] = await self.get_coingecko_price(symbol)
-            
+
             return price_data
-            
+
         except Exception as e:
             logger.error(f"Error getting comprehensive price data for {symbol}: {e}")
             return {}
-    
+
     async def get_coingecko_price(self, symbol):
         """Get price from CoinGecko with comprehensive data"""
         try:
@@ -398,7 +393,7 @@ class UltimateCompleteTradingBot:
                 'MATIC/USDT': 'matic-network', 'LTC/USDT': 'litecoin', 'LINK/USDT': 'chainlink',
                 'UNI/USDT': 'uniswap', 'ATOM/USDT': 'cosmos', 'FIL/USDT': 'filecoin'
             }
-            
+
             if symbol in symbol_map:
                 response = requests.get(f'https://api.coingecko.com/api/v3/coins/{symbol_map[symbol]}', timeout=10)
                 if response.status_code == 200:
@@ -416,7 +411,7 @@ class UltimateCompleteTradingBot:
         except Exception as e:
             logger.warning(f"CoinGecko error for {symbol}: {e}")
         return None
-    
+
     async def send_telegram(self, message, channel):
         """Send Telegram message"""
         try:
@@ -426,7 +421,7 @@ class UltimateCompleteTradingBot:
             logger.info(f"📱 Message sent to {channel}")
         except Exception as e:
             logger.error(f"Telegram error: {e}")
-    
+
     def calculate_advanced_technical_indicators(self, price_data):
         """Calculate comprehensive technical indicators"""
         try:
@@ -436,45 +431,45 @@ class UltimateCompleteTradingBot:
                 if source in price_data:
                     primary_data = price_data[source]
                     break
-            
+
             if not primary_data:
                 return {}
-            
+
             price = primary_data['price']
             change_24h = primary_data['change_24h']
             high_24h = primary_data['high_24h']
             low_24h = primary_data['low_24h']
             volume = primary_data['volume']
-            
+
             # RSI calculation
             rsi = 50 + (change_24h * 2)
             rsi = max(0, min(100, rsi))
-            
+
             # MACD calculation
             macd_line = change_24h * 0.5
             signal_line = change_24h * 0.3
             macd_histogram = macd_line - signal_line
-            
+
             # Bollinger Bands
             sma = price
             std_dev = abs(change_24h) * 0.01
             upper_band = sma + (2 * std_dev)
             lower_band = sma - (2 * std_dev)
-            
+
             # Support and Resistance
             resistance = high_24h
             support = low_24h
-            
+
             # Volume analysis
             volume_sma = volume
             volume_ratio = volume / volume_sma if volume_sma > 0 else 1
-            
+
             # Price momentum
             momentum = change_24h
-            
+
             # Volatility
             volatility = abs(change_24h) / 100
-            
+
             return {
                 'rsi': rsi,
                 'macd': macd_line,
@@ -492,17 +487,17 @@ class UltimateCompleteTradingBot:
         except Exception as e:
             logger.error(f"Technical indicators error: {e}")
             return {}
-    
+
     def generate_ultimate_ai_signal(self, symbol, price_data, indicators, news_sentiment=0, social_sentiment=0):
         """Generate ultimate AI signal using all models"""
         try:
             if not indicators:
                 return None
-            
+
             price = indicators['price']
             change_24h = price_data.get('bybit', {}).get('change_24h', 0)
-            volume = price_data.get('bybit', {}).get('volume', 0)
-            
+            # volume = price_data.get('bybit', {}).get('volume', 0)  # Unused variable
+
             # Model 1: Trend Analysis
             trend_score = 0
             if change_24h > 3:
@@ -517,7 +512,7 @@ class UltimateCompleteTradingBot:
                 trend_score -= 20
             else:
                 trend_score -= 10
-            
+
             # Model 2: Volume Analysis
             volume_score = 0
             if indicators['volume_ratio'] > 2:
@@ -528,7 +523,7 @@ class UltimateCompleteTradingBot:
                 volume_score += 10
             else:
                 volume_score -= 10
-            
+
             # Model 3: Technical Indicators
             tech_score = 0
             rsi = indicators['rsi']
@@ -538,16 +533,16 @@ class UltimateCompleteTradingBot:
                 tech_score -= 35
             elif 40 <= rsi <= 60:  # Neutral
                 tech_score += 15
-            
+
             # MACD analysis
             if indicators['macd'] > indicators['macd_signal']:
                 tech_score += 15
             else:
                 tech_score -= 15
-            
+
             # Model 4: Market Sentiment
             sentiment_score = news_sentiment + social_sentiment
-            
+
             # Model 5: Momentum Analysis
             momentum_score = 0
             if indicators['momentum'] > 2:
@@ -558,7 +553,7 @@ class UltimateCompleteTradingBot:
                 momentum_score -= 20
             else:
                 momentum_score -= 10
-            
+
             # Model 6: Volatility Analysis
             volatility_score = 0
             if indicators['volatility'] > 0.05:  # High volatility
@@ -567,11 +562,11 @@ class UltimateCompleteTradingBot:
                 volatility_score += 10
             else:  # Low volatility
                 volatility_score -= 5
-            
+
             # Combine all models
-            total_score = (trend_score + volume_score + tech_score + 
+            total_score = (trend_score + volume_score + tech_score +
                           sentiment_score + momentum_score + volatility_score)
-            
+
             # Determine signal
             if total_score >= 80:
                 action = "BUY"
@@ -588,22 +583,22 @@ class UltimateCompleteTradingBot:
             else:
                 action = "HOLD"
                 confidence = 50
-            
+
             # Calculate TP levels based on volatility and confidence
             volatility_multiplier = max(1, indicators['volatility'] * 100)
             confidence_multiplier = confidence / 100
-            
+
             if action != "HOLD":
                 base_tp1 = 0.015 * volatility_multiplier * confidence_multiplier
                 base_tp2 = 0.035 * volatility_multiplier * confidence_multiplier
                 base_tp3 = 0.070 * volatility_multiplier * confidence_multiplier
                 base_sl = 0.025 * volatility_multiplier * confidence_multiplier
-                
+
                 tp1 = price * (1 + base_tp1 if action == "BUY" else 1 - base_tp1)
                 tp2 = price * (1 + base_tp2 if action == "BUY" else 1 - base_tp2)
                 tp3 = price * (1 + base_tp3 if action == "BUY" else 1 - base_tp3)
                 stop_loss = price * (1 - base_sl if action == "BUY" else 1 + base_sl)
-                
+
                 return {
                     'action': action,
                     'confidence': confidence,
@@ -621,40 +616,40 @@ class UltimateCompleteTradingBot:
                         'volatility': volatility_score
                     }
                 }
-            
+
             return None
-            
+
         except Exception as e:
             logger.error(f"Ultimate AI signal error: {e}")
             return None
-    
+
     async def analyze_comprehensive_markets(self):
         """Analyze all markets with comprehensive AI"""
         logger.info("🧠 Analyzing markets with Ultimate AI...")
-        
+
         for pair in self.crypto_pairs:
             try:
                 # Get comprehensive price data
                 price_data = await self.get_comprehensive_price_data(pair)
-                
+
                 if price_data:
                     # Calculate technical indicators
                     indicators = self.calculate_advanced_technical_indicators(price_data)
-                    
+
                     # Get news sentiment
                     news_sentiment = await self.news_analyzer.get_sentiment(pair)
-                    
+
                     # Get social sentiment
                     social_sentiment = await self.social_monitor.get_sentiment(pair)
-                    
+
                     # Generate ultimate AI signal
                     signal = self.generate_ultimate_ai_signal(pair, price_data, indicators, news_sentiment, social_sentiment)
-                    
+
                     if signal and signal['confidence'] >= 70:
                         # Get primary price for display
                         primary_price = indicators['price']
                         primary_source = 'bybit' if 'bybit' in price_data else list(price_data.keys())[0]
-                        
+
                         # Create comprehensive signal message
                         message = f"""🚀 {pair} ULTIMATE AI SIGNAL
 
@@ -689,67 +684,67 @@ class UltimateCompleteTradingBot:
 
 ⏰ Time: {datetime.now().strftime('%H:%M:%S')}
 🚀 ULTIMATE COMPLETE AI BOT"""
-                        
+
                         # Send signal
                         if signal['confidence'] >= 85:
                             await self.send_telegram(message, 'vip')
                         else:
                             await self.send_telegram(message, 'free')
-                        
+
                         # Save to database
                         cursor = self.db.cursor()
                         cursor.execute('''
-                            INSERT INTO trading_signals 
+                            INSERT INTO trading_signals
                             (symbol, signal, confidence, price, tp1, tp2, tp3, stop_loss, ai_score)
                             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-                        ''', (pair, signal['action'], signal['confidence'], primary_price, 
+                        ''', (pair, signal['action'], signal['confidence'], primary_price,
                               signal['tp1'], signal['tp2'], signal['tp3'], signal['stop_loss'], signal['ai_score']))
                         self.db.commit()
-                        
+
                         # Save market data
                         for source, data in price_data.items():
                             cursor.execute('''
                                 INSERT INTO market_data (symbol, price, volume, change_24h, high_24h, low_24h, source)
                                 VALUES (?, ?, ?, ?, ?, ?, ?)
-                            ''', (pair, data['price'], data['volume'], data['change_24h'], 
+                            ''', (pair, data['price'], data['volume'], data['change_24h'],
                                   data['high_24h'], data['low_24h'], source))
                         self.db.commit()
-                        
+
                         self.stats['total_signals'] += 1
                         logger.info(f"📊 {pair}: ${primary_price:,.2f} - {signal['action']} ({signal['confidence']:.1f}%)")
-                
+
             except Exception as e:
                 logger.error(f"Error analyzing {pair}: {e}")
-    
+
     async def detect_comprehensive_arbitrage(self):
         """Detect comprehensive arbitrage opportunities"""
         try:
             logger.info("💰 Detecting comprehensive arbitrage opportunities...")
-            
+
             for pair in ['BTC/USDT', 'ETH/USDT', 'BNB/USDT']:
                 try:
                     price_data = await self.get_comprehensive_price_data(pair)
-                    
+
                     if len(price_data) >= 2:
                         prices = {source: data['price'] for source, data in price_data.items()}
-                        
+
                         max_price = max(prices.values())
                         min_price = min(prices.values())
                         max_exchange = max(prices, key=prices.get)
                         min_exchange = min(prices, key=prices.get)
-                        
+
                         arbitrage_pct = ((max_price - min_price) / min_price) * 100
-                        
+
                         if arbitrage_pct > 0.3:  # 0.3% arbitrage opportunity
                             message = f"""💰 ARBITRAGE OPPORTUNITY!
 
 🚀 {pair} Multi-Exchange Arbitrage
 
 📊 Exchange Prices:"""
-                            
+
                             for exchange, price in prices.items():
                                 message += f"\n• {exchange.upper()}: ${price:,.2f}"
-                            
+
                             message += f"""
 
 📈 Arbitrage: {arbitrage_pct:.2f}%
@@ -758,48 +753,48 @@ class UltimateCompleteTradingBot:
 
 ⏰ Time: {datetime.now().strftime('%H:%M:%S')}
 🚀 ULTIMATE COMPLETE AI BOT"""
-                            
+
                             await self.send_telegram(message, 'vip')
                             self.stats['arbitrage_opportunities'] += 1
-                            
+
                 except Exception as e:
                     logger.warning(f"Arbitrage error for {pair}: {e}")
-                    
+
         except Exception as e:
             logger.error(f"Arbitrage detection error: {e}")
-    
+
     async def spot_advanced_moon_tokens(self):
         """Spot advanced moon tokens with comprehensive analysis"""
         try:
             logger.info("🌙 Spotting advanced moon tokens...")
-            
+
             # Get trending tokens
             response = requests.get('https://api.coingecko.com/api/v3/search/trending', timeout=10)
             if response.status_code == 200:
                 data = response.json()
-                
+
                 for coin in data['coins'][:5]:
                     coin_data = coin['item']
                     name = coin_data['name']
                     symbol = coin_data['symbol'].upper()
                     rank = coin_data['market_cap_rank']
-                    
+
                     # Get detailed data
                     try:
                         detail_response = requests.get(f"https://api.coingecko.com/api/v3/coins/{coin_data['id']}", timeout=5)
                         if detail_response.status_code == 200:
                             detail_data = detail_response.json()
                             market_data = detail_data['market_data']
-                            
+
                             market_cap = market_data.get('market_cap', {}).get('usd', 0)
                             price_change_24h = market_data.get('price_change_percentage_24h', 0)
                             volume_24h = market_data.get('total_volume', {}).get('usd', 0)
-                            
+
                             # Moon token criteria
                             if (market_cap < 100000000 and  # < $100M market cap
                                 price_change_24h > 20 and    # > 20% growth
                                 volume_24h > 1000000):       # > $1M volume
-                                
+
                                 message = f"""🌙 ADVANCED MOON TOKEN ALERT!
 
 🪙 Token: {name} ({symbol})
@@ -823,22 +818,22 @@ class UltimateCompleteTradingBot:
 
 ⏰ Time: {datetime.now().strftime('%H:%M:%S')}
 🚀 ULTIMATE COMPLETE AI BOT"""
-                                
+
                                 await self.send_telegram(message, 'vip')
                                 self.stats['moon_tokens_found'] += 1
                                 break
-                                
+
                     except Exception as e:
                         logger.warning(f"Error getting details for {name}: {e}")
-                        
+
         except Exception as e:
             logger.error(f"Moon token spotting error: {e}")
-    
+
     async def run_quantum_optimization(self):
         """Run quantum computing optimization"""
         try:
             logger.info("⚛️ Running quantum optimization...")
-            
+
             # Simulate quantum portfolio optimization
             optimization_results = {
                 'portfolio_rebalance': True,
@@ -846,7 +841,7 @@ class UltimateCompleteTradingBot:
                 'correlation_analysis': 'Low correlation detected',
                 'optimal_allocation': 'BTC: 40%, ETH: 30%, Others: 30%'
             }
-            
+
             message = f"""⚛️ QUANTUM OPTIMIZATION UPDATE (ADMIN)
 
 🧠 Quantum Portfolio Optimization:
@@ -863,18 +858,18 @@ class UltimateCompleteTradingBot:
 
 ⏰ Time: {datetime.now().strftime('%H:%M:%S')}
 🚀 ULTIMATE COMPLETE AI BOT"""
-            
+
             await self.send_telegram(message, 'admin')
             self.stats['quantum_optimizations'] += 1
-            
+
         except Exception as e:
             logger.error(f"Quantum optimization error: {e}")
-    
+
     def update_ai_learning(self):
         """Update AI learning with comprehensive data"""
         try:
             self.stats['ai_learning_cycles'] += 1
-            
+
             # Update ML models
             for model_type, model in self.ml_models.items():
                 try:
@@ -882,29 +877,29 @@ class UltimateCompleteTradingBot:
                     cursor = self.db.cursor()
                     cursor.execute('SELECT COUNT(*) FROM market_data WHERE timestamp > datetime("now", "-1 hour")')
                     data_points = cursor.fetchone()[0]
-                    
+
                     if data_points > 0:
                         # Simulate accuracy improvement
                         base_accuracy = 85.0
                         improvement = min(2.0, data_points / 1000)
                         new_accuracy = base_accuracy + improvement
-                        
+
                         cursor.execute('''
                             INSERT INTO ai_learning (model_type, accuracy, precision, recall, f1_score, data_points)
                             VALUES (?, ?, ?, ?, ?, ?)
                         ''', (model_type, new_accuracy, new_accuracy - 1, new_accuracy - 0.5, new_accuracy - 0.8, data_points))
-                        
+
                         self.stats['ml_model_updates'] += 1
-                        
+
                 except Exception as e:
                     logger.warning(f"Error updating {model_type} model: {e}")
-            
+
             self.db.commit()
             logger.info(f"🧠 AI Learning updated - Cycle #{self.stats['ai_learning_cycles']}")
-            
+
         except Exception as e:
             logger.error(f"AI learning error: {e}")
-    
+
     async def send_comprehensive_performance_update(self):
         """Send comprehensive performance update"""
         try:
@@ -912,10 +907,10 @@ class UltimateCompleteTradingBot:
             cursor = self.db.cursor()
             cursor.execute('SELECT COUNT(*) FROM trading_signals WHERE timestamp > datetime("now", "-24 hours")')
             daily_signals = cursor.fetchone()[0]
-            
+
             cursor.execute('SELECT AVG(confidence) FROM trading_signals WHERE timestamp > datetime("now", "-24 hours")')
             avg_confidence = cursor.fetchone()[0] or 0
-            
+
             message = f"""📊 COMPREHENSIVE PERFORMANCE UPDATE (ADMIN)
 
 🧠 AI Learning Status:
@@ -954,16 +949,16 @@ class UltimateCompleteTradingBot:
 🧠 AI Evolution Status: CONTINUOUSLY IMPROVING
 ⏰ Time: {datetime.now().strftime('%H:%M:%S')}
 🚀 ULTIMATE COMPLETE AI BOT"""
-            
+
             await self.send_telegram(message, 'admin')
-            
+
         except Exception as e:
             logger.error(f"Performance update error: {e}")
-    
+
     async def run_ultimate_complete_bot(self):
         """Run the ultimate complete trading bot"""
         logger.info("🚀 STARTING ULTIMATE COMPLETE TRADING BOT!")
-        
+
         startup_message = f"""🚀 ULTIMATE COMPLETE TRADING BOT STARTED!
 
 🧠 ULTIMATE AI-Powered Trading System
@@ -1010,40 +1005,40 @@ class UltimateCompleteTradingBot:
 ⏰ Started: {datetime.now().strftime('%H:%M:%S')}
 🔄 Running CONTINUOUSLY with FULL POTENTIAL
 🚀 ULTIMATE COMPLETE AI BOT"""
-        
+
         await self.send_telegram(startup_message, 'admin')
-        
+
         loop_count = 0
-        
+
         while True:
             try:
                 loop_count += 1
                 current_time = datetime.now().strftime('%H:%M:%S')
                 logger.info(f"🧠 Ultimate Analysis #{loop_count} - {current_time}")
-                
+
                 # 1. Analyze comprehensive markets with ultimate AI
                 await self.analyze_comprehensive_markets()
-                
+
                 # 2. Detect comprehensive arbitrage opportunities
                 if loop_count % 5 == 0:  # Every 10 minutes
                     await self.detect_comprehensive_arbitrage()
-                
+
                 # 3. Spot advanced moon tokens
                 if loop_count % 8 == 0:  # Every 16 minutes
                     await self.spot_advanced_moon_tokens()
-                
+
                 # 4. Run quantum optimization
                 if loop_count % 12 == 0:  # Every 24 minutes
                     await self.run_quantum_optimization()
-                
+
                 # 5. Update AI learning
                 if loop_count % 10 == 0:  # Every 20 minutes
                     self.update_ai_learning()
                     await self.send_comprehensive_performance_update()
-                
+
                 # Wait 2 minutes between cycles
                 await asyncio.sleep(120)
-                
+
             except Exception as e:
                 logger.error(f"Main loop error: {e}")
                 await asyncio.sleep(30)
@@ -1055,7 +1050,7 @@ class AdvancedRiskManager:
         self.stop_loss_pct = 0.03
         self.take_profit_pct = 0.05
         self.max_drawdown = 0.15
-    
+
     def calculate_position_size(self, account_balance, signal_confidence, volatility):
         base_size = self.max_position_size * account_balance
         confidence_multiplier = signal_confidence / 100
@@ -1067,22 +1062,22 @@ class PortfolioManager:
         self.positions = {}
         self.total_value = 0
         self.unrealized_pnl = 0
-    
+
     def update_portfolio(self, symbol, side, amount, price):
         if symbol not in self.positions:
             self.positions[symbol] = {'long': 0, 'short': 0, 'avg_price': 0}
-        
+
         if side == 'BUY':
             self.positions[symbol]['long'] += amount
         else:
             self.positions[symbol]['short'] += amount
-        
+
         self.positions[symbol]['avg_price'] = price
 
 class NewsSentimentAnalyzer:
     def __init__(self):
         self.sentiment_cache = {}
-    
+
     async def get_sentiment(self, symbol):
         try:
             # Simulate news sentiment analysis
@@ -1090,13 +1085,13 @@ class NewsSentimentAnalyzer:
             sentiment = random.uniform(-50, 50)
             self.sentiment_cache[symbol] = sentiment
             return sentiment
-        except:
+        except Exception:
             return 0
 
 class SocialMediaMonitor:
     def __init__(self):
         self.sentiment_cache = {}
-    
+
     async def get_sentiment(self, symbol):
         try:
             # Simulate social media sentiment
@@ -1104,13 +1099,13 @@ class SocialMediaMonitor:
             sentiment = random.uniform(-30, 30)
             self.sentiment_cache[symbol] = sentiment
             return sentiment
-        except:
+        except Exception:
             return 0
 
 class AdvancedBacktester:
     def __init__(self):
         self.backtest_results = {}
-    
+
     def run_backtest(self, strategy, start_date, end_date):
         # Simulate backtesting
         return {

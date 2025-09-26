@@ -51,19 +51,19 @@ class UltraLauncherAdvanced:
         self.risk_engine = RiskEngine()
         self.pattern_memory = PatternMemory()
         self.brain = Brain()
-        
+
         # Initialize exchange manager and universe for UltraCore
         from exchange_manager import exchange_manager
         self.exchange_manager = exchange_manager
         self.universe = ["BTC/USDT", "ETH/USDT", "BNB/USDT"]
-        
+
         # Create a simple router wrapper for UltraCore compatibility
         class RouterWrapper:
             def __init__(self, exchange_manager):
                 self.exchange_manager = exchange_manager
                 self.live = False
                 self.testnet = True
-            
+
             def fetch_markets(self):
                 """Fetch markets from exchange manager"""
                 markets = {}
@@ -75,7 +75,7 @@ class UltraLauncherAdvanced:
                         'active': True
                     }
                 return markets
-            
+
             def get_current_price(self, symbol):
                 """Get current price for symbol"""
                 try:
@@ -86,11 +86,11 @@ class UltraLauncherAdvanced:
                     ticker = loop.run_until_complete(self.exchange_manager.fetch_ticker(symbol))
                     loop.close()
                     return ticker.get('price', 0)
-                except:
+                except Exception:
                     return 50000 if 'BTC' in symbol else 3000 if 'ETH' in symbol else 500
-        
+
         self.router = RouterWrapper(self.exchange_manager)
-        
+
         # Initialize UltraCore with required parameters
         self.ultra_core = UltraCore(self.router, self.universe)
 
@@ -299,9 +299,9 @@ class UltraLauncherAdvanced:
                     learning_results = await self.backtest_engine.learn_from_history()
 
                     # Make predictions
-                    prediction = await self.backtest_engine.predict_future(
-                        "BTC/USDT", "1h", 24
-                    )
+                    # prediction = await self.backtest_engine.predict_future(
+                    #     "BTC/USDT", "1h", 24
+                    # )
 
                     # Log significant learning progress
                     if learning_results['self_awareness_level'] > 0.8:
