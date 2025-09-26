@@ -45,20 +45,20 @@ class ProfessionalTradingBot:
         self.market_fetcher = RealMarketDataFetcher()
         self.divine_intelligence = DivineIntelligenceCore()
         
-        # Bybit Testnet Configuration
-        self.bybit_config = {
-            'api_key': '***REDACTED***',
-            'secret': '***REDACTED***',
-            'sandbox': True,
-            'testnet': True
-        }
+        # Load API configuration
+        with open('api_config.json', 'r') as f:
+            self.api_config = json.load(f)
+        
+        # Bybit Configuration (using centralized config)
+        self.bybit_config = self.api_config['exchanges']['bybit']
         
         # Initialize Bybit
         self.bybit_exchange = None
         self.initialize_bybit()
         
-        # Telegram Bot Configuration
-        self.telegram_bot = Bot(token="***REDACTED***")
+        # Telegram Bot Configuration (using centralized config)
+        telegram_config = self.api_config.get('telegram', {})
+        self.telegram_bot = Bot(token=telegram_config.get('bot_token', "***REDACTED***"))
         
         # Channel IDs
         self.channels = {

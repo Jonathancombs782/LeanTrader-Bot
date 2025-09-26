@@ -38,12 +38,21 @@ class UltimateCompleteTradingBot:
         self.exchanges = {}
         self.initialize_all_exchanges()
         
-        # Bybit configuration
+        # Load API configuration
+        with open('api_config.json', 'r') as f:
+            self.api_config = json.load(f)
+        
+        # Initialize all exchanges
+        self.exchanges = {}
+        self.initialize_all_exchanges()
+        
+        # Bybit configuration (using centralized config)
+        bybit_config = self.api_config['exchanges']['bybit']
         self.bybit = ccxt.bybit({
-            'apiKey': '***REDACTED***',
-            'secret': '***REDACTED***',
-            'sandbox': True,
-            'testnet': True,
+            'apiKey': bybit_config['api_key'],
+            'secret': bybit_config['secret'],
+            'sandbox': bybit_config.get('sandbox', False),
+            'testnet': bybit_config.get('testnet', False),
         })
         
         # Telegram configuration
@@ -108,15 +117,76 @@ class UltimateCompleteTradingBot:
         self.initialize_ai_models()
         
     def initialize_all_exchanges(self):
-        """Initialize all available exchanges"""
+        """Initialize all available exchanges using centralized API config"""
         try:
-            # Binance
-            self.exchanges['binance'] = ccxt.binance({'enableRateLimit': True})
+            # Load API configuration if not already loaded
+            if not hasattr(self, 'api_config'):
+                with open('api_config.json', 'r') as f:
+                    self.api_config = json.load(f)
             
-            # OKX
-            self.exchanges['okx'] = ccxt.okx({'enableRateLimit': True})
+            # Initialize all configured exchanges
+            for exchange_name, config in self.api_config['exchanges'].items():
+                if config.get('enabled', False):
+                    try:
+                        if exchange_name == 'binance':
+                            self.exchanges['binance'] = ccxt.binance({
+                                'apiKey': config['api_key'],
+                                'secret': config['secret'],
+                                'sandbox': config.get('sandbox', False),
+                                'enableRateLimit': True
+                            })
+                        elif exchange_name == 'bybit':
+                            self.exchanges['bybit'] = ccxt.bybit({
+                                'apiKey': config['api_key'],
+                                'secret': config['secret'],
+                                'sandbox': config.get('sandbox', False),
+                                'testnet': config.get('testnet', False),
+                                'enableRateLimit': True
+                            })
+                        elif exchange_name == 'okx':
+                            self.exchanges['okx'] = ccxt.okx({
+                                'apiKey': config['api_key'],
+                                'secret': config['secret'],
+                                'passphrase': config.get('passphrase', ''),
+                                'sandbox': config.get('sandbox', False),
+                                'enableRateLimit': True
+                            })
+                        elif exchange_name == 'kucoin':
+                            self.exchanges['kucoin'] = ccxt.kucoin({
+                                'apiKey': config['api_key'],
+                                'secret': config['secret'],
+                                'passphrase': config.get('passphrase', ''),
+                                'sandbox': config.get('sandbox', False),
+                                'enableRateLimit': True
+                            })
+                        elif exchange_name == 'gateio':
+                            self.exchanges['gateio'] = ccxt.gateio({
+                                'apiKey': config['api_key'],
+                                'secret': config['secret'],
+                                'sandbox': config.get('sandbox', False),
+                                'enableRateLimit': True
+                            })
+                        elif exchange_name == 'mexc':
+                            self.exchanges['mexc'] = ccxt.mexc({
+                                'apiKey': config['api_key'],
+                                'secret': config['secret'],
+                                'sandbox': config.get('sandbox', False),
+                                'enableRateLimit': True
+                            })
+                        elif exchange_name == 'bitget':
+                            self.exchanges['bitget'] = ccxt.bitget({
+                                'apiKey': config['api_key'],
+                                'secret': config['secret'],
+                                'passphrase': config.get('passphrase', ''),
+                                'sandbox': config.get('sandbox', False),
+                                'enableRateLimit': True
+                            })
+                        
+                        logger.info(f"✅ {exchange_name.upper()} exchange initialized successfully")
+                    except Exception as e:
+                        logger.error(f"❌ Failed to initialize {exchange_name}: {e}")
             
-            # Coinbase Pro
+            # Coinbase Pro (fallback)
             try:
                 self.exchanges['coinbase'] = ccxt.coinbasepro({'enableRateLimit': True})
             except:

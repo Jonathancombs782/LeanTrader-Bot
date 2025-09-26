@@ -55,14 +55,19 @@ class MultiChannelUltraTradingSystem:
             'connected': False
         }
         
-        # Telegram Bot Configuration
-        self.telegram_bot = Bot(token="***REDACTED***")
+        # Load API configuration
+        with open('api_config.json', 'r') as f:
+            self.api_config = json.load(f)
         
-        # Channel IDs
+        # Telegram Bot Configuration (using centralized config)
+        telegram_config = self.api_config.get('telegram', {})
+        self.telegram_bot = Bot(token=telegram_config.get('bot_token', "***REDACTED***"))
+        
+        # Channel IDs (using centralized config)
         self.channels = {
-            'admin': '5329503447',           # Your personal chat (system updates only)
-            'free': '-1002930953007',        # Free signal channel
-            'vip': '-1002983007302'          # VIP signal channel with trade buttons
+            'admin': telegram_config.get('admin_id', '5329503447'),           # Your personal chat (system updates only)
+            'free': telegram_config.get('free_channel', '-1002930953007'),        # Free signal channel
+            'vip': telegram_config.get('vip_channel', '-1002983007302')          # VIP signal channel with trade buttons
         }
         
         self.telegram_enabled = True
