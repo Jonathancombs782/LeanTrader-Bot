@@ -11,7 +11,8 @@ def fetch(api_key: str, contracts: List[str], blocks_lookback: int) -> List[Dict
         latest = requests.get(base, params={"module":"proxy","action":"eth_blockNumber","apikey":api_key}, timeout=15).json()
         latest_block = int(latest.get("result","0x0"), 16)
     except Exception as e:
-        print("[ETHERSCAN] latest block error:", e); return []
+        print("[ETHERSCAN] latest block error:", e)
+        return []
     start_block = max(0, latest_block - blocks_lookback)
     out = []
     for c in contracts:

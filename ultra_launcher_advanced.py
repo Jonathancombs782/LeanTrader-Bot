@@ -48,10 +48,17 @@ class UltraLauncherAdvanced:
         self.config = config or {}
 
         # Initialize core components
-        self.ultra_core = UltraCore()
         self.risk_engine = RiskEngine()
         self.pattern_memory = PatternMemory()
         self.brain = Brain()
+        
+        # Initialize router and universe for UltraCore
+        from router import ExchangeRouter
+        self.router = ExchangeRouter()
+        self.universe = ["BTC/USDT", "ETH/USDT", "BNB/USDT"]
+        
+        # Initialize UltraCore with required parameters
+        self.ultra_core = UltraCore(self.router, self.universe)
 
         # Initialize trading engines
         self.god_mode = None
@@ -64,17 +71,17 @@ class UltraLauncherAdvanced:
         self.arbitrage_engine = None
         self.continuous_trading = None
         self.november_growth = None
-        
+
         # Initialize swarm consciousness system
         self.swarm_consciousness = None
         self.testnet_trader = None
-        
+
         # Initialize fluid mechanics system
         self.fluid_mechanics = None
-        
+
         # Initialize backtest engine
         self.backtest_engine = None
-        
+
         # Initialize multi-platform scanner
         self.multi_platform_scanner = None
 
@@ -124,17 +131,17 @@ class UltraLauncherAdvanced:
             self.arbitrage_engine = integrate_ultra_arbitrage_engine(self.ultra_core, self.risk_engine)
             self.continuous_trading = integrate_ultra_continuous_trading(self.ultra_core, self.risk_engine)
             self.november_growth = integrate_november_growth_strategy(self.ultra_core, self.risk_engine)
-            
+
             # Initialize swarm consciousness system
             self.swarm_consciousness = integrate_swarm_consciousness(self.ultra_core, self.risk_engine)
             self.testnet_trader = integrate_testnet_trader(self.ultra_core, self.risk_engine, self.swarm_consciousness)
-            
+
             # Initialize fluid mechanics system
             self.fluid_mechanics = integrate_fluid_mechanics(self.ultra_core, self.risk_engine)
-            
+
             # Initialize backtest engine
             self.backtest_engine = integrate_backtest_engine(self.ultra_core, self.risk_engine)
-            
+
             # Initialize multi-platform scanner
             self.multi_platform_scanner = integrate_multi_platform_scanner(self.ultra_core, self.risk_engine)
 
@@ -176,17 +183,17 @@ class UltraLauncherAdvanced:
             tasks.append(asyncio.create_task(self.arbitrage_engine.start_arbitrage_scanning()))
             tasks.append(asyncio.create_task(self.continuous_trading.start_continuous_trading()))
             tasks.append(asyncio.create_task(self.november_growth.start_november_growth()))
-            
+
             # Start swarm consciousness system
             tasks.append(asyncio.create_task(self.swarm_consciousness.start_swarm_consciousness()))
             tasks.append(asyncio.create_task(self.testnet_trader.start_testnet_trading()))
-            
+
             # Start fluid mechanics system
             tasks.append(asyncio.create_task(self.fluid_mechanics.start_sentinel_brilliance()))
-            
+
             # Start backtest engine
             tasks.append(asyncio.create_task(self._run_backtest_engine()))
-            
+
             # Start multi-platform scanner
             tasks.append(asyncio.create_task(self._run_multi_platform_scanner()))
 
@@ -242,7 +249,7 @@ class UltraLauncherAdvanced:
             except Exception as e:
                 self.logger.error(f"Error in Telegram Master: {e}")
                 await asyncio.sleep(60)
-    
+
     async def _run_backtest_engine(self) -> None:
         """Run Backtest Engine for continuous learning"""
         while self.is_running:
@@ -253,24 +260,24 @@ class UltraLauncherAdvanced:
                         await self.backtest_engine.load_historical_data(
                             ["BTC/USDT", "ETH/USDT"], years_back=5
                         )
-                    
+
                     # Learn from history
                     learning_results = await self.backtest_engine.learn_from_history()
-                    
+
                     # Make predictions
                     prediction = await self.backtest_engine.predict_future(
                         "BTC/USDT", "1h", 24
                     )
-                    
+
                     # Log significant learning progress
                     if learning_results['self_awareness_level'] > 0.8:
                         self.logger.info(f"🧠 Self-Awareness Level: {learning_results['self_awareness_level']:.2f}")
-                    
+
                 await asyncio.sleep(3600)  # Run every hour
             except Exception as e:
                 self.logger.error(f"Error in Backtest Engine: {e}")
                 await asyncio.sleep(3600)
-    
+
     async def _run_multi_platform_scanner(self) -> None:
         """Run Multi-Platform Scanner for comprehensive opportunity detection"""
         while self.is_running:
@@ -278,28 +285,28 @@ class UltraLauncherAdvanced:
                 if self.multi_platform_scanner:
                     # Get best opportunities
                     best_opportunities = await self.multi_platform_scanner.get_best_opportunities(limit=5)
-                    
+
                     # Get arbitrage opportunities
                     arbitrage_opportunities = await self.multi_platform_scanner.get_arbitrage_opportunities(min_profit=0.1)
-                    
+
                     # Get yield opportunities
                     yield_opportunities = await self.multi_platform_scanner.get_yield_opportunities(min_apy=10.0)
-                    
+
                     # Log significant opportunities
                     if best_opportunities:
                         self.logger.info(f"🔍 Found {len(best_opportunities)} best opportunities across all platforms")
-                    
+
                     if arbitrage_opportunities:
                         self.logger.info(f"💰 Found {len(arbitrage_opportunities)} arbitrage opportunities")
-                    
+
                     if yield_opportunities:
                         self.logger.info(f"🌾 Found {len(yield_opportunities)} yield opportunities")
-                    
+
                     # Log platform breakdown
                     status = self.multi_platform_scanner.get_scanner_status()
                     platforms = status['platforms_scanned']
                     self.logger.info(f"📊 Platform Scan: DEX({platforms['dex']}) CEX({platforms['cex']}) DeFi({platforms['defi']}) Other({platforms['other']})")
-                    
+
                 await asyncio.sleep(30)  # Run every 30 seconds
             except Exception as e:
                 self.logger.error(f"Error in Multi-Platform Scanner: {e}")
@@ -437,7 +444,7 @@ class UltraLauncherAdvanced:
                 self.logger.info(f"💰 Current Balance: ${48 + self.total_profit:.2f}")
                 self.logger.info("🎯 Target: $3000-5000 by November")
                 self.logger.info(f"📈 Progress: {self.performance_metrics['target_progress']:.1f}%")
-                
+
                 # Log swarm consciousness status
                 if self.swarm_consciousness:
                     swarm_status = self.swarm_consciousness.get_swarm_status()
@@ -445,27 +452,27 @@ class UltraLauncherAdvanced:
                     self.logger.info(f"🎯 Market State: {swarm_status['market_state']}")
                     self.logger.info(f"⚡ Opportunity Score: {swarm_status['opportunity_score']:.2f}")
                     self.logger.info(f"🚨 Black Swan Events: {swarm_status['black_swan_events']}")
-                
+
                 # Log testnet trading status
                 if self.testnet_trader:
                     testnet_status = self.testnet_trader.get_testnet_status()
                     self.logger.info(f"🚀 Testnet Trades: {testnet_status['active_trades']} active, {testnet_status['total_trades']} total")
                     self.logger.info(f"📊 Testnet Win Rate: {testnet_status['performance_metrics']['win_rate']:.1%}")
-                
+
                 # Log fluid mechanics status
                 if self.fluid_mechanics:
                     fluid_status = self.fluid_mechanics.get_brilliance_status()
                     self.logger.info(f"⚡ Fluid Mechanics: Brilliance {fluid_status['brilliance_level']:.2f}, Quality: {fluid_status['analytics_quality']}")
                     self.logger.info(f"🎯 Sentinel Mode: {'SCARY GOOD' if fluid_status['scary_good_mode'] else 'ACTIVE'}, Streak: {fluid_status['unbeatable_streak']}")
                     self.logger.info(f"💫 Effortless Executions: {fluid_status['effortless_executions']}, Accuracy: {fluid_status['sentinel_accuracy']:.1%}")
-                
+
                 # Log backtest engine status
                 if self.backtest_engine:
                     backtest_status = self.backtest_engine.get_backtest_status()
                     self.logger.info(f"📊 Backtest Engine: Self-Awareness {backtest_status['self_awareness_level']:.2f}, Autonomous Confidence: {backtest_status['autonomous_confidence']:.2f}")
                     self.logger.info(f"🧠 Knowledge Base: {backtest_status['knowledge_base_size']:,} data points, {backtest_status['historical_strategies']} strategies")
                     self.logger.info(f"🎯 Predictions: {backtest_status['predictions_made']} made, Accuracy: {backtest_status['prediction_accuracy']:.1%}")
-                
+
                 # Log multi-platform scanner status
                 if self.multi_platform_scanner:
                     scanner_status = self.multi_platform_scanner.get_scanner_status()

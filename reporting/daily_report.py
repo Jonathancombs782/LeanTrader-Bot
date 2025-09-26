@@ -189,7 +189,7 @@ def render_html(payload: Dict[str, Any]) -> str:
   <h3>Notes</h3>
   <pre>{payload.get('notes','')}</pre>
   <h3>Trade Explanations</h3>
-  {('<ul>' + ''.join([f'<li><a href="out/explanations/{payload.get('date','')}/{fn}">{fn}</a></li>' for fn in payload.get('explanations', [])]) + '</ul>') if payload.get('explanations') else '<i>No trade explanations found</i>'}
+  {('<ul>' + ''.join([f'<li><a href="out/explanations/{payload.get(\"date\",\"\")}/{fn}">{fn}</a></li>' for fn in payload.get('explanations', [])]) + '</ul>') if payload.get('explanations') else '<i>No trade explanations found</i>'}
   <h3>Attribution</h3>
   {('<b>Total PnL:</b> ' + str(payload.get('attribution',{}).get('total_pnl','')) + '<br/>'
     + '<b>Top Contributors:</b><ul>' + ''.join([f"<li>{k}: {v:.6f}</li>" for k,v in (payload.get('attribution',{}).get('top_contributors',[]) or [])]) + '</ul>'

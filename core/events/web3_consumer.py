@@ -15,7 +15,8 @@ def subscribe(callback: Callable[[dict], None], channel: str = "signal.web3.tren
         pubsub.subscribe(channel)
         print(f"[web3_consumer] Subscribed to {channel} on {redis_url}")
         for msg in pubsub.listen():
-            if msg.get("type") != "message": continue
+            if msg.get("type") != "message":
+                continue
             try:
                 payload = json.loads(msg["data"])
                 callback(payload)
@@ -25,7 +26,8 @@ def subscribe(callback: Callable[[dict], None], channel: str = "signal.web3.tren
         print("[web3_consumer] No REDIS_URL or redis not installed; reading JSON lines from stdin (dev mode)")
         for line in sys.stdin:
             line=line.strip()
-            if not line: continue
+            if not line:
+                continue
             try:
                 callback(json.loads(line))
             except Exception as e:
