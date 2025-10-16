@@ -53,5 +53,41 @@ class FxBroker:
         self.secret = secret
 
     def market(self, symbol: str, side: str, qty: float) -> dict:
-        # TODO: implement real call
-        return {"status": "todo_fx", "symbol": symbol, "side": side, "qty": qty}
+        """Execute market order on FX broker.
+        
+        Note: This is a placeholder implementation. For production:
+        - Integrate with Oanda API: https://developer.oanda.com/rest-live-v20/order-ep/
+        - Or MT5 via MetaTrader5 Python package
+        - Or use CCXT for forex-enabled brokers
+        """
+        try:
+            # Placeholder for real broker implementation
+            # Example for Oanda:
+            # import requests
+            # endpoint = f"https://api-fxtrade.oanda.com/v3/accounts/{account_id}/orders"
+            # headers = {"Authorization": f"Bearer {self.api_key}"}
+            # data = {
+            #     "order": {
+            #         "instrument": symbol,
+            #         "units": qty if side == "buy" else -qty,
+            #         "type": "MARKET"
+            #     }
+            # }
+            # response = requests.post(endpoint, headers=headers, json=data)
+            # return response.json()
+            
+            return {
+                "status": "simulated",
+                "symbol": symbol,
+                "side": side,
+                "qty": qty,
+                "message": "FX broker integration pending - using paper mode"
+            }
+        except Exception as e:
+            return {
+                "status": "error",
+                "symbol": symbol,
+                "side": side,
+                "qty": qty,
+                "error": str(e)
+            }

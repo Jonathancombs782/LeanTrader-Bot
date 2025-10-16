@@ -553,11 +553,70 @@ def profit_summary_notification(trades: List[Dict[str, Any]]):
 
 
 def health_check() -> bool:
-    """Simple health check stub (module-level)."""
+    """Comprehensive health check with connectivity and system checks."""
     try:
-        # TODO: add router/ccxt connectivity checks and disk space checks
-        return True
-    except Exception:
+        import shutil
+        
+        checks_passed = []
+        checks_failed = []
+        
+        # 1. Check disk space (at least 1GB free)
+        try:
+            stat = shutil.disk_usage(".")
+            free_gb = stat.free / (1024**3)
+            if free_gb >= 1.0:
+                checks_passed.append(f"disk:{free_gb:.1f}GB")
+            else:
+                checks_failed.append(f"disk_low:{free_gb:.1f}GB")
+        except Exception as e:
+            checks_failed.append(f"disk_check_error:{e}")
+        
+        # 2. Check router/CCXT connectivity
+        try:
+            router = _router()
+            if router is not None:
+                # Try to fetch a ticker to verify connectivity
+                try:
+                    test_symbol = os.getenv("HEALTH_CHECK_SYMBOL", "BTC/USDT")
+                    ticker = router.safe_fetch_ticker(test_symbol)
+                    if ticker and ticker.get("last"):
+                        checks_passed.append("router_ok")
+                    else:
+                        checks_failed.append("router_no_data")
+                except Exception as e:
+                    checks_failed.append(f"router_fetch_error:{e}")
+            else:
+                checks_failed.append("router_unavailable")
+        except Exception as e:
+            checks_failed.append(f"router_error:{e}")
+        
+        # 3. Check memory files are writable
+        try:
+            test_file = Path("runtime") / "health_check.tmp"
+            test_file.parent.mkdir(parents=True, exist_ok=True)
+            test_file.write_text("ok")
+            test_file.unlink()
+            checks_passed.append("filesystem_writable")
+        except Exception as e:
+            checks_failed.append(f"filesystem_error:{e}")
+        
+        # Log health check results
+        if checks_failed:
+            try:
+                msg = f"⚠️ Health Check: {len(checks_passed)} passed, {len(checks_failed)} failed\n"
+                msg += f"Failed: {', '.join(checks_failed[:3])}"
+                send_text(msg)
+            except Exception:
+                pass
+        
+        # Return True only if no critical failures
+        return len(checks_failed) == 0
+        
+    except Exception as e:
+        try:
+            send_text(f"⚠️ Health Check Exception: {e}")
+        except Exception:
+            pass
         return False
 
 

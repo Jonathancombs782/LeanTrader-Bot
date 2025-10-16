@@ -72,12 +72,66 @@ def update_from_feats(feat_dict: dict, win: bool):
 
 
 def memorize_entry(symbol: str, row: Dict[str, Any]) -> None:
-    # TODO: store features from entry for later training
+    """Store features from entry for later training."""
+    try:
+        feats = {k: float(row.get(k, 0.0)) for k in FEATURE_ORDER if k in row}
+        if not feats:
+            return
+        
+        # Store in memory file
+        memory_dir = Path("data") / "entry_memory"
+        memory_dir.mkdir(parents=True, exist_ok=True)
+        memory_file = memory_dir / f"{symbol.replace('/', '_')}_entries.jsonl"
+        
+        entry_record = {
+            "timestamp": row.get("timestamp", None),
+            "symbol": symbol,
+            "features": feats,
+            "entry_price": row.get("entry", row.get("price", 0.0)),
+            "side": row.get("side", "unknown")
+        }
+        
+        with open(memory_file, "a") as f:
+            f.write(json.dumps(entry_record) + "\n")
+    except Exception:
+        pass  # Silent fail to avoid breaking caller
     return
 
 
 def reward_from_exit_safe(symbol: str, pnl: float, row: dict | None = None) -> None:
-    # TODO: store realized PnL outcome — safe no-op alias to avoid redefinition
+    """Store realized PnL outcome and update model."""
+    try:
+        if row is None:
+            row = {}
+        
+        # Extract features if available
+        feats = {k: float(row.get(k, 0.0)) for k in FEATURE_ORDER if k in row}
+        
+        # Determine if it was a winning trade
+        win = pnl > 0
+        
+        # Update model with features if available
+        if feats:
+            update_from_feats(feats, win)
+        
+        # Store outcome in outcomes file
+        outcomes_dir = Path("data") / "trade_outcomes"
+        outcomes_dir.mkdir(parents=True, exist_ok=True)
+        outcomes_file = outcomes_dir / f"{symbol.replace('/', '_')}_outcomes.jsonl"
+        
+        outcome_record = {
+            "timestamp": row.get("timestamp", None),
+            "symbol": symbol,
+            "pnl": float(pnl),
+            "win": win,
+            "features": feats,
+            "exit_price": row.get("exit", row.get("price", 0.0))
+        }
+        
+        with open(outcomes_file, "a") as f:
+            f.write(json.dumps(outcome_record) + "\n")
+    except Exception:
+        pass  # Silent fail to avoid breaking caller
     return
 
 

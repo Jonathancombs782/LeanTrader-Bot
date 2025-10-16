@@ -111,7 +111,30 @@ async def telegram_callback(req: Request):
             _log_order({"user": payload.get("user", "demo"), "req": order, "res": res})
             return {"ok": True, "routed": True, "payload": payload, "exec": res}
         elif action == "mute":
-            # TODO: store mute preference
+            # Store mute preference
+            try:
+                user_id = payload.get("user", "demo")
+                pair = payload.get("pair")
+                if pair:
+                    mute_path = Path(os.getenv("MUTE_PREFS_PATH", "data/telegram/mute_prefs.json"))
+                    mute_path.parent.mkdir(parents=True, exist_ok=True)
+                    
+                    mute_data = {}
+                    if mute_path.exists():
+                        try:
+                            mute_data = json.loads(mute_path.read_text(encoding="utf-8"))
+                        except Exception:
+                            mute_data = {}
+                    
+                    # Add to user's muted pairs
+                    if user_id not in mute_data:
+                        mute_data[user_id] = []
+                    if pair not in mute_data[user_id]:
+                        mute_data[user_id].append(pair)
+                    
+                    mute_path.write_text(json.dumps(mute_data, indent=2), encoding="utf-8")
+            except Exception:
+                pass  # Silent fail
             return {"ok": True, "muted": payload.get("pair")}
     except Exception:
         pass
