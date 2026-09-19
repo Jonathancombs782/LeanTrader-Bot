@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from web3.guards import estimate_price_impact, is_safe_gas, token_safety_checks, is_safe_price_impact
+from web3_local.guards import estimate_price_impact, is_safe_gas, token_safety_checks, is_safe_price_impact
 
 
 def test_price_impact_calc():
