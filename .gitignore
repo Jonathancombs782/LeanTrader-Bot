@@ -16,3 +16,7 @@ tools/*_out.txt
 *.pkl
 flake_report.txt
 pytest_report.txt
+# Coinbase CDP API key files - NEVER commit these
+*cdp_api_key*.json
+*coinbase_cdp*.json
+*.pem
