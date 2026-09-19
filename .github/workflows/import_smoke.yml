@@ -13,9 +13,10 @@ jobs:
         uses: actions/setup-python@v4
         with:
           python-version: '3.x'
-      - name: Install deps (optional)
+      - name: Install deps
         run: |
-          if [ -f requirements.txt ]; then python -m pip install --upgrade pip; python -m pip install -r requirements.txt || true; fi
+          python -m pip install --upgrade pip
+          pip install -r requirements-test.txt beautifulsoup4
       - name: Run import smoke (fail on any import error)
         env:
           PYTHONPATH: .
