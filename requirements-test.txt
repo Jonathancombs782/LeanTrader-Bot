@@ -1,0 +1,17 @@
+# Slim test-only requirements for CI.
+# Full requirements.txt pulls tensorflow, torch, and ta-lib (needs system build
+# tools) — too heavy/slow for CI. This file covers what the test suite imports
+# (verified 2026-09-19 against all 26 files in tests/).
+# Validate in a clean env: `pip install -r requirements-test.txt && pytest -q`
+# If a test fails on a missing import, add the package here (not the full ML stack).
+
+pytest>=8.0
+numpy
+pandas
+scikit-learn
+scipy
+fastapi
+ccxt
+pyyaml
+requests
+web3
