@@ -17,4 +17,6 @@ jobs:
         run: |
           if [ -f requirements.txt ]; then python -m pip install --upgrade pip; python -m pip install -r requirements.txt || true; fi
       - name: Run import smoke (fail on any import error)
+        env:
+          PYTHONPATH: .
         run: python .github/scripts/import_smoke.py
