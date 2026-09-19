@@ -1,54 +1,39 @@
 name: CI
 
+# Consolidated CI workflow for LeanTrader-Bot.
+# Replaces ci-basic.yml and python-tests.yml (delete those after this lands).
+# Key change vs. old workflows: pytest failures are BLOCKING (no more `|| true`).
+
 on:
   push:
-    branches: [ main, master, 'feature/**' ]
+    branches: [main, feature/ultra-defensive-router-tests-ci]
   pull_request:
-    branches: [ main, master ]
 
 jobs:
   test:
     runs-on: ubuntu-latest
+    env:
+      ENABLE_LIVE: "false" # never hit live exchanges in CI
+      PYTHONPATH: . # tests import root-level modules (e.g. `from router import ...`)
+      SIGNALS_DEDUPE_WINDOW_SEC: "0" # matches conftest.py guard
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
+      - uses: actions/setup-python@v5
         with:
-          python-version: '3.11'
+          python-version: "3.11"
+          cache: pip
 
-      - name: Install dependencies
+      - name: Install test dependencies
         run: |
           python -m pip install --upgrade pip
-          if [ -f requirements.txt ]; then
-            python -m pip install -r requirements.txt
-          fi
-          python -m pip install pytest
+          pip install -r requirements-test.txt
 
-      - name: Lint (flake8)
-        run: |
-          python -m pip install flake8
-          python -m flake8 --max-line-length=120 || true
+      - name: Run tests (blocking)
+        run: pytest -q
 
-      - name: Import smoke
-        env:
-          ENABLE_LIVE: 'false'
+      - name: Lint (non-blocking for now)
+        continue-on-error: true
         run: |
-          python - << 'PY'
-          try:
-              import importlib
-              importlib.import_module('router')
-              print('router import OK')
-          except Exception as e:
-              print('router import FAILED:', e)
-              raise
-          PY
-
-      - name: Run tests (if any)
-        env:
-          ENABLE_LIVE: 'false'
-        run: |
-          if [ -d tests ]; then
-            pytest -q || true
-          fi
+          pip install flake8
+          flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
