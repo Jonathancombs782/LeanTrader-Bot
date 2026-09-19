@@ -79,6 +79,14 @@ def apply_exposure_caps(
     """Cap total exposure per sector; renormalize to sum 1.
 
     sector_map maps index -> sector name. If None, returns w unchanged.
+
+    Each overweight sector is scaled down to exactly ``sector_cap`` and then
+    pinned; the remaining (unpinned) assets are rescaled so the total returns
+    to 1 without touching the pinned sectors. Pinning is what makes this
+    converge: the previous implementation renormalized *all* assets together,
+    which re-inflated capped sectors above the cap every iteration and could
+    never satisfy the cap. If the caps are infeasible (sum of caps < 1) the
+    result is best-effort.
     """
     w = np.asarray(w, dtype=float).reshape(-1)
     if not sector_map:
@@ -89,27 +97,37 @@ def apply_exposure_caps(
             sectors.setdefault(s, []).append(i)
     out = w.copy()
     sector_cap = float(max(0.0, min(1.0, sector_cap)))
+    in_sector = {i for idxs in sectors.values() for i in idxs}
 
-    for _ in range(10):
-        changed = False
-        # Scale down overweight sectors
+    pinned = set()
+    for _ in range(len(sectors) + 1):
+        # Scale every overweight sector down to exactly the cap and pin it.
         for s, idxs in sectors.items():
+            if s in pinned:
+                continue
             ssum = float(np.sum(out[idxs]))
-            if ssum > sector_cap and ssum > 0:
-                factor = sector_cap / ssum
-                out[idxs] *= factor
-                changed = True
-        # Renormalize
-        out = _l1_normalize(out)
-        # Check again
+            if ssum > sector_cap + 1e-12 and ssum > 0:
+                out[idxs] *= sector_cap / ssum
+                pinned.add(s)
+        # Restore the total to 1 using only unpinned assets, so pinned
+        # sectors stay exactly at the cap.
+        free = [i for s, idxs in sectors.items() if s not in pinned for i in idxs]
+        free += [i for i in range(out.shape[0]) if i not in in_sector]
+        if not free:
+            break
+        pinned_sum = float(np.sum([out[i] for i in range(out.shape[0]) if i not in free]))
+        free_sum = float(np.sum(out[free]))
+        if free_sum > 1e-15 and pinned_sum < 1.0:
+            out[free] *= (1.0 - pinned_sum) / free_sum
+        # Converged when no unpinned sector is overweight.
         ok = True
         for s, idxs in sectors.items():
-            if float(np.sum(out[idxs])) > sector_cap + 1e-6:
+            if s not in pinned and float(np.sum(out[idxs])) > sector_cap + 1e-9:
                 ok = False
                 break
-        if ok and not changed:
+        if ok:
             break
-    return out
+    return _l1_normalize(out)
 
 
 __all__ = ["vol_scaled_weights", "apply_exposure_caps"]
