@@ -1,0 +1,8 @@
+# Local pre-commit protection: catches secrets before they ever reach GitHub.
+# Install once per machine: `pip install pre-commit && pre-commit install`
+
+repos:
+  - repo: https://github.com/gitleaks/gitleaks
+    rev: v8.24.0
+    hooks:
+      - id: gitleaks
