@@ -14,5 +14,6 @@ fastapi
 ccxt
 pyyaml
 requests
+python-dotenv
 httpx
 web3
