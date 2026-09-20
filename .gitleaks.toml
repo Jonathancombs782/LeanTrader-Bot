@@ -1,0 +1,16 @@
+title = "LeanTrader-Bot gitleaks config"
+
+[extend]
+useDefault = true
+
+# False positive allowlist (verified 2026-09-19):
+# marketdata/satoshi_api.py references the NIST P-256 curve by name
+# ("...key.curve, ec.SECP256R1") when validating a user-supplied CDP key, and
+# raises CredentialsError("CDP private key must be an EC P-256 (SECP256R1) key").
+# "SECP256R1" is a public, well-known elliptic-curve identifier — not key
+# material. It trips the generic-api-key rule. Scoped to this file and this
+# literal token only; does NOT allowlist the file or the rule.
+[allowlist]
+description = "False positive: SECP256R1 is the public NIST P-256 curve name, not a secret"
+paths = ['''marketdata/satoshi_api\.py''']
+regexes = ['''SECP256R1''']
