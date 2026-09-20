@@ -1,7 +1,11 @@
 venv/
 .venv/
-# Local environment variables
-.env
+# Local environment variables - NEVER commit secrets
+.env*
+!.env.example
+!.env.template
+accounts.yml
+api_config.json
 # Python artifacts
 __pycache__/
 *.pyc
