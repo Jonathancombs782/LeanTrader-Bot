@@ -24,3 +24,8 @@ pytest_report.txt
 *cdp_api_key*.json
 *coinbase_cdp*.json
 *.pem
+
+# paper-trading brain runtime artifacts
+paper/ledger/
+paper/cache/
+paper/evidence/
