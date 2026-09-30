@@ -13,7 +13,7 @@ from .ledger import Ledger
 from .portfolio import PaperPortfolio, Position
 from .receipts import utcnow_iso
 from .risk import RiskBreach, RiskLimits, check_new_trade, size_position
-from .signals import Signal
+from .signals import Signal, SignalSide
 
 
 @dataclass
@@ -132,3 +132,54 @@ class PaperEngine:
         }
         self.ledger.append("equity", snap)
         return snap
+
+
+def replay_ledger(ledger: Ledger, starting_equity: float = 100_000.0) -> PaperEngine:
+    """Rebuild engine state by replaying the ledger's recorded fills.
+
+    Milestone 1 correctness: commands like `paper.cli status` must reflect the
+    recorded trading history, not a freshly funded portfolio. Replay applies
+    each recorded fill in ledger order — entry fills reconstruct their
+    positions (stop/target/risk come from the matching *accepted* signal),
+    close fills settle cash and realized PnL. Peak equity is restored from the
+    max recorded equity snapshot so drawdown stays meaningful.
+
+    The replay is read-only with respect to the ledger: nothing is appended.
+    """
+    engine = PaperEngine(starting_equity=starting_equity, ledger=ledger)
+    accepted = {
+        s["signal_id"]: s
+        for s in ledger.read("signals")
+        if s.get("disposition") == "accepted"
+    }
+    for rec in ledger.read("fills"):
+        if rec.get("event") == "close":
+            engine.portfolio.close_position(
+                rec["symbol"], float(rec["exit_price"]), float(rec["fee"])
+            )
+            continue
+        sig = accepted.get(rec.get("signal_id"))
+        if sig is None:
+            continue  # fill without a recorded accepted signal; skip it
+        side = SignalSide(rec["side"])
+        risk_per_unit = abs(float(sig["entry"]) - float(sig["stop"]))
+        position = Position(
+            symbol=rec["symbol"],
+            side=side,
+            quantity=float(rec["quantity"]),
+            avg_price=float(rec["fill_price"]),
+            stop=float(sig["stop"]),
+            target=float(sig["target"]),
+            risk_amount=float(rec["quantity"]) * risk_per_unit,
+            fees_paid=float(rec["fee"]),
+        )
+        if side == SignalSide.LONG:
+            engine.portfolio.open_position(
+                position, float(rec["notional"]) + float(rec["fee"])
+            )
+        else:  # short: fee only; proceeds are credited inside open_position
+            engine.portfolio.open_position(position, float(rec["fee"]))
+    peaks = [e.get("equity", 0.0) for e in ledger.read("equity")]
+    if peaks:
+        engine.portfolio.peak_equity = max(starting_equity, max(peaks))
+    return engine

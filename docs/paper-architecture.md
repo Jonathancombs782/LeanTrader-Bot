@@ -82,7 +82,8 @@ provenance don't).
 ## Milestone roadmap
 
 - **M1 (this):** Core invariants — signals, receipts, fills, risk gates,
-  portfolio accounting, ledger. Tested.
+  portfolio accounting, ledger, and ledger replay (so `paper.cli status`
+  reflects the recorded history instead of a fresh portfolio). Tested.
 - **M2:** Strategy interface — a strategy submits signals with declared inputs;
   engine replays inputs to verify reproducibility.
 - **M3:** On-chain receipt collectors (DEX trades, whale wallets) as first-class

@@ -12,7 +12,7 @@ import json
 import sys
 
 from . import feeds
-from .engine import PaperEngine
+from .engine import PaperEngine, replay_ledger
 from .ledger import Ledger
 from .signals import Signal, SignalSide
 
@@ -52,7 +52,9 @@ def cmd_signal(args: argparse.Namespace) -> int:
 
 
 def cmd_status(args: argparse.Namespace) -> int:
-    engine = _engine(args.ledger)
+    # Replay the recorded history — a fresh portfolio would hide every trade
+    # the ledger actually holds.
+    engine = replay_ledger(Ledger(args.ledger))
     prices, _ = feeds.fetch_prices(cache_dir=args.cache, evidence_dir=args.evidence)
     engine.update_prices(prices)
     snap = engine.snapshot_equity()

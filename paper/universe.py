@@ -17,7 +17,9 @@ class Asset:
 
 BLUE_CHIPS: list[Asset] = [
     Asset("BTC", "Bitcoin", "bitcoin", "major"),
-    Asset("ETH", "Ethereum", "ethereum", "major"),
+    # NOTE: 19 assets, per the documented universe. ETH is intentionally NOT in
+    # BLUE_CHIPS — it was never in the documented 19-asset seed. Jonathan can
+    # add it (or swap the whole universe) with by_symbol/universe= if he wants.
     Asset("SOL", "Solana", "solana", "major"),
     Asset("XRP", "XRP", "ripple", "major"),
     Asset("LINK", "Chainlink", "chainlink", "major"),

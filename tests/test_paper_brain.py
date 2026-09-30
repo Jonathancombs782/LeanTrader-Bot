@@ -4,7 +4,7 @@ import json
 import pytest
 
 from paper import feeds as feeds_mod
-from paper.engine import PaperEngine
+from paper.engine import PaperEngine, replay_ledger
 from paper.fills import FEE_BPS, simulate_fill
 from paper.ledger import Ledger
 from paper.receipts import Receipt, hash_bytes, utcnow_iso
@@ -233,7 +233,88 @@ def test_blue_chips_universe():
     assert by_symbol("BTC").tier == "major"
 
 
+def test_blue_chips_is_19_assets_documented():
+    # docs/paper-architecture.md promises a 19-asset seed universe
+    assert len(BLUE_CHIPS) == 19
+    assert "ETH" not in {a.symbol for a in BLUE_CHIPS}
+
+
 def test_feed_extract():
     wanted = [by_symbol("BTC"), by_symbol("SOL")]
     data = {"bitcoin": {"usd": 84000}, "solana": {"usd": 133.3}}
     assert feeds_mod._extract(data, wanted) == {"BTC": 84000.0, "SOL": 133.3}
+
+
+# -- ledger replay -------------------------------------------------------
+def test_replay_reconstructs_open_position(tmp_path):
+    eng = _engine(tmp_path)
+    eng.update_prices({"SOL": 130.0})
+    assert eng.submit_signal(_sig()).accepted
+    live_cash = eng.portfolio.cash
+    live_pos = eng.portfolio.positions["SOL"]
+
+    replayed = replay_ledger(Ledger(tmp_path / "ledger"))
+    rpos = replayed.portfolio.positions["SOL"]
+    assert replayed.portfolio.cash == pytest.approx(live_cash)
+    assert rpos.quantity == pytest.approx(live_pos.quantity)
+    assert rpos.avg_price == pytest.approx(live_pos.avg_price)
+    assert rpos.side == live_pos.side
+    assert rpos.stop == live_pos.stop and rpos.target == live_pos.target
+    assert rpos.risk_amount == pytest.approx(live_pos.risk_amount)
+    # mark-to-market matches the live engine
+    replayed.update_prices({"SOL": 140.0})
+    eng.update_prices({"SOL": 140.0})
+    assert replayed.portfolio.equity({"SOL": 140.0}) == pytest.approx(
+        eng.portfolio.equity({"SOL": 140.0})
+    )
+
+
+def test_replay_applies_close_and_realized_pnl(tmp_path):
+    eng = _engine(tmp_path)
+    eng.update_prices({"SOL": 130.0})
+    assert eng.submit_signal(_sig()).accepted
+    eng.update_prices({"SOL": 140.0})
+    live_pnl = eng.close("SOL")
+    live_cash = eng.portfolio.cash
+
+    replayed = replay_ledger(Ledger(tmp_path / "ledger"))
+    assert "SOL" not in replayed.portfolio.positions
+    assert replayed.portfolio.realized_pnl == pytest.approx(live_pnl)
+    assert replayed.portfolio.cash == pytest.approx(live_cash)
+
+
+def test_replay_skips_rejected_signals(tmp_path):
+    eng = _engine(tmp_path)
+    eng.update_prices({"SOL": 130.0, "LINK": 12.0, "BTC": 84000.0, "XRP": 1.78})
+    assert eng.submit_signal(_sig(symbol="SOL", entry=130, stop=120, target=150)).accepted
+    assert eng.submit_signal(_sig(symbol="LINK", entry=12, stop=11, target=14)).accepted
+    assert eng.submit_signal(_sig(symbol="BTC", entry=84000, stop=80000, target=90000)).accepted
+    res = eng.submit_signal(_sig(symbol="XRP", entry=1.78, stop=1.60, target=2.10))
+    assert not res.accepted  # rejected on portfolio_heat
+
+    replayed = replay_ledger(Ledger(tmp_path / "ledger"))
+    assert set(replayed.portfolio.positions) == {"SOL", "LINK", "BTC"}
+    assert replayed.portfolio.cash == pytest.approx(eng.portfolio.cash)
+
+
+def test_replay_restores_peak_from_equity_snapshots(tmp_path):
+    eng = _engine(tmp_path)
+    eng.update_prices({"SOL": 130.0})
+    assert eng.submit_signal(_sig()).accepted
+    eng.update_prices({"SOL": 150.0})
+    eng.snapshot_equity()
+    peak = eng.portfolio.peak_equity
+
+    replayed = replay_ledger(Ledger(tmp_path / "ledger"))
+    assert replayed.portfolio.peak_equity == pytest.approx(peak)
+
+
+def test_replay_is_read_only(tmp_path):
+    eng = _engine(tmp_path)
+    eng.update_prices({"SOL": 130.0})
+    assert eng.submit_signal(_sig()).accepted
+    ledger = Ledger(tmp_path / "ledger")
+    before = {s: len(ledger.read(s)) for s in ("signals", "fills", "risk_events", "equity")}
+    replay_ledger(ledger)
+    after = {s: len(ledger.read(s)) for s in ("signals", "fills", "risk_events", "equity")}
+    assert before == after
