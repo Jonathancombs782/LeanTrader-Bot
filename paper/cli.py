@@ -12,24 +12,27 @@ import json
 import sys
 
 from . import feeds
-from .engine import PaperEngine, replay_ledger
+from .engine import replay_ledger
 from .ledger import Ledger
 from .signals import Signal, SignalSide
 
 
-def _engine(ledger_root: str) -> PaperEngine:
-    return PaperEngine(ledger=Ledger(ledger_root))
-
-
 def cmd_signal(args: argparse.Namespace) -> int:
-    engine = _engine(args.ledger)
+    # Replay recorded history FIRST: risk gates (heat, daily halt, drawdown)
+    # must see existing positions, not a freshly funded portfolio — otherwise
+    # every invocation gets a fresh 6% heat allowance.
+    engine = replay_ledger(Ledger(args.ledger))
+    # Fetch the whole universe, not just the signal's symbol: replayed
+    # positions need current marks, otherwise equity/drawdown gate on cash
+    # alone and every later signal trips the kill switch.
     prices, receipt = feeds.fetch_prices(
-        [args.symbol], cache_dir=args.cache, evidence_dir=args.evidence
+        None, cache_dir=args.cache, evidence_dir=args.evidence
     )
     if args.symbol not in prices:
         print(f"no public price for {args.symbol} — signal not submitted")
         return 2
     engine.update_prices(prices)
+    engine.roll_day_if_new()
     receipts = (receipt,) if receipt else ()
     signal = Signal(
         symbol=args.symbol,
@@ -57,6 +60,7 @@ def cmd_status(args: argparse.Namespace) -> int:
     engine = replay_ledger(Ledger(args.ledger))
     prices, _ = feeds.fetch_prices(cache_dir=args.cache, evidence_dir=args.evidence)
     engine.update_prices(prices)
+    engine.roll_day_if_new()
     snap = engine.snapshot_equity()
     print(json.dumps(snap, indent=2))
     for sym, pos in engine.portfolio.positions.items():
