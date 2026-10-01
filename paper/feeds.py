@@ -5,6 +5,7 @@ evidence dir with its SHA-256, so a signal can cite the exact bytes it saw.
 """
 from __future__ import annotations
 
+import hashlib
 import json
 import time
 import urllib.parse
@@ -18,8 +19,11 @@ COINGECKO_SIMPLE = "https://api.coingecko.com/api/v3/simple/price"
 CACHE_TTL_S = 300
 
 
-def _cache_path(cache_dir: Path) -> Path:
-    return cache_dir / "coingecko_simple.json"
+def _cache_path(cache_dir: Path, ids: str) -> Path:
+    # Key the cache by the requested asset set: a SOL-only response must never
+    # be served to a BTC request just because it is fresh.
+    key = hashlib.sha256(ids.encode()).hexdigest()[:12]
+    return cache_dir / f"coingecko_simple_{key}.json"
 
 
 def fetch_prices(
@@ -47,7 +51,7 @@ def fetch_prices(
     )
 
     # short disk cache to respect the free rate limit
-    cache_file = _cache_path(cache_dir)
+    cache_file = _cache_path(cache_dir, ids)
     if cache_file.exists() and time.time() - cache_file.stat().st_mtime < CACHE_TTL_S:
         try:
             raw = cache_file.read_bytes()
@@ -78,8 +82,11 @@ def fetch_prices(
 def _snapshot_receipt(
     raw: bytes, url: str, evidence_dir: Path, note: str
 ) -> Receipt | None:
-    stamp = utcnow_iso().replace(":", "").replace("+", "Z")
-    snap_path = evidence_dir / f"coingecko_{stamp}.json"
+    # Content-addressed filename: one-second timestamps collide when two
+    # fetches run in the same second, and the later write would invalidate the
+    # earlier receipt's hash. Identical payloads safely share one file.
+    digest = hash_bytes(raw)
+    snap_path = evidence_dir / f"coingecko_{digest[:16]}.json"
     try:
         snap_path.write_bytes(raw)
     except OSError:
@@ -88,7 +95,7 @@ def _snapshot_receipt(
         type="coingecko_price_snapshot",
         source=url,
         observed_at=utcnow_iso(),
-        sha256=hash_bytes(raw),
+        sha256=digest,
         payload_path=str(snap_path),
         note=note,
     )

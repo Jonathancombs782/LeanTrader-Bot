@@ -3,6 +3,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 
+from .receipts import utcnow_iso
 from .signals import SignalSide
 
 
@@ -41,10 +42,16 @@ class PaperPortfolio:
     fees_paid: float = 0.0
     day_start_equity: float = 0.0
     peak_equity: float = 0.0
+    # ISO date (UTC) the day_start_equity baseline belongs to. Advanced by
+    # the engine when a new trading day begins; day_start_equity is meaningless
+    # without it.
+    trading_day: str = ""
 
     @classmethod
     def funded(cls, equity: float) -> "PaperPortfolio":
-        return cls(cash=equity, day_start_equity=equity, peak_equity=equity)
+        today = utcnow_iso()[:10]
+        return cls(cash=equity, day_start_equity=equity, peak_equity=equity,
+                   trading_day=today)
 
     def equity(self, prices: dict[str, float]) -> float:
         total = self.cash

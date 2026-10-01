@@ -58,10 +58,27 @@ This package is the foundation of that system:
 | Max risk per trade | 2% of equity | Trade rejected |
 | Max portfolio heat | 6% (sum of open-trade risk) | Trade rejected |
 | Max position size | 25% of equity notional | Trade rejected |
+| One position per symbol | — | Second fill on an open symbol rejected |
 | Daily loss halt | −4% day | No new trades rest of day (logged) |
 | Kill switch | −15% drawdown from peak | All trading halted, positions flagged (logged) |
 | Fee | 10 bps per side | Applied to every fill |
-| Slippage | 5 / 15 / 30 bps by tier | Applied to every fill |
+| Slippage | 5 / 15 / 30 bps by tier | Applied to every fill, entries AND exits |
+
+## Accounting rules
+
+- **Sizing uses the simulated fill, not the declared entry.** The engine probes
+  the fill price (mid ± tier slippage) first, then sizes quantity and records
+  `risk_amount` from the fill-to-stop distance. A stale entry can never
+  understate the true stop loss. Stop equal to the fill price is rejected
+  (undefined risk).
+- **The daily PnL baseline rolls every UTC day.** `trading_day` + a
+  `day_roll` risk event persist the marker; ledger replay restores it, and the
+  engine rolls the baseline to current mark-to-market equity on the first
+  command of a new day.
+- **The feed cache is keyed by requested asset IDs.** A cached response for one
+  symbol set is never served to a different request.
+- **Evidence snapshots are content-addressed** (`coingecko_<sha256[:16]>.json`),
+  so concurrent fetches can never overwrite each other's cited bytes.
 
 ## Receipt format
 
@@ -82,7 +99,8 @@ provenance don't).
 ## Milestone roadmap
 
 - **M1 (this):** Core invariants — signals, receipts, fills, risk gates,
-  portfolio accounting, ledger. Tested.
+  portfolio accounting, ledger, and ledger replay (so `paper.cli status`
+  reflects the recorded history instead of a fresh portfolio). Tested.
 - **M2:** Strategy interface — a strategy submits signals with declared inputs;
   engine replays inputs to verify reproducibility.
 - **M3:** On-chain receipt collectors (DEX trades, whale wallets) as first-class
