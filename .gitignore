@@ -29,3 +29,4 @@ pytest_report.txt
 paper/ledger/
 paper/cache/
 paper/evidence/
+.venv-paper/
