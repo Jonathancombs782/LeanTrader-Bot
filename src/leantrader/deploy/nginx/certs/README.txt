@@ -1,1 +1,0 @@
-Place your TLS certificates here: fullchain.pem and privkey.pem
