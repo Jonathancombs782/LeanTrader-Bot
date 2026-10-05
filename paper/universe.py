@@ -13,6 +13,7 @@ class Asset:
     name: str            # e.g. "Solana"
     coingecko_id: str | None  # None => no public price feed mapping yet
     tier: str = "mid"    # "major" | "mid" | "small" — drives slippage
+    yahoo_symbol: str | None = None  # e.g. "GOOG" — stock feed mapping
 
 
 BLUE_CHIPS: list[Asset] = [
@@ -46,3 +47,11 @@ def by_symbol(symbol: str, universe: list[Asset] = BLUE_CHIPS) -> Asset:
         if asset.symbol == symbol:
             return asset
     raise KeyError(f"{symbol} not in universe")
+
+
+# Jonathan's active watchlist (2026-10-05): the two symbols the daily loop
+# scans every evening and builds trade plans for.
+WATCHLIST: list[Asset] = [
+    Asset("SOL", "Solana", "solana", "major"),
+    Asset("GOOG", "Alphabet", None, "major", yahoo_symbol="GOOG"),
+]
