@@ -399,6 +399,30 @@ def test_replay_restores_day_roll_marker(tmp_path):
         eng.portfolio.day_start_equity)
 
 
+def test_replay_bootstraps_day_roll_when_none_recorded(tmp_path):
+    # Fresh ledgers have no day_roll events: the funded portfolio claims
+    # trading_day=today, which would suppress the first roll forever and
+    # freeze day_start_equity at the initial funding.
+    eng = _engine(tmp_path)
+    eng.update_prices({"SOL": 130.0})
+    assert eng.submit_signal(_sig()).accepted
+    rolls = [e for e in eng.ledger.read("risk_events")
+             if e.get("event") == "day_roll"]
+    assert not rolls
+
+    replayed = replay_ledger(Ledger(tmp_path / "ledger"))
+    assert replayed.portfolio.trading_day == ""
+    replayed.update_prices({"SOL": 140.0})
+    assert replayed.roll_day_if_new(today="2026-09-30")
+    assert replayed.portfolio.day_start_equity == pytest.approx(
+        replayed.portfolio.equity({"SOL": 140.0}))
+    # the marker now persists across replays
+    again = replay_ledger(Ledger(tmp_path / "ledger"))
+    assert again.portfolio.trading_day == "2026-09-30"
+    assert again.portfolio.day_start_equity == pytest.approx(
+        replayed.portfolio.day_start_equity)
+
+
 def test_close_applies_slippage(tmp_path):
     eng = _engine(tmp_path)
     eng.update_prices({"SOL": 130.0})

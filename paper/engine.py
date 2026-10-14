@@ -212,10 +212,21 @@ def replay_ledger(ledger: Ledger, starting_equity: float = 100_000.0) -> PaperEn
     # Restore the trading-day marker: day_start_equity is meaningless without
     # the date it belongs to. The last day_roll wins; later fills do not move
     # the baseline.
+    saw_roll = False
     for ev in ledger.read("risk_events"):
         if ev.get("event") == "day_roll":
+            saw_roll = True
             engine.portfolio.trading_day = ev["trading_day"]
             engine.portfolio.day_start_equity = float(ev["day_start_equity"])
+    if not saw_roll:
+        # No day_roll has ever been recorded. The freshly funded portfolio
+        # claims trading_day=today, which would make roll_day_if_new() a
+        # permanent no-op and freeze day_start_equity at the initial funding —
+        # so "daily PnL" would read as since-inception forever. Clear the
+        # marker so the next roll_day_if_new() performs a genuine bootstrap
+        # roll at today's mark-to-market equity and persists the first
+        # day_roll event.
+        engine.portfolio.trading_day = ""
 
     accepted = {
         s["signal_id"]: s

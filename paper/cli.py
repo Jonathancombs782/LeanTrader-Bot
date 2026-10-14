@@ -12,6 +12,8 @@ import json
 import sys
 
 from . import feeds
+from . import history
+from . import universe as universe_mod
 from .engine import replay_ledger
 from .ledger import Ledger
 from .signals import Signal, SignalSide
@@ -54,15 +56,46 @@ def cmd_signal(args: argparse.Namespace) -> int:
     return 1
 
 
+def _current_marks(cache_dir: str, evidence_dir: str) -> dict[str, float]:
+    """Current USD marks for the whole watchlist — crypto via CoinGecko,
+    stocks via their daily-history close. The same marks the evening loop
+    uses.
+
+    `feeds.fetch_prices` only knows CoinGecko (crypto). A stock position left
+    unmarked makes equity skip its value while the entry's cash debit stays,
+    which records a bogus equity row — so never mark from a subset.
+    """
+    prices, _ = feeds.fetch_prices(cache_dir=cache_dir, evidence_dir=evidence_dir)
+    for asset in universe_mod.WATCHLIST:
+        if asset.symbol in prices:
+            continue
+        bars, _ = history.fetch_daily_bars(
+            asset.symbol, universe_mod.WATCHLIST,
+            cache_dir=cache_dir, evidence_dir=evidence_dir,
+        )
+        if bars:
+            prices[asset.symbol] = bars[-1].close
+    return prices
+
+
 def cmd_status(args: argparse.Namespace) -> int:
     # Replay the recorded history — a fresh portfolio would hide every trade
     # the ledger actually holds.
     engine = replay_ledger(Ledger(args.ledger))
-    prices, _ = feeds.fetch_prices(cache_dir=args.cache, evidence_dir=args.evidence)
+    prices = _current_marks(args.cache, args.evidence)
     engine.update_prices(prices)
     engine.roll_day_if_new()
-    snap = engine.snapshot_equity()
-    print(json.dumps(snap, indent=2))
+    unmarked = [s for s in engine.portfolio.positions if s not in engine.prices]
+    if unmarked:
+        # A snapshot with an unmarked position would record a bogus equity
+        # row (the entry's cash debit is replayed but the position value is
+        # skipped). Print the readout, but do NOT append the row.
+        eq = engine.portfolio.equity(engine.prices)
+        print(f"WARNING: no live mark for {unmarked} — "
+              f"equity {eq:,.2f} excludes them; snapshot not recorded")
+    else:
+        snap = engine.snapshot_equity()
+        print(json.dumps(snap, indent=2))
     for sym, pos in engine.portfolio.positions.items():
         px = prices.get(sym)
         upnl = pos.unrealized_pnl(px) if px else float("nan")
