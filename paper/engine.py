@@ -6,6 +6,7 @@ Every step is recorded; a breached limit stops the trade and logs why.
 from __future__ import annotations
 
 from dataclasses import dataclass
+from datetime import datetime, timezone
 
 from . import universe as universe_mod
 from .fills import simulate_fill
@@ -14,6 +15,12 @@ from .portfolio import PaperPortfolio, Position
 from .receipts import utcnow_iso
 from .risk import RiskBreach, RiskLimits, check_new_trade, size_position
 from .signals import Signal, SignalSide
+
+# Fail-closed mark age: a mark older than this means the position's risk can
+# no longer be validated from a fresh quote, so new orders are blocked until
+# the mark is refreshed. 36h covers the daily loop cadence plus one missed
+# refresh; a second missed day trips the gate.
+MAX_MARK_AGE_S = 36 * 3600
 
 
 @dataclass
@@ -37,10 +44,51 @@ class PaperEngine:
         self.ledger = ledger or Ledger()
         self.universe = universe or universe_mod.BLUE_CHIPS
         self.prices: dict[str, float] = {}  # last known mids, set via update_prices
+        # Per-symbol mark metadata: {"price", "source_observed_at", "received_at"}
+        # (both timestamps ISO-8601 UTC). A price WITHOUT a fresh mark is a
+        # number the risk gates must not trust — see mark_problems().
+        self.marks: dict[str, dict] = {}
 
     # -- market data -----------------------------------------------------
-    def update_prices(self, prices: dict[str, float]) -> None:
-        self.prices.update({k: v for k, v in prices.items() if v > 0})
+    def update_prices(self, prices: dict[str, float], marks: dict | None = None) -> None:
+        """Record last-known mids plus their provenance.
+
+        marks maps symbol -> {"source_observed_at": iso|None, "received_at": iso}.
+        Callers that pass no marks get received_at=now; source stays unknown.
+        """
+        now = utcnow_iso()
+        for k, v in prices.items():
+            if v > 0:
+                self.prices[k] = v
+                m = (marks or {}).get(k) or {}
+                self.marks[k] = {
+                    "price": v,
+                    "source_observed_at": m.get("source_observed_at"),
+                    "received_at": m.get("received_at") or now,
+                }
+
+    def mark_problems(self, max_age_s: int = MAX_MARK_AGE_S) -> list[tuple[str, str]]:
+        """Symbols whose risk cannot currently be validated.
+
+        Every open position needs a mark no older than max_age_s. A missing
+        mark used to silently drop the position from equity (understating a
+        LONG's loss, overstating a SHORT's) — now it is reported instead.
+        """
+        now = datetime.now(timezone.utc)
+        problems: list[tuple[str, str]] = []
+        for sym in sorted(self.portfolio.positions):
+            m = self.marks.get(sym)
+            if m is None:
+                problems.append((sym, "missing mark"))
+                continue
+            try:
+                age = (now - datetime.fromisoformat(m["received_at"])).total_seconds()
+            except (ValueError, TypeError):
+                problems.append((sym, "unparseable mark time"))
+                continue
+            if age > max_age_s:
+                problems.append((sym, f"stale mark ({age / 3600:.1f}h old)"))
+        return problems
 
     def roll_day_if_new(self, today: str | None = None) -> bool:
         """Advance the daily PnL baseline when the UTC date has changed.
@@ -77,6 +125,16 @@ class PaperEngine:
         price = self.prices[signal.symbol]
         self.roll_day_if_new()
         equity = self.portfolio.equity(self.prices)
+
+        # Fail-closed: every open position needs a fresh, validated mark
+        # before ANY new order is gated. A stale or missing mark means the
+        # position's true risk is unknown — blocking is safer than pricing
+        # the book on a number we cannot validate.
+        problems = self.mark_problems()
+        if problems:
+            detail = ("risk indeterminate — no new orders until marks are "
+                      "validated: " + ", ".join(f"{s} ({r})" for s, r in problems))
+            return self._reject(signal, "risk_indeterminate", detail)
 
         # One open position per symbol: a second fill would silently discard
         # the first Position while keeping its cash debit.
@@ -181,6 +239,7 @@ class PaperEngine:
 
     def snapshot_equity(self) -> dict:
         eq = self.portfolio.equity(self.prices)
+        problems = self.mark_problems()
         snap = {
             "equity": eq,
             "cash": self.portfolio.cash,
@@ -190,6 +249,8 @@ class PaperEngine:
             "drawdown_pct": self.portfolio.drawdown_pct(self.prices),
             "trading_day": self.portfolio.trading_day,
             "day_start_equity": self.portfolio.day_start_equity,
+            "mark_state": ("ok" if not problems
+                           else "indeterminate: " + ",".join(s for s, _ in problems)),
         }
         self.ledger.append("equity", snap)
         return snap

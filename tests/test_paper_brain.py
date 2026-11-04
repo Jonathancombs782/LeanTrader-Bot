@@ -243,7 +243,48 @@ def test_blue_chips_is_19_assets_documented():
 def test_feed_extract():
     wanted = [by_symbol("BTC"), by_symbol("SOL")]
     data = {"bitcoin": {"usd": 84000}, "solana": {"usd": 133.3}}
-    assert feeds_mod._extract(data, wanted) == {"BTC": 84000.0, "SOL": 133.3}
+    prices, provider_ts = feeds_mod._extract(data, wanted)
+    assert prices == {"BTC": 84000.0, "SOL": 133.3}
+    # no last_updated_at in the payload -> timestamps unknown, not fabricated
+    assert provider_ts == {"BTC": None, "SOL": None}
+
+
+def test_feed_extract_keeps_last_updated_at():
+    wanted = [by_symbol("BTC"), by_symbol("SOL")]
+    data = {"bitcoin": {"usd": 84000, "last_updated_at": 1793797195},
+            "solana": {"usd": 133.3, "last_updated_at": 1793797200}}
+    prices, provider_ts = feeds_mod._extract(data, wanted)
+    assert prices == {"BTC": 84000.0, "SOL": 133.3}
+    assert provider_ts == {"BTC": 1793797195, "SOL": 1793797200}
+
+
+def test_fail_closed_blocks_new_orders_on_stale_mark(tmp_path):
+    from datetime import datetime, timedelta, timezone
+    eng = PaperEngine(ledger=Ledger(tmp_path / "ledger"))
+    eng.update_prices({"SOL": 130.0})
+    assert eng.submit_signal(
+        Signal("SOL", SignalSide.LONG, 130, 120, 150, "t")).accepted
+    # simulate a day with no refresh: the open SOL mark goes stale
+    stale = (datetime.now(timezone.utc) - timedelta(hours=40)).isoformat()
+    eng.marks["SOL"]["received_at"] = stale
+    eng.update_prices({"GOOG": 350.0})  # GOOG fresh, SOL stale
+    res = eng.submit_signal(
+        Signal("GOOG", SignalSide.LONG, 350, 340, 370, "t"))
+    assert not res.accepted
+    assert "risk_indeterminate" in res.reason and "SOL" in res.reason
+
+
+def test_fail_closed_blocks_new_orders_on_missing_mark(tmp_path):
+    eng = PaperEngine(ledger=Ledger(tmp_path / "ledger"))
+    eng.update_prices({"SOL": 130.0})
+    assert eng.submit_signal(
+        Signal("SOL", SignalSide.LONG, 130, 120, 150, "t")).accepted
+    del eng.marks["SOL"]  # mark lost entirely
+    eng.update_prices({"GOOG": 350.0})
+    res = eng.submit_signal(
+        Signal("GOOG", SignalSide.LONG, 350, 340, 370, "t"))
+    assert not res.accepted
+    assert "risk_indeterminate" in res.reason and "missing mark" in res.reason
 
 
 # -- ledger replay -------------------------------------------------------

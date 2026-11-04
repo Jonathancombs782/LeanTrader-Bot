@@ -28,8 +28,11 @@ def run_loop(ledger_path: str = "paper/ledger", plans_dir: str = "paper/plans",
     plans: list[dict] = []
 
     # Current marks: crypto via CoinGecko, stocks via their own history fetch.
-    prices, price_receipt = feeds.fetch_prices(
-        None, universe_mod.WATCHLIST, cache_dir=cache_dir, evidence_dir=evidence_dir
+    # with_marks=True keeps the provider's own update time (source_observed_at)
+    # and our true fetch time (received_at) per symbol — see paper/feeds.py.
+    prices, marks, price_receipt = feeds.fetch_prices(
+        None, universe_mod.WATCHLIST, cache_dir=cache_dir, evidence_dir=evidence_dir,
+        with_marks=True,
     )
 
     for asset in universe_mod.WATCHLIST:
@@ -39,14 +42,22 @@ def run_loop(ledger_path: str = "paper/ledger", plans_dir: str = "paper/plans",
         )
         if asset.symbol in prices:
             price = prices[asset.symbol]
+            mark = marks.get(asset.symbol) or {}
         elif bars:
             price = bars[-1].close  # stock: last daily close
+            # Day-granularity provenance: the bar's own date is the source's
+            # update time; received_at is when we fetched the history.
+            mark = {
+                "source_observed_at": bars[-1].date + "T00:00:00+00:00",
+                "received_at": (hist_receipt.observed_at if hist_receipt
+                                else utcnow_iso()),
+            }
         else:
             plans.append({"symbol": asset.symbol, "disposition": "no_data",
                           "note": "no price and no history — feed down?"})
             continue
 
-        engine.update_prices({asset.symbol: price})
+        engine.update_prices({asset.symbol: price}, marks={asset.symbol: mark})
         receipts = tuple(r for r in (price_receipt, hist_receipt) if r)
         crypto = asset.coingecko_id is not None
         signal: Signal | None = strategy.generate_signal(
