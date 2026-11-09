@@ -1,6 +1,6 @@
 # LeanTrader-Bot
 
-Paper-trading brain for stocks and crypto. **Paper only — no live trading, no real money, no exchange keys.**
+Paper-trading brain for stocks and crypto. ** live trading, real money, exchange keys.**
 
 ## The one entry point
 
