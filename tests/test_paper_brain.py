@@ -561,3 +561,141 @@ def test_cli_signal_replays_ledger_before_risk_gates(tmp_path, monkeypatch, caps
     ledger = Ledger(tmp_path / "ledger")
     assert [f["symbol"] for f in ledger.read("fills")] == ["SOL", "LINK", "BTC"]
     assert ledger.read("signals")[-1]["disposition"] == "rejected"
+
+
+# -- Nov 9, 2026 ledger fix: annotate, never delete ----------------------
+# The Nov 4, 2026 phantom fills (four SOL longs in one second while a long
+# was already open) and the broken day_start baselines (frozen $100,000
+# Oct 5-13; GOOG leg missing Oct 24-Nov 3; negative Nov 4-8) are annotated
+# in the ledger. These tests pin the fix: replay skips phantoms, the
+# single-position gate sees fills logged by other engines, and the day-roll
+# refuses an indeterminate mark set instead of recording a bad baseline.
+
+
+def _seed_phantom_pair(tmp_path):
+    """A ledger with one legit SOL fill and one phantom SOL fill.
+
+    Mirrors Nov 4, 2026: the phantom is identical to its siblings except
+    signal_id, and its signal is recorded accepted — so only the
+    legitimacy annotation can tell replay to skip it.
+    """
+    eng = _engine(tmp_path)
+    eng.update_prices({"SOL": 130.0})
+    assert eng.submit_signal(_sig()).accepted
+    ledger = Ledger(tmp_path / "ledger")
+    ledger.append("signals", {
+        "signal_id": "phantom-1", "symbol": "SOL", "side": "long",
+        "entry": 100.0, "stop": 95.0, "target": 110.0, "thesis": "t",
+        "disposition": "accepted",
+    })
+    ledger.append("fills", {
+        "signal_id": "phantom-1", "symbol": "SOL", "side": "long",
+        "quantity": 249.87506246876563, "mid_price": 100.0,
+        "fill_price": 100.05, "notional": 25000.0, "fee": 25.0,
+        "slippage_bps": 5, "risk_amount": 762.1189405297345,
+        "legitimacy": "phantom",
+        "at": "2026-11-04T16:15:35+00:00",
+    })
+    return ledger
+
+
+def test_replay_skips_phantom_fills(tmp_path):
+    _seed_phantom_pair(tmp_path)
+    replayed = replay_ledger(Ledger(tmp_path / "ledger"))
+    assert list(replayed.portfolio.positions) == ["SOL"]
+    # only the legit fill debited cash: the phantom's $25,000 never left
+    assert replayed.portfolio.cash == pytest.approx(100_000 - 25000.0 - 25.0)
+    assert replayed.portfolio.positions["SOL"].quantity < 210.0  # legit size
+    assert replayed.portfolio.equity({"SOL": 130.0}) > 0
+
+
+def test_submit_signal_sees_fills_logged_by_another_engine(tmp_path):
+    # Nov 4, 2026: four SOL fills in one second from engines that never saw
+    # each other's writes. An engine built before the first fill must still
+    # reject the re-entry once the fill is in the ledger.
+    ledger = Ledger(tmp_path / "ledger")
+    first = PaperEngine(ledger=ledger)
+    second = PaperEngine(ledger=ledger)  # built before any fill exists
+    first.update_prices({"SOL": 130.0})
+    assert first.submit_signal(_sig()).accepted
+    second.update_prices({"SOL": 130.0})
+    res = second.submit_signal(_sig(entry=132, stop=122, target=152))
+    assert not res.accepted
+    assert "single_position_per_symbol" in res.reason
+    assert len(ledger.read("fills")) == 1
+
+
+def _engine_with_sol_goog(tmp_path):
+    eng = _engine(tmp_path)
+    eng.update_prices({"SOL": 130.0, "GOOG": 350.0})
+    assert eng.submit_signal(_sig()).accepted
+    assert eng.submit_signal(
+        _sig(symbol="GOOG", entry=350, stop=340, target=370)).accepted
+    return eng
+
+
+def test_day_roll_refuses_on_indeterminate_marks(tmp_path):
+    eng = _engine_with_sol_goog(tmp_path)
+    del eng.marks["GOOG"]  # the GOOG mark is lost before the next day's roll
+    eng.portfolio.trading_day = "2026-09-01"
+    old_baseline = eng.portfolio.day_start_equity
+    assert not eng.roll_day_if_new(today="2026-09-30")
+    assert eng.portfolio.trading_day == "2026-09-01"
+    assert eng.portfolio.day_start_equity == pytest.approx(old_baseline)
+    refusals = [e for e in eng.ledger.read("risk_events")
+                if e.get("event") == "day_roll_refused"]
+    assert len(refusals) == 1
+    assert refusals[0]["trading_day"] == "2026-09-30"
+    assert "GOOG" in refusals[0]["reason"]
+    assert refusals[0]["mark_state"].startswith("indeterminate")
+    assert not [e for e in eng.ledger.read("risk_events")
+                if e.get("event") == "day_roll"
+                and e.get("trading_day") == "2026-09-30"]
+
+
+def test_day_roll_refused_logged_once_per_day(tmp_path):
+    eng = _engine_with_sol_goog(tmp_path)
+    del eng.marks["GOOG"]
+    eng.portfolio.trading_day = "2026-09-01"
+    assert not eng.roll_day_if_new(today="2026-09-30")
+    assert not eng.roll_day_if_new(today="2026-09-30")
+    refusals = [e for e in eng.ledger.read("risk_events")
+                if e.get("event") == "day_roll_refused"]
+    assert len(refusals) == 1
+
+
+def test_baseline_correction_restores_day_start(tmp_path):
+    eng = _engine(tmp_path)
+    eng.update_prices({"SOL": 130.0})
+    assert eng.submit_signal(_sig()).accepted
+    # a broken day_roll (the Nov 3, 2026 shape: baseline missing a leg)
+    eng.ledger.append("risk_events", {
+        "event": "day_roll", "trading_day": "2026-11-03",
+        "day_start_equity": 70094.32})
+    # the correction supersedes it: the last marker event wins
+    eng.ledger.append("risk_events", {
+        "event": "baseline_correction", "trading_day": "2026-11-03",
+        "day_start_equity": 89422.15,
+        "reason": "reset to verified Nov 3 close"})
+    replayed = replay_ledger(Ledger(tmp_path / "ledger"))
+    assert replayed.portfolio.trading_day == "2026-11-03"
+    assert replayed.portfolio.day_start_equity == pytest.approx(89422.15)
+
+
+def test_new_fill_carries_legitimacy(tmp_path):
+    eng = _engine(tmp_path)
+    eng.update_prices({"SOL": 130.0})
+    assert eng.submit_signal(_sig()).accepted
+    fills = eng.ledger.read("fills")
+    assert len(fills) == 1 and fills[0]["legitimacy"] == "legit"
+
+
+def test_snapshot_carries_two_axis_classification(tmp_path):
+    eng = _engine(tmp_path)
+    eng.update_prices({"SOL": 130.0})
+    assert eng.submit_signal(_sig()).accepted
+    snap = eng.snapshot_equity()
+    assert snap["legitimacy"] == "legit"
+    assert snap["mark_state"] == "ok"
+    assert snap["marks"]["SOL"]["price"] == pytest.approx(130.0)
+    assert "received_at" in snap["marks"]["SOL"]

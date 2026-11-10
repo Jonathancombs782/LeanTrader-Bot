@@ -35,6 +35,12 @@ def run_loop(ledger_path: str = "paper/ledger", plans_dir: str = "paper/plans",
         with_marks=True,
     )
 
+    # Pass 1 — one mark snapshot for the whole watchlist, before any gate
+    # runs. The old per-asset update meant the first asset's signal was
+    # gated while the other position's mark was still unfetched, so every
+    # evening run rejected SOL with "GOOG (missing mark)" — the Nov 4-8
+    # pattern. Nothing is submitted until every mark is loaded.
+    collected: dict[str, dict] = {}
     for asset in universe_mod.WATCHLIST:
         bars, hist_receipt = history.fetch_daily_bars(
             asset.symbol, universe_mod.WATCHLIST,
@@ -56,8 +62,23 @@ def run_loop(ledger_path: str = "paper/ledger", plans_dir: str = "paper/plans",
             plans.append({"symbol": asset.symbol, "disposition": "no_data",
                           "note": "no price and no history — feed down?"})
             continue
+        collected[asset.symbol] = {
+            "price": price, "mark": mark, "bars": bars,
+            "hist_receipt": hist_receipt,
+        }
+    engine.update_prices(
+        {s: c["price"] for s, c in collected.items()},
+        marks={s: c["mark"] for s, c in collected.items()},
+    )
 
-        engine.update_prices({asset.symbol: price}, marks={asset.symbol: mark})
+    # Pass 2 — signals and risk gates, all against the one snapshot above.
+    for asset in universe_mod.WATCHLIST:
+        if asset.symbol not in collected:
+            continue
+        entry = collected[asset.symbol]
+        price = entry["price"]
+        bars = entry["bars"]
+        hist_receipt = entry["hist_receipt"]
         receipts = tuple(r for r in (price_receipt, hist_receipt) if r)
         crypto = asset.coingecko_id is not None
         signal: Signal | None = strategy.generate_signal(
@@ -90,6 +111,18 @@ def run_loop(ledger_path: str = "paper/ledger", plans_dir: str = "paper/plans",
         plans.append(plan)
 
     engine.roll_day_if_new()
+    # The equity row is recorded from the SAME mark snapshot the plans used.
+    # Nov 3, 2026: the plan said $89,422.15 (SOL $93.47) and a later status
+    # snapshot said $89,413.83 (SOL $93.43) — two snapshots seven seconds
+    # apart. A snapshot that would exclude an open position's value is
+    # skipped, never recorded (same guard as paper.cli status).
+    unmarked = [s for s in engine.portfolio.positions if s not in engine.prices]
+    if unmarked:
+        snapshot_note = ("skipped — no live mark for "
+                         + ", ".join(unmarked))
+    else:
+        engine.snapshot_equity()
+        snapshot_note = "recorded"
     summary = {
         "run_at": utcnow_iso(),
         "plans": plans,
@@ -98,6 +131,7 @@ def run_loop(ledger_path: str = "paper/ledger", plans_dir: str = "paper/plans",
             s: {"qty": p.quantity, "side": p.side.value}
             for s, p in engine.portfolio.positions.items()
         },
+        "snapshot": snapshot_note,
     }
     _write_plan_file(summary, plans_dir)
     return summary
@@ -109,6 +143,7 @@ def _write_plan_file(summary: dict, plans_dir: str) -> Path:
     path.parent.mkdir(parents=True, exist_ok=True)
     lines = [f"# Paper trade plans — {day}", ""]
     lines.append(f"Run at {summary['run_at']}. Portfolio equity: ${summary['equity']:,.2f}.")
+    lines.append(f"Equity snapshot: {summary.get('snapshot', 'not recorded')}.")
     lines.append("")
     for p in summary["plans"]:
         lines.append(f"## {p['symbol']} — {p['disposition'].upper()}")

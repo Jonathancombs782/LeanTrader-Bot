@@ -52,3 +52,63 @@ def test_avg_daily_range_crypto_vs_stock():
 def test_insufficient_history_returns_none():
     bars = _bars(10, 100.0, 0.5)
     assert generate_signal("SOL", bars, 105.0, (), crypto_closes_only=True) is None
+
+
+# -- Nov 9, 2026 ledger fix: one mark snapshot per run --------------------
+# The Nov 3 plan said $89,422.15 (SOL $93.47) while a later status snapshot
+# said $89,413.83 (SOL $93.43): two snapshots seven seconds apart. The
+# evening loop must record its equity row from the same snapshot the plans
+# used, and must load every mark before gating any signal (the old
+# per-asset update rejected SOL every night with "GOOG (missing mark)").
+
+
+def test_run_loop_snapshot_matches_plan_equity(tmp_path, monkeypatch):
+    import pytest
+
+    from paper import daily_loop as loop_mod
+    from paper.engine import PaperEngine
+    from paper.ledger import Ledger
+    from paper.signals import Signal, SignalSide
+
+    ledger_path = str(tmp_path / "ledger")
+    eng = PaperEngine(ledger=Ledger(ledger_path))
+    eng.update_prices({"SOL": 130.0, "GOOG": 350.0})
+    assert eng.submit_signal(
+        Signal("SOL", SignalSide.LONG, 130, 120, 150, "sol trend")).accepted
+    assert eng.submit_signal(
+        Signal("GOOG", SignalSide.LONG, 350, 340, 370, "goog trend")).accepted
+
+    def fake_prices(symbols=None, universe=None, cache_dir="paper/cache",
+                    evidence_dir="paper/evidence", with_marks=False):
+        marks = {
+            "SOL": {"source_observed_at": "2026-11-09T22:56:23+00:00",
+                    "received_at": "2026-11-09T22:56:23+00:00"},
+        }
+        return ({"SOL": 130.0}, marks, None)
+
+    def fake_bars(symbol, universe=None, **kw):
+        return ([Bar(date="2026-11-09", open=350.0, high=351.0, low=349.0,
+                     close=350.0)], None)
+
+    monkeypatch.setattr(loop_mod.feeds, "fetch_prices", fake_prices)
+    monkeypatch.setattr(loop_mod.history, "fetch_daily_bars", fake_bars)
+    # no trend either night: the point is the snapshot, not the signals
+    monkeypatch.setattr(loop_mod.strategy, "generate_signal",
+                        lambda *a, **k: None)
+
+    summary = loop_mod.run_loop(ledger_path=ledger_path,
+                                plans_dir=str(tmp_path / "plans"),
+                                cache_dir=str(tmp_path / "cache"),
+                                evidence_dir=str(tmp_path / "evidence"))
+    rows = Ledger(ledger_path).read("equity")
+    assert len(rows) == 1
+    assert rows[0]["equity"] == pytest.approx(summary["equity"])
+    assert rows[0]["legitimacy"] == "legit"
+    assert rows[0]["mark_state"] == "ok"
+    assert rows[0]["marks"]["SOL"]["price"] == pytest.approx(130.0)
+    assert rows[0]["marks"]["GOOG"]["price"] == pytest.approx(350.0)
+    assert summary["snapshot"] == "recorded"
+    # the plan file is dated by run day; find whichever file was written
+    plan_files = list((tmp_path / "plans").glob("*.md"))
+    assert len(plan_files) == 1
+    assert "Equity snapshot: recorded." in plan_files[0].read_text()

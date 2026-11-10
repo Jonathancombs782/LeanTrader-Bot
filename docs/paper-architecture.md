@@ -79,6 +79,29 @@ This package is the foundation of that system:
   symbol set is never served to a different request.
 - **Evidence snapshots are content-addressed** (`coingecko_<sha256[:16]>.json`),
   so concurrent fetches can never overwrite each other's cited bytes.
+- **Every ledger row carries a two-axis classification** (adopted Nov 9,
+  2026). Axis 1, fill legitimacy: `legit` or `phantom` — a phantom fill is
+  a recorded fill that never represented a real entry, and replay skips it;
+  nothing is ever deleted, bogus rows are annotated in place. Axis 2, mark
+  state: `ok` or `indeterminate: ...` — an equity row or day_roll baseline
+  computed from a missing or stale mark is refused or labeled, never
+  silently recorded as truth.
+- **The day-roll fails closed.** `roll_day_if_new()` refuses when any open
+  position's mark is missing or stale, records one `day_roll_refused`
+  event per trading day, and leaves the old baseline in place. A baseline
+  reset is a `baseline_correction` risk event, which replay applies like a
+  day_roll and which supersedes every day_roll before it.
+- **One mark snapshot per run.** The evening loop loads every watchlist
+  mark before gating any signal, and records its equity row from the same
+  snapshot the plans used — so a plan and its row can never disagree the
+  way the Nov 3 plan ($89,422.15, SOL $93.47) and row ($89,413.83,
+  SOL $93.43) did. A snapshot that would exclude an open position's value
+  is skipped, never recorded.
+- **The fill path reads its own writes.** `submit_signal()` refreshes
+  positions from the ledger before gating, so a fill logged by another
+  process (or by a fresh engine that never replayed) is visible to the
+  single-position check. That is the Nov 4, 2026 fix: four SOL fills in
+  one second while a long was already open.
 
 ## Receipt format
 
