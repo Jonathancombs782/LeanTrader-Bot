@@ -94,7 +94,9 @@ def cmd_status(args: argparse.Namespace) -> int:
         print(f"WARNING: no live mark for {unmarked} — "
               f"equity {eq:,.2f} excludes them; snapshot not recorded")
     else:
-        snap = engine.snapshot_equity()
+        # Read-only readout: print the snapshot, record nothing. The
+        # evening loop is the only writer of equity rows.
+        snap = engine.snapshot_equity(record=False)
         print(json.dumps(snap, indent=2))
     for sym, pos in engine.portfolio.positions.items():
         px = prices.get(sym)

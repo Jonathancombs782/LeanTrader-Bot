@@ -373,7 +373,7 @@ class PaperEngine:
         self._applied_fill_ids.add(_fill_key(rec))
         return pnl
 
-    def snapshot_equity(self) -> dict:
+    def snapshot_equity(self, record: bool = True) -> dict:
         eq = self.portfolio.equity(self.prices)
         problems = self.mark_problems()
         # Axis 1 (fill legitimacy): replay skips phantom fills, so the
@@ -406,7 +406,12 @@ class PaperEngine:
         }
         if phantom_ids:
             snap["phantom_fills_excluded"] = phantom_ids
-        self.ledger.append("equity", snap)
+        # One row per day, written by the evening loop only. A status
+        # readout computes the same snapshot but must not record it
+        # (record=False) — otherwise every `paper status` call adds a
+        # second row for the day.
+        if record:
+            self.ledger.append("equity", snap)
         return snap
 
 

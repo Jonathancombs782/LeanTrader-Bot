@@ -1,4 +1,5 @@
 """CLI tests. Network-free: feeds and history are monkeypatched."""
+import json
 from types import SimpleNamespace
 
 import pytest
@@ -59,7 +60,7 @@ def test_status_skips_snapshot_when_position_unmarked(
     assert "SOL" in out and "GOOG" in out
 
 
-def test_status_records_snapshot_with_stock_marks(
+def test_status_reads_snapshot_without_recording(
         tmp_path, monkeypatch, capsys):
     eng = _engine_with_sol_goog(tmp_path)
     monkeypatch.setattr(cli_mod.feeds, "fetch_prices",
@@ -68,9 +69,13 @@ def test_status_records_snapshot_with_stock_marks(
                         lambda symbol, *a, **k: ([_Bar(350.0)], None))
 
     assert cli_mod.cmd_status(_status_args(tmp_path)) == 0
-    assert "WARNING" not in capsys.readouterr().out
-    snaps = Ledger(tmp_path / "ledger").read("equity")
-    assert len(snaps) == 1
+    out = capsys.readouterr().out
+    assert "WARNING" not in out
+    # status is a read-only readout: it prints the snapshot but records
+    # no equity row, so the evening loop stays the only writer
+    assert Ledger(tmp_path / "ledger").read("equity") == []
+    lines = out.splitlines()
+    snap = json.loads("\n".join(lines[:lines.index("}") + 1]))
     # equity counts the GOOG position value, not just the debited cash
-    assert snaps[0]["equity"] == pytest.approx(
+    assert snap["equity"] == pytest.approx(
         eng.portfolio.equity({"SOL": 130.0, "GOOG": 350.0}))
