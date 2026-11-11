@@ -2,6 +2,7 @@ name: Import smoke
 
 on:
   push:
+    branches: [feature/ultra-defensive-router-tests-ci]
   pull_request:
 
 jobs:
