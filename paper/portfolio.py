@@ -18,11 +18,6 @@ class Position:
     risk_amount: float        # equity risked at entry
     fees_paid: float = 0.0
 
-    def market_value(self, price: float) -> float:
-        if self.side == SignalSide.LONG:
-            return self.quantity * price
-        return -self.quantity * price  # short market value (liability)
-
     def unrealized_pnl(self, price: float) -> float:
         if self.side == SignalSide.LONG:
             return self.quantity * (price - self.avg_price)
@@ -54,6 +49,12 @@ class PaperPortfolio:
                    trading_day=today)
 
     def equity(self, prices: dict[str, float]) -> float:
+        """Mark-to-market equity. A position with no mark in `prices` is
+        silently skipped — its value excluded while its cash debit stays —
+        so callers must check for unmarked symbols before recording a
+        snapshot from this number; `paper.cli status` and
+        `paper.daily_loop` both refuse to record an unmarked row.
+        """
         total = self.cash
         for sym, pos in self.positions.items():
             if sym in prices:

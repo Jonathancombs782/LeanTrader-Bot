@@ -2,7 +2,10 @@
 
 Commands:
   signal   Submit a paper signal (LONG/SHORT) with live public prices.
-  status   Show portfolio equity, positions, PnL.
+  status   Show portfolio equity, positions, PnL. Strictly read-only:
+           replays the ledger and prints the snapshot; records nothing.
+  roll     Advance the daily PnL baseline to today (the explicit day-roll).
+           The evening loop also rolls; status never does.
   verify   Re-hash every stored receipt payload; report failures.
 """
 from __future__ import annotations
@@ -12,8 +15,11 @@ import json
 import sys
 
 from . import feeds
+from . import history
+from . import universe as universe_mod
 from .engine import replay_ledger
 from .ledger import Ledger
+from .receipts import utcnow_iso
 from .signals import Signal, SignalSide
 
 
@@ -54,15 +60,50 @@ def cmd_signal(args: argparse.Namespace) -> int:
     return 1
 
 
+def _current_marks(cache_dir: str, evidence_dir: str) -> dict[str, float]:
+    """Current USD marks for the whole watchlist — crypto via CoinGecko,
+    stocks via their daily-history close. The same marks the evening loop
+    uses.
+
+    `feeds.fetch_prices` only knows CoinGecko (crypto). A stock position left
+    unmarked makes equity skip its value while the entry's cash debit stays,
+    which records a bogus equity row — so never mark from a subset.
+    """
+    prices, _ = feeds.fetch_prices(cache_dir=cache_dir, evidence_dir=evidence_dir)
+    for asset in universe_mod.WATCHLIST:
+        if asset.symbol in prices:
+            continue
+        bars, _ = history.fetch_daily_bars(
+            asset.symbol, universe_mod.WATCHLIST,
+            cache_dir=cache_dir, evidence_dir=evidence_dir,
+        )
+        if bars:
+            prices[asset.symbol] = bars[-1].close
+    return prices
+
+
 def cmd_status(args: argparse.Namespace) -> int:
     # Replay the recorded history — a fresh portfolio would hide every trade
-    # the ledger actually holds.
+    # the ledger actually holds. Strictly read-only: no day-roll, no equity
+    # row, no event of any kind is appended. The day-roll is an explicit
+    # `roll` command (and the evening loop's job), never a side effect of
+    # reading the status.
     engine = replay_ledger(Ledger(args.ledger))
-    prices, _ = feeds.fetch_prices(cache_dir=args.cache, evidence_dir=args.evidence)
+    prices = _current_marks(args.cache, args.evidence)
     engine.update_prices(prices)
-    engine.roll_day_if_new()
-    snap = engine.snapshot_equity()
-    print(json.dumps(snap, indent=2))
+    unmarked = [s for s in engine.portfolio.positions if s not in engine.prices]
+    if unmarked:
+        # A snapshot with an unmarked position would record a bogus equity
+        # row (the entry's cash debit is replayed but the position value is
+        # skipped). Print the readout, but do NOT append the row.
+        eq = engine.portfolio.equity(engine.prices)
+        print(f"WARNING: no live mark for {unmarked} — "
+              f"equity {eq:,.2f} excludes them; snapshot not recorded")
+    else:
+        # Read-only readout: print the snapshot, record nothing. The
+        # evening loop is the only writer of equity rows.
+        snap = engine.snapshot_equity(record=False)
+        print(json.dumps(snap, indent=2))
     for sym, pos in engine.portfolio.positions.items():
         px = prices.get(sym)
         upnl = pos.unrealized_pnl(px) if px else float("nan")
@@ -71,15 +112,68 @@ def cmd_status(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_roll(args: argparse.Namespace) -> int:
+    """Explicit day-roll: advance the daily PnL baseline to today.
+
+    The only writer of day_roll/day_roll_refused events besides the
+    evening loop and signal submission. Kept out of `status` so a
+    read-only readout can never move the baseline or append an event.
+    """
+    engine = replay_ledger(Ledger(args.ledger))
+    prices = _current_marks(args.cache, args.evidence)
+    engine.update_prices(prices)
+    if engine.roll_day_if_new():
+        print(f"rolled to {engine.portfolio.trading_day} — baseline "
+              f"${engine.portfolio.day_start_equity:,.2f}")
+        return 0
+    today = utcnow_iso()[:10]
+    refused = [e for e in engine.ledger.read("risk_events")
+               if e.get("event") == "day_roll_refused"
+               and e.get("trading_day") == today]
+    if refused:
+        print(f"day_roll refused for {today}: {refused[-1].get('reason', '')}")
+        return 1
+    print(f"already on {engine.portfolio.trading_day or today} — no roll needed")
+    return 0
+
+
 def cmd_verify(args: argparse.Namespace) -> int:
+    """Verify the ledger three ways; exit 1 on any failure.
+
+    1. Receipts: re-hash every stored payload against its recorded SHA-256.
+    2. Hash chain: walk every stream's prev_hash/record_sha chain (legacy
+       pre-chain lines count as a prefix, not a failure).
+    3. Replay: rebuild the portfolio and surface orphan/duplicate
+       diagnostics; a malformed record fails the replay outright.
+    """
+    from .engine import ReplayError, replay_ledger
+
     ledger = Ledger(args.ledger)
     failures = ledger.verify_receipts()
-    if not failures:
-        print("all stored receipt payloads verify OK")
-        return 0
-    for sig_id, bad in failures.items():
-        print(f"FAILED {sig_id}: {bad}")
-    return 1
+    chains = ledger.verify_all_chains()
+    for stream, res in chains.items():
+        if res["ok"]:
+            print(f"chain {stream}: OK "
+                  f"({res['chained']} chained, {res['legacy']} legacy)")
+        else:
+            for f in res["failures"]:
+                print(f"CHAIN FAILED {stream}: {f}")
+    try:
+        engine = replay_ledger(ledger)
+    except ReplayError as e:
+        print(f"REPLAY FAILED: {e}")
+        return 1
+    for d in engine.replay_diagnostics:
+        print(f"REPLAY DIAGNOSTIC {d['kind']}: {d.get('detail', '')} "
+              f"({d.get('key', d.get('signal_id', ''))})")
+    if failures:
+        for sig_id, bad in failures.items():
+            print(f"FAILED {sig_id}: {bad}")
+    if failures or engine.replay_diagnostics or not all(
+            res["ok"] for res in chains.values()):
+        return 1
+    print("all stored receipt payloads verify OK; chains OK; replay clean")
+    return 0
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -100,6 +194,9 @@ def main(argv: list[str] | None = None) -> int:
 
     st = sub.add_parser("status")
     st.set_defaults(func=cmd_status)
+
+    r = sub.add_parser("roll")
+    r.set_defaults(func=cmd_roll)
 
     v = sub.add_parser("verify")
     v.set_defaults(func=cmd_verify)

@@ -5,28 +5,27 @@ description = "LeanTrader: evolving FX bot with DSL, RAG research, GA alpha fact
 readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
-  "pandas>=2.2",
-  "numpy>=1.26",
-  "scikit-learn>=1.5",
-  "scipy>=1.13",
-  "statsmodels>=0.14",
-  "pydantic>=2.8",
+  "numpy>=1.26.0",
+  "pandas>=2.2.0",
+  "requests>=2.31.0",
   "pyyaml>=6.0",
-  "tenacity>=8.5",
-  "tiktoken>=0.7.0",
-  "matplotlib>=3.9",
-  "networkx>=3.3",
-  "numba>=0.60",
-  "requests>=2.32",
-  "beautifulsoup4>=4.12",
-  "fastapi>=0.112",
-  "uvicorn>=0.30",
-  "ccxt>=4.3",
-  "aiohttp>=3.9",
-  "redis>=5.0",
-  "python-multipart>=0.0.9",
+  "python-dotenv>=1.0.0",
+  "ccxt>=4.3.0",
+  "MetaTrader5>=5.0.45",
+  "fastapi>=0.103.1",
+  "uvicorn>=0.23.2",
+  "redis>=4.6.0",
   "cryptography>=43.0",
-  "python-dotenv>=1.0"
+  "PyNaCl",
+  "portalocker",
+  "matplotlib>=3.6",
+  "mplfinance",
+  "Pillow>=10.2",
+  "jinja2",
+  "feedparser",
+  "beautifulsoup4>=4.12",
+  "cvxpy",
+  "prometheus-client>=0.20",
 ]
 
 [project.optional-dependencies]
@@ -46,7 +45,7 @@ requires = ["setuptools>=61.0"]
 build-backend = "setuptools.build_meta"
 
 [tool.pytest.ini_options]
-pythonpath = ["src"]
+pythonpath = ["."]
 addopts = "-q"
 
 [tool.black]
