@@ -2,7 +2,6 @@ venv/
 .venv/
 # Local environment variables - NEVER commit secrets
 .env*
-!.env.example
 !.env.template
 accounts.yml
 api_config.json
@@ -14,8 +13,11 @@ __pycache__/
 build/
 dist/
 *.egg-info/
-runtime/
+runtime/*
+!runtime/webhook_server.py
+!runtime/__init__.py
 tools/*.txt
+tools/*.json
 tools/*_out.txt
 *.pkl
 flake_report.txt

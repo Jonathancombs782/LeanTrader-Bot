@@ -5,6 +5,7 @@ never happens. No overrides, no "just this once".
 """
 from __future__ import annotations
 
+import math
 from dataclasses import dataclass
 
 
@@ -23,6 +24,20 @@ class RiskLimits:
     max_position_pct: float = 25.0        # max notional per symbol, % of equity
     daily_loss_limit_pct: float = 4.0     # halt new trades after -4% day
     kill_switch_drawdown_pct: float = 15.0  # halt everything after -15% from peak
+
+    def __post_init__(self) -> None:
+        # Fail closed, mirroring Signal's validation: a limit that is
+        # negative or non-finite is a misconfiguration, not a gate.
+        # (inf fails open, a negative limit fails closed by accident —
+        # neither is a limit anyone meant.)
+        for name in ("max_risk_per_trade_pct", "max_portfolio_heat_pct",
+                     "max_position_pct", "daily_loss_limit_pct",
+                     "kill_switch_drawdown_pct"):
+            value = getattr(self, name)
+            if not math.isfinite(value) or value < 0:
+                raise ValueError(
+                    f"RiskLimits.{name} must be finite and >= 0, "
+                    f"got {value!r}")
 
 
 def check_new_trade(

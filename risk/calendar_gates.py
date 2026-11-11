@@ -7,6 +7,11 @@ from functools import lru_cache
 from typing import List, Dict, Optional
 
 
+# NOTE (Nov 11, 2026): data/calendar/*.csv are TEST fixtures with
+# far-future (2099) dates so they can never fire a real gate; the tests in
+# tests/test_calendar_gates.py pin those dates. Do not add live events
+# here — this loader is read on production paths too
+# (strategies/pipeline.py -> risk_gate).
 CAL_DIR = os.path.join("data", "calendar")
 FX_FILE = os.path.join(CAL_DIR, "fx_macro.csv")
 CRYPTO_FILE = os.path.join(CAL_DIR, "crypto_events.csv")

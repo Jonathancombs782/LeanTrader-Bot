@@ -1,7 +1,7 @@
 # Paper-Trading Brain — Architecture
 
-**Status:** Milestone 1 (2026-09-24) — core invariants implemented and tested.
-**Branch:** `feature/paper-trading-brain`
+**Status:** Milestone 1 (2026-09-24) — core invariants implemented and tested; updated Nov 11, 2026 (hash-chained ledger, strictly read-only status, replay hardening).
+**Branch:** `feature/cdp-signing-helper`
 
 ## The idea nobody has built
 
@@ -28,9 +28,13 @@ This package is the foundation of that system:
 
 ## What this is NOT (yet)
 
-- Not a strategy. Milestone 1 has no alpha engine — signals are submitted
-  explicitly (by a human, a script, or a future strategy module). The brain
-  validates, sizes, simulates, and records. Strategy comes in milestone 2.
+- Not a strategy *interface* yet. A trend-v1 strategy exists
+  (`paper/strategy.py`: LONG when close>SMA20>SMA50, SHORT when
+  reversed) and the evening loop (`paper/daily_loop.py`) scans the
+  watchlist and submits its signals through the risk gates — but
+  Milestone 2's reproducibility check (replaying a strategy's declared
+  inputs to verify its signals) is still open. Signals can also still
+  be submitted explicitly (by a human or a script).
 - Not live trading. Nothing here touches an exchange. Real-money execution is a
   separately approved future phase with fresh, restricted credentials.
 - Not financial advice. Educational / research software.
@@ -46,9 +50,13 @@ This package is the foundation of that system:
 | `fills.py` | Fill simulator: mid-price ± slippage by liquidity tier, fee in bps. Returns effective fill price + cost breakdown. |
 | `risk.py` | `RiskLimits` + gate checks: per-trade risk, portfolio heat, max position size, daily loss halt, drawdown kill switch. Breaches raise `RiskBreach` and are ledger-logged. |
 | `portfolio.py` | `PaperPortfolio`: cash, positions, mark-to-market equity, realized/unrealized PnL, daily PnL. |
-| `ledger.py` | Append-only JSONL writers (`signals`, `fills`, `risk_events`, `equity`) + `verify()` that re-hashes receipts. |
+| `ledger.py` | Append-only JSONL writers (`signals`, `fills`, `risk_events`, `equity`) + `verify_receipts()` that re-hashes receipts + `verify_chain()` that checks the per-line `prev_hash`/`record_sha` hash chain. |
 | `engine.py` | `PaperEngine`: submit signal → risk gate → size → simulate fill → update portfolio → ledger everything. |
-| `cli.py` | `python -m paper.cli` — `signal`, `status`, `verify` commands. |
+| `strategy.py` | Trend v1: LONG when close>SMA20>SMA50, SHORT when reversed; stop 1.5× ADR, target 3.0× ADR. |
+| `history.py` | Daily bars: CoinGecko `market_chart` (crypto) + Yahoo chart (stocks), with cached payloads and SHA-256 evidence receipts. |
+| `daily_loop.py` | Evening loop: one mark snapshot for the watchlist, signal scan, risk gates, one equity row, writes `paper/plans/YYYY-MM-DD.md`. |
+| `annotate_ledger.py` | One-time Nov 9, 2026 ledger annotator (phantom fills, broken baselines); refuses once any line carries a `record_sha`. |
+| `cli.py` | `python -m paper.cli` — `signal`, `status` (strictly read-only), `roll` (explicit day-roll), `verify` commands. |
 
 ## Risk limits (defaults)
 
@@ -58,7 +66,7 @@ This package is the foundation of that system:
 | Max risk per trade | 2% of equity | Trade rejected |
 | Max portfolio heat | 6% (sum of open-trade risk) | Trade rejected |
 | Max position size | 25% of equity notional | Trade rejected |
-| One position per symbol | — | Second fill on an open symbol rejected |
+| One position per symbol | — | Second fill on an open symbol rejected at submit; in replay a duplicate-position fill is flagged in `replay_diagnostics` and skipped, never overwriting the first position |
 | Daily loss halt | −4% day | No new trades rest of day (logged) |
 | Kill switch | −15% drawdown from peak | All trading halted, positions flagged (logged) |
 | Fee | 10 bps per side | Applied to every fill |
@@ -72,13 +80,43 @@ This package is the foundation of that system:
   understate the true stop loss. Stop equal to the fill price is rejected
   (undefined risk).
 - **The daily PnL baseline rolls every UTC day.** `trading_day` + a
-  `day_roll` risk event persist the marker; ledger replay restores it, and the
-  engine rolls the baseline to current mark-to-market equity on the first
-  command of a new day.
+  `day_roll` risk event persist the marker; ledger replay restores it.
+  The roll happens in the evening loop, on signal submission, and via
+  the explicit `paper.cli roll` command — never on `status`, which is
+  strictly read-only.
+- **Every ledger line is hash-chained** (Nov 11, 2026). New lines carry
+  `prev_hash` (hash of the previous line) + `record_sha` (SHA-256 of
+  the line's content including `prev_hash`); `verify_chain()` fails on
+  any edited, deleted, reordered, or unchained-after-chained line.
+  Lines written before the chain are a legacy prefix, never rewritten;
+  the first chained line anchors on the last legacy line's raw bytes.
 - **The feed cache is keyed by requested asset IDs.** A cached response for one
   symbol set is never served to a different request.
 - **Evidence snapshots are content-addressed** (`coingecko_<sha256[:16]>.json`),
   so concurrent fetches can never overwrite each other's cited bytes.
+- **Every ledger row carries a two-axis classification** (adopted Nov 9,
+  2026). Axis 1, fill legitimacy: `legit` or `phantom` — a phantom fill is
+  a recorded fill that never represented a real entry, and replay skips it;
+  nothing is ever deleted, bogus rows are annotated in place. Axis 2, mark
+  state: `ok` or `indeterminate: ...` — an equity row or day_roll baseline
+  computed from a missing or stale mark is refused or labeled, never
+  silently recorded as truth.
+- **The day-roll fails closed.** `roll_day_if_new()` refuses when any open
+  position's mark is missing or stale, records one `day_roll_refused`
+  event per trading day, and leaves the old baseline in place. A baseline
+  reset is a `baseline_correction` risk event, which replay applies like a
+  day_roll and which supersedes every day_roll before it.
+- **One mark snapshot per run.** The evening loop loads every watchlist
+  mark before gating any signal, and records its equity row from the same
+  snapshot the plans used — so a plan and its row can never disagree the
+  way the Nov 3 plan ($89,422.15, SOL $93.47) and row ($89,413.83,
+  SOL $93.43) did. A snapshot that would exclude an open position's value
+  is skipped, never recorded.
+- **The fill path reads its own writes.** `submit_signal()` refreshes
+  positions from the ledger before gating, so a fill logged by another
+  process (or by a fresh engine that never replayed) is visible to the
+  single-position check. That is the Nov 4, 2026 fix: four SOL fills in
+  one second while a long was already open.
 
 ## Receipt format
 
@@ -88,7 +126,7 @@ This package is the foundation of that system:
   "source": "https://api.coingecko.com/api/v3/simple/price?...",
   "observed_at": "2026-09-24T22:10:00Z",
   "sha256": "9f2c…",
-  "payload_path": "paper/evidence/coingecko_20260924T221000Z.json"
+  "payload_path": "paper/evidence/coingecko_<sha256[:16]>.json"
 }
 ```
 

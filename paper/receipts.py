@@ -37,6 +37,10 @@ class Receipt:
     sha256: str         # hash of the captured payload
     payload_path: str | None = None  # local evidence file, if we kept one
     note: str = ""
+    # The origin's own update time for the fact, when the origin supplies one
+    # (e.g. CoinGecko's last_updated_at). Bounds provider update age — it is
+    # NOT proof the underlying market tick is fresh. None when unknown.
+    source_observed_at: str | None = None
 
     def to_dict(self) -> dict:
         return asdict(self)

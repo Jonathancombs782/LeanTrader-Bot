@@ -18,8 +18,12 @@ class Settings:
     bybit_api_secret: str = os.getenv("BYBIT_API_SECRET", "")
 
     # === Binance API (optional) ===
+    # Canonical template name is BINANCE_SECRET_KEY (.env.template);
+    # BINANCE_API_SECRET is accepted as an alias (config.py / helper use
+    # that name). Either works; BINANCE_API_SECRET wins if both are set.
     binance_api_key: str = os.getenv("BINANCE_API_KEY", "")
-    binance_api_secret: str = os.getenv("BINANCE_API_SECRET", "")
+    binance_api_secret: str = os.getenv("BINANCE_API_SECRET", "") or os.getenv(
+        "BINANCE_SECRET_KEY", "")
 
     # === Telegram Bot ===
     telegram_bot_token: str = os.getenv("TELEGRAM_BOT_TOKEN", "")
