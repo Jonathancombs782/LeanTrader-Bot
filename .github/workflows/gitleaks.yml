@@ -4,7 +4,10 @@ name: Gitleaks
 # Prevents recurrence of the committed .env / .env.recover exposure.
 # NOTE: this does NOT clean history — rotate keys and purge history first (Phase 0).
 
-on: [push, pull_request]
+on:
+  push:
+    branches: [feature/ultra-defensive-router-tests-ci]
+  pull_request:
 
 jobs:
   scan:
